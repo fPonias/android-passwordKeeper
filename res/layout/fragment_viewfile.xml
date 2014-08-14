@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent" 
+    >
+
+    <TextView
+        android:id="@+id/viewfile_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="18sp"
+    />
+    
+	<ListView android:id="@+id/viewfile_detaillist"
+	        android:layout_width="match_parent"
+	        android:layout_height="fill_parent"
+	        android:layout_above="@+id/viewfile_addbtn"
+	        android:layout_below="@+id/viewfile_name">
+	    
+	</ListView>
+
+    <Button
+        android:id="@+id/viewfile_addbtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="+"
+    />
+
+</RelativeLayout>

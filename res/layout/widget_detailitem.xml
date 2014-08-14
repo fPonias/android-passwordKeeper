@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+>
+	<LinearLayout 
+	    android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+	>
+
+		<TextView
+		    android:id="@+id/detailitem_keylabel"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:layout_weight=".5"
+		    android:text="Label1" 
+	        android:paddingLeft="12dp"
+	        android:paddingTop="7dp"
+	        android:paddingBottom="7dp"
+	        android:textSize="18sp" >
+		</TextView>
+
+		<TextView
+		    android:id="@+id/detailitem_valuelabel"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:layout_weight=".5"
+		    android:text="label2" 
+	        android:paddingLeft="12dp"
+	        android:paddingTop="7dp"
+	        android:paddingBottom="7dp"
+	        android:textSize="18sp" >
+		</TextView>
+
+	</LinearLayout>
+	
+    <LinearLayout 
+	    android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+	>
+        <EditText 
+        	android:id="@+id/detailitem_keyinput"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:layout_weight=".5"
+		    android:hint="Key"
+		    android:singleLine="true"
+        />
+        
+        <EditText 
+        	android:id="@+id/detailitem_valueinput"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:layout_weight=".5"
+		    android:hint="Value"
+		    android:singleLine="true"
+        />
+        
+	    <Button
+	        android:id="@+id/detailitem_deletebtn"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:minHeight="36dp"
+	        android:minWidth="36dp"
+	        android:text="-" />
+    </LinearLayout>
+	
+</LinearLayout>

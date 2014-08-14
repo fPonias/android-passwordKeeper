@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.munger.passwordkeeper.MainActivity" >
+    
+    <item android:id="@+id/action_detail_copy"
+          android:title="copy"
+          app:showAsAction="always" />
+    <item android:id="@+id/action_detail_paste"
+          android:title="paste"
+          app:showAsAction="always" />
+    <item android:id="@+id/action_detail_random"
+          android:title="random"
+          app:showAsAction="always" />
+</menu>

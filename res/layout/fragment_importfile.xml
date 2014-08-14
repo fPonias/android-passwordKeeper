@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+	<ImageButton
+	    android:id="@+id/import_uplevelbtn"
+	    android:layout_width="36dp"
+	    android:layout_height="36dp"
+	    android:layout_alignParentLeft="true"
+	    android:layout_alignParentTop="true"
+	    android:src="@drawable/ic_action_back" />
+
+	<ImageButton
+	    android:id="@+id/import_refreshbtn"
+	    android:layout_width="36dp"
+	    android:layout_height="36dp"
+	    android:layout_above="@+id/import_filelist"
+	    android:layout_alignParentRight="true"
+	    android:layout_alignParentTop="true"
+	    android:src="@drawable/ic_action_refresh" />
+	
+	<EditText
+	    android:id="@+id/import_pathinput"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_toLeftOf="@+id/import_refreshbtn"
+	    android:layout_toRightOf="@+id/import_uplevelbtn"
+	    android:hint="Path" 
+	    android:singleLine="true"/>
+
+	<ListView
+	    android:id="@+id/import_filelist"
+	    android:layout_width="match_parent"
+	    android:layout_height="fill_parent"
+	    android:layout_alignParentLeft="true"
+	    android:layout_below="@+id/import_pathinput" >
+	</ListView>
+	
+</RelativeLayout>

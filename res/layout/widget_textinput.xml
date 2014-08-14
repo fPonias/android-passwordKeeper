@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewSwitcher xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" 
+>
+    <TextView
+        android:id="@+id/widget_ti_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="12dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:text="Label"
+        android:textSize="18sp" />
+	    
+	<RelativeLayout android:id="@+id/widget_ti_editView"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	>
+
+	    <EditText
+	        android:id="@+id/widget_ti_editText"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_toLeftOf="@+id/widget_ti_deleteBtn"
+	        android:text="Label" 
+	        android:singleLine="true"/>
+
+	    <Button
+	        android:id="@+id/widget_ti_deleteBtn"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignBottom="@+id/widget_ti_editText"
+	        android:layout_alignParentRight="true"
+	        android:layout_alignParentTop="true"
+	        android:minHeight="36dp"
+	        android:minWidth="36dp"
+	        android:text="-" />
+
+	</RelativeLayout>
+</ViewSwitcher>
