@@ -99,8 +99,9 @@ public class SelectFileFragment extends Fragment
 	 */
 	public void setEditable(boolean editable)
 	{
-		View v = getView();
-		if (v == null)
+		this.editable = editable;
+		
+		if (rootView == null)
 			return;
 		
 		//bring up the delete button on all listed files

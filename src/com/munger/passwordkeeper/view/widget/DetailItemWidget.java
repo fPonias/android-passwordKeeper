@@ -51,6 +51,7 @@ public class DetailItemWidget extends LinearLayout
 		valueInput = (EditText) findViewById(R.id.detailitem_valueinput);
 		deleteBtn = (Button) findViewById(R.id.detailitem_deletebtn);
 		
+		
 		//make the matching view label match the edit text
 		keyInput.addTextChangedListener(new TextWatcher() 
 		{

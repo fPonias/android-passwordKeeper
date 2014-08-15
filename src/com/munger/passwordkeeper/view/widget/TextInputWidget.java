@@ -139,6 +139,10 @@ public class TextInputWidget extends ViewSwitcher
 		}
 	}
 	
+	/**
+	 * Some bug in Android was causing all instances of TextInputWidget to share the same savedBundleResources object.
+	 * This function had to be overriden to avoid every instance of this object being assigned the same string.
+	 */
 	@Override
 	protected void dispatchRestoreInstanceState(android.util.SparseArray<android.os.Parcelable> container) 
 	{
