@@ -2,13 +2,16 @@ package com.munger.passwordkeeper.struct;
 
 import java.util.ArrayList;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * A struct that contains specific details for the PasswordDocument
  * Details are composed of a name, URL or location, and key/value pairs associated with this location.
  * Each key/value pair in meant to be a username/password pair or perhaps a question/answer pair.
  * All values can be blank if necessary.
  */
-public class PasswordDetails 
+public class PasswordDetails implements Parcelable
 {
 	public String name;
 	public String location;
@@ -120,13 +123,14 @@ public class PasswordDetails
 	public String toString()
 	{
 		StringBuilder builder = new StringBuilder();
-		builder.append("name: ").append(name).append('\n');
 		builder.append("location: ").append(location).append('\n');
+		builder.append("name: ").append(name).append('\n');
+		builder.append("id: ").append(index).append('\n');
 
 		for (Pair item : details)
 		{
-			builder.append("key: ").append(item.key).append('\n');
-			builder.append("value: ").append(item.value).append('\n');
+			builder.append("\tkey: ").append(item.key).append('\n');
+			builder.append("\tvalue: ").append(item.value).append('\n');
 		}
 		
 		return builder.toString();
@@ -153,16 +157,32 @@ public class PasswordDetails
 	        {
 	        	location = line.substring(10);
 	        }
-	        else if (line.startsWith("key: "))
+	        else if (line.startsWith("id: "))
+	        {
+	        	index = Integer.valueOf(line.substring(4));
+	        }
+	        else if (line.startsWith("\tkey: "))
 	        {
 	        	curPair = new Pair();
-	        	curPair.key = line.substring(5);
+	        	curPair.key = line.substring(6);
 	        }
-	        else if (line.startsWith("value: "))
+	        else if (line.startsWith("\tvalue: "))
 	        {
-	        	curPair.value = line.substring(7);
+	        	curPair.value = line.substring(8);
 	        	details.add(curPair);
 	        }
 	    }
+	}
+
+	@Override
+	public int describeContents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel arg0, int arg1) 
+	{
+		arg0.writeString(toString());
 	}
 }

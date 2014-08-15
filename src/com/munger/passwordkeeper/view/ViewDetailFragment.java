@@ -51,13 +51,41 @@ public class ViewDetailFragment extends Fragment
 
 	/** listener opens the copy submenu on a long click */ private View.OnLongClickListener copyMenuListener;
 	
+	@Override
+	public void onSaveInstanceState(Bundle outState) 
+	{
+		outState.putString("file", parent.currentDoc);
+		outState.putString("password", parent.password);
+		outState.putInt("index", details.index);
+	};
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) 
+	{
+		super.onCreate(savedInstanceState);
+		
+		parent = (MainActivity) getActivity();
+		
+		if (savedInstanceState != null)
+		{
+			String file = savedInstanceState.getString("file");
+			String password = savedInstanceState.getString("password");
+			int index = savedInstanceState.getInt("index");
+			
+			parent.setFile(file, password);
+			parent.setDetails(index);
+			parent.fragmentExists(this);
+		}
+		
+		setDetails(parent.getDetails());
+	};
+	
 	/**
 	 * Gather references to commonly used components and setup event handlers.
 	 */
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
 	{	
-		this.parent = (MainActivity) getActivity();
 		root = inflater.inflate(R.layout.fragment_viewdetail, container, false);
 	
 		setHasOptionsMenu(true);
@@ -68,6 +96,9 @@ public class ViewDetailFragment extends Fragment
 		itemList = (ListView) root.findViewById(R.id.viewdetail_itemlist);
 		addButton = (Button) root.findViewById(R.id.viewdetail_addbtn);
 		
+		nameLabel.getLabel().setOnLongClickListener(copyMenuListener);
+		locationLabel.getLabel().setOnLongClickListener(copyMenuListener);
+
 		if (details != null)
 			setupFields();
 		
@@ -85,10 +116,6 @@ public class ViewDetailFragment extends Fragment
 			actionMode = parent.startActionMode(actionCallback);
 			return true;
 		}};
-
-		nameLabel.getLabel().setOnLongClickListener(copyMenuListener);
-		locationLabel.getLabel().setOnLongClickListener(copyMenuListener);
-		
 		
 		//update the changeable copy of the details whenever a change to any text input is done
 		nameLabel.setInputChangeListener(new TextInputWidget.InputChangedListener() {public void changed() 
@@ -112,6 +139,9 @@ public class ViewDetailFragment extends Fragment
 			
 			addPair();
 		}});
+		
+		
+		setupEditable();
 		
 		return root;
 	}
@@ -198,6 +228,20 @@ public class ViewDetailFragment extends Fragment
 		});
 	};
 	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) 
+	{
+		int id = item.getItemId();
+		
+		if (id == R.id.action_edit)
+		{
+			setEditable(!editable);
+			return true;
+		}
+		
+		return super.onOptionsItemSelected(item);
+	};
+	
 	/**
 	 * Select the textView by changing the background
 	 * An interesting feature of android is changing the background on a textview will cause the padding to get reset.
@@ -266,8 +310,8 @@ public class ViewDetailFragment extends Fragment
 	 */
 	private void setupFields()
 	{
-		pairListAdapter = new DetailArrayAdapter(this, parent, R.layout.widget_detailitem, details.details);
-		filterAdapter = new DetailArrayAdapter(this, parent, R.layout.widget_detailitem, filtered);
+		pairListAdapter = new DetailArrayAdapter(this, parent, details.details);
+		filterAdapter = new DetailArrayAdapter(this, parent, filtered);
 		itemList.setAdapter(pairListAdapter);
 
 		nameLabel.setText(details.name);
@@ -437,9 +481,9 @@ public class ViewDetailFragment extends Fragment
 	{
 		private ViewDetailFragment host;
 		
-		public DetailArrayAdapter(ViewDetailFragment host, Context context, int resource, List<PasswordDetails.Pair> objects) 
+		public DetailArrayAdapter(ViewDetailFragment host, Context context, List<PasswordDetails.Pair> objects) 
 		{
-			super(context, resource, objects);
+			super(context, 0, objects);
 			
 			this.host = host;
 		}
@@ -605,23 +649,6 @@ public class ViewDetailFragment extends Fragment
 		
 		return ret.toString();
 	}
-	
-	/**
-	 * make sure all of the labels in the proper editing mode on resume
-	 */
-	@Override
-	public void onResume()
-	{
-		super.onResume();
-		
-		if (details == null)
-			return;
-		
-		if (root == null)
-			return;
-		
-		setupEditable();
-	}
 
 	/**
 	 * swap all fragment components to the proper editing mode
@@ -647,7 +674,7 @@ public class ViewDetailFragment extends Fragment
 		
 		addButton.setVisibility(editable ? View.VISIBLE : View.GONE);
 		
-		int sz = itemList.getChildCount();
+		int sz = details.details.size();
 		
 		if (sz == 0)
 		{
@@ -655,10 +682,14 @@ public class ViewDetailFragment extends Fragment
 			pairListAdapter.notifyDataSetChanged();
 		}
 		
+		
+		sz = itemList.getCount();
 		for (int i = 0; i < sz; i++)
 		{
 			DetailItemWidget item = (DetailItemWidget) itemList.getChildAt(i);
-			item.setEditable(editable);
+			
+			if (item != null)
+				item.setEditable(editable);
 		}
 		
 		root.invalidate();

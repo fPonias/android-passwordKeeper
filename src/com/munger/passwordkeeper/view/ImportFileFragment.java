@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -57,13 +56,30 @@ public class ImportFileFragment extends Fragment
 	public void setEditable(boolean editable)
 	{}
 	
+	@Override
+	public void onSaveInstanceState(Bundle outState) 
+	{
+		outState.putString("path", currentDir);
+	};
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) 
+	{
+		this.parent = (MainActivity) getActivity();
+	
+		if (savedInstanceState != null)
+		{
+			setDirectory(savedInstanceState.getString("path"));
+		}
+		
+		super.onCreate(savedInstanceState);
+	};
+	
 	/**
 	 * get references to important components, setup the event handlers
 	 */
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
 	{
-		this.parent = (MainActivity) getActivity();
-		
 		//get component references
 		root = (RelativeLayout) inflater.inflate(R.layout.fragment_importfile, container, false);
 		upButton = (ImageButton) root.findViewById(R.id.import_uplevelbtn);
@@ -114,7 +130,7 @@ public class ImportFileFragment extends Fragment
 		nextDir = directory;
 		currentDir = nextDir;
 		
-		if (parent != null)
+		if (root != null)
 			populateViews();
 	}
 	

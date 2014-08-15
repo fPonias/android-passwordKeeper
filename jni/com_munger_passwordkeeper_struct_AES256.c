@@ -80,7 +80,8 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JN
     //check the validity of the string
     for (i = 0; i < decSz; i++)
     {
-    	if (!(retPtr[i] == 0 || retPtr[i] == 10 || (retPtr[i] > 31 && retPtr[i] < 127)))
+    	//null tab return alphanumeric and symbols
+    	if (!(retPtr[i] == 0 || retPtr[i] == 9 || retPtr[i] == 10 || (retPtr[i] > 31 && retPtr[i] < 127)))
     	{
     		ret = (*env)->NewStringUTF(env, "");
     		found = 0;

@@ -148,6 +148,32 @@ public class ViewFileFragment extends Fragment
 		}
 	}
 	
+	@Override
+	public void onSaveInstanceState(Bundle outState) 
+	{
+		outState.putString("file", parent.currentDoc);
+		outState.putString("password", parent.password);
+	};
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) 
+	{
+		super.onCreate(savedInstanceState);
+		
+		parent = (MainActivity) getActivity();
+		
+		if (savedInstanceState != null)
+		{
+			String file = savedInstanceState.getString("file");
+			String password = savedInstanceState.getString("password");
+			
+			parent.setFile(file, password);
+			parent.fragmentExists(this);
+		}
+		
+		setDocument(parent.currentDoc, parent.document);
+	};
+	
 	/**
 	 * Get references to relevant components and setup events for most components
 	 */
@@ -195,6 +221,13 @@ public class ViewFileFragment extends Fragment
 		
 		return root;
 	}
+	
+	@Override
+	public void onPause() 
+	{
+		parent.reset();
+		super.onPause();
+	};
 	
 	/**
 	 * Filter the list of detials down to matching details.

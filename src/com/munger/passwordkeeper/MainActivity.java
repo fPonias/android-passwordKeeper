@@ -2,15 +2,16 @@ package com.munger.passwordkeeper;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
 
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
@@ -46,20 +47,83 @@ public class MainActivity extends ActionBarActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		selectFileFragment = null;
-		createFileFragment = null;
-		viewFileFragment = null;
-		viewDetailFragment = null;
-		importFileFragment = null;
+		try
+		{
+			setupSample();
+		}
+		catch(Exception e){
+			Log.v("password", "failed to import sample");
+		}
 		
 		//if the app is just starting, bring up the first screen
 		if (savedInstanceState == null) 
 		{
+			selectFileFragment = null;
+			createFileFragment = null;
+			viewFileFragment = null;
+			viewDetailFragment = null;
+			importFileFragment = null;
+			
 			selectFileFragment = new SelectFileFragment();
 			getSupportFragmentManager().beginTransaction().add(R.id.container, selectFileFragment).commit();
 		}
+		else
+		{
+			if (savedInstanceState.containsKey("document"))
+			{
+				password = savedInstanceState.getString("password");
+				currentDoc = savedInstanceState.getString("file");
+				document = new PasswordDocument(this, password);
+				document.fromString(savedInstanceState.getString("document"), false);
+			}
+			
+			if (savedInstanceState.containsKey("details"))
+			{
+				String detStr = savedInstanceState.getString("details");
+				details = new PasswordDetails();
+				details.fromString(detStr);
+			}
+		}
 	}
-
+	
+	public void fragmentExists(Fragment frag)
+	{
+		if (frag instanceof ViewDetailFragment)
+			viewDetailFragment = (ViewDetailFragment) frag;
+		else if (frag instanceof ViewFileFragment)
+			viewFileFragment = (ViewFileFragment) frag;
+		else if (frag instanceof SelectFileFragment)
+			selectFileFragment = (SelectFileFragment) frag;
+		else if (frag instanceof ImportFileFragment)
+			importFileFragment = (ImportFileFragment) frag;
+		else if (frag instanceof CreateFileFragment)
+			createFileFragment = (CreateFileFragment) frag;
+	}
+	
+	/**
+	 * if the data directory is empty, populate it with the provided sample file
+	 */
+	private void setupSample() throws IOException
+	{
+		String path = getFilesDir().getAbsolutePath() + "/saved/";
+		File fpath = new File(path);
+		
+		if (fpath.list().length > 0)
+			return;
+		
+		path += "password is sample";
+		File f = new File(path);
+		
+		if (f.exists())
+			return;
+		
+		InputStream ins = getAssets().open("sample");
+		PasswordDocument doc = new PasswordDocument(this);
+		doc.importFromStream(ins);
+		doc.setPassword("sample");
+		doc.saveToFile("password is sample");
+	}
+	
 	/** Keep track of the editable state of this Activity */ private boolean editable = false;
 	
 	/**
@@ -121,12 +185,22 @@ public class MainActivity extends ActionBarActivity
 		}
 	};
 	
+	public void reset()
+	{
+		//FragmentManager fm = getSupportFragmentManager();
+		//int sz = fm.getBackStackEntryCount();
+		//for(int i = 0; i < sz; i++)
+		//{    
+		//	fm.popBackStack();
+		//}
+	}
+	
 	/** 
 	 * The current document containing passwords.  
 	 * Fragments should refer to this variable to determine what data to display.
 	 */
 	public PasswordDocument document;
-	
+	/** The password of the currently loaded password document. */ public String password;
 	/** The filename of the currently loaded password document. */ public String currentDoc;
 	
 	/**
@@ -179,8 +253,7 @@ public class MainActivity extends ActionBarActivity
 	{
 		try
 		{
-			document = new PasswordDocument(this, password);
-			document.loadFromFile(file);
+			setFile(file, password);
 			
 			//open the file viewer fragment
 			FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
@@ -192,6 +265,7 @@ public class MainActivity extends ActionBarActivity
 			{
 				PasswordDetails det = new PasswordDetails();
 				det.name = "new entry";
+				document.setIndex(det);
 				document.details.add(det);
 			}
 			
@@ -208,6 +282,37 @@ public class MainActivity extends ActionBarActivity
 		catch(Exception e){
 			AlertFragment frag = new AlertFragment("Failed to open the document: " + file);
 			frag.show(getSupportFragmentManager(), "invalid_fragment");
+		}
+	}
+	
+	public void setFile(String file, String password)
+	{
+		this.currentDoc = file;
+		this.password = password;
+		
+		document = new PasswordDocument(this, password);
+		
+		try
+		{
+			document.loadFromFile(file);
+		}
+		catch(IOException e){
+			Log.v("password", "failed to load file");
+		}
+	}
+	
+	public void setDetails(int index)
+	{
+		int sz = document.details.size();
+		for (int i = 0; i < sz; i++)
+		{
+			PasswordDetails dets = document.details.get(i);
+			
+			if (dets.index == index)
+			{
+				details = dets;
+				break;
+			}
 		}
 	}
 	
@@ -244,7 +349,12 @@ public class MainActivity extends ActionBarActivity
 	/**
 	 * The currently loaded password details used by the ViewDetailFragment fragment.
 	 */
-	public PasswordDetails details;
+	private PasswordDetails details;
+	
+	public PasswordDetails getDetails()
+	{
+		return details;
+	}
 	
 	/**
 	 * Open the specified detail into a new ViewDetailFragment

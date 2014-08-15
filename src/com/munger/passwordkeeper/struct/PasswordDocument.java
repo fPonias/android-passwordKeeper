@@ -1,14 +1,19 @@
 package com.munger.passwordkeeper.struct;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.util.Log;
 
 /**
  * A data structure that contains a list of password details and information for encrypting to the file system.
@@ -22,6 +27,7 @@ public class PasswordDocument
 	/** date of the last load to avoid unneeded decryptions */ private long lastLoad;
 
 	/** the contents of this document */ public ArrayList<PasswordDetails> details;
+	/** unique id for the next detail */ private int nextIndex;
 	
 	public PasswordDocument(Context c)
 	{
@@ -29,6 +35,7 @@ public class PasswordDocument
 		encoder = null;
 		details = new ArrayList<PasswordDetails>();
 		lastLoad = 0;
+		nextIndex = 0;
 	}
 	
 	public PasswordDocument(Context c, String password)
@@ -37,8 +44,15 @@ public class PasswordDocument
 		encoder = new AES256(password);
 		details = new ArrayList<PasswordDetails>();
 		lastLoad = 0;
+		nextIndex = 0;
 	}
 	
+	public void setIndex(PasswordDetails dets)
+	{
+		dets.index = nextIndex;
+		nextIndex++;
+	}
+		
 	/**
 	 * Set the password that will protect this document.
 	 * @param password
@@ -85,7 +99,7 @@ public class PasswordDocument
 			else
 			{
 				//separate details by ***** for easier parsing later
-				builder.append(line).append("\n*****\n");
+				builder.append(line);
 			}
 		}
 		
@@ -130,17 +144,15 @@ public class PasswordDocument
 	    }
 	    else
 	    {
-	    	//split by the ***** markers and convert the resulting lines to PasswordDetails objects
-	    	String[] parts = text.split("\n*****\n");
-	    	for (String part : parts)
+	    	try
 	    	{
-	    		if (part.length() > 0)
-	    		{
-	    			PasswordDetails item = new PasswordDetails();
-	    			item.fromString(part);
-	    			details.add(item);
-	            }
-	        }
+		    	ByteArrayInputStream bais = new ByteArrayInputStream(text.getBytes());
+		    	importFromStream(bais);
+		    	bais.close();
+	    	}
+	    	catch(IOException e){
+	    		Log.v("password", "failed to import encoded string");
+	    	}
 	    }
 	}
 	
@@ -233,14 +245,42 @@ public class PasswordDocument
 	
 	/**
 	 * Older versions of this program I have running on my laptop export the files in a different format.
-	 * This function reads files exported in the older format
-	 * @param path the path of the file to import
-	 * @throws FileNotFoundException the file didn't exist
+	 * This function reads files in the older format
+	 * @param path the file to read data from
+	 * @throws FileNotFoundException the file couldn't be found
 	 * @throws IOException the file couldn't be loaded
 	 */
 	public void importFromFile(String path) throws FileNotFoundException, IOException
 	{
-		BufferedReader reader = new BufferedReader(new FileReader(path));
+		FileInputStream fis = new FileInputStream(new File(path));
+		
+		IOException ret = null;
+		
+		try
+		{
+			importFromStream(fis);
+		}
+		catch(IOException e){
+			ret = e;
+		}
+		finally{
+			fis.close();
+		}
+		
+		if (ret != null)
+			throw(ret);
+	}
+	
+	/**
+	 * Older versions of this program I have running on my laptop export the files in a different format.
+	 * This function reads stream in the older format.
+	 * Make sure you close your stream.
+	 * @param stream the stream to read data from
+	 * @throws IOException the file couldn't be loaded
+	 */
+	public void importFromStream(InputStream stream) throws IOException
+	{
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 		details = new ArrayList<PasswordDetails>();
 		PasswordDetails dets = null;
 		PasswordDetails.Pair pair = null;
@@ -260,6 +300,7 @@ public class PasswordDocument
 					{
 						if (dets != null)
 						{
+							dets.index = details.size() + 1;
 							details.add(dets);
 							i++;
 						}
@@ -268,6 +309,10 @@ public class PasswordDocument
 						dets.location = line.substring(10);
 						dets.name = dets.location;
 						dets.index = i;
+					}
+					else if (line.startsWith("name: "))
+					{
+						dets.name = line.substring(6);
 					}
 					//create a new pair for the current details if the line starts with <tab>key:
 					else if (line.startsWith("\tkey: "))
@@ -290,10 +335,6 @@ public class PasswordDocument
 		}
 		catch(IOException e){
 			ret = e;
-		}
-		//make sure the file reader is cleanly closed
-		finally{
-			reader.close();
 		}
 		
 		if (ret != null)

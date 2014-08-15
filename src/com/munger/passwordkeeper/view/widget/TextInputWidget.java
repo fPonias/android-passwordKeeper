@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
@@ -47,9 +48,12 @@ public class TextInputWidget extends ViewSwitcher
 		
 		//get relevant view references
 		switcher = (ViewSwitcher) getChildAt(0);
-		label = (TextView) switcher.findViewById(R.id.widget_ti_label);
-		input = (EditText) switcher.findViewById(R.id.widget_ti_editText);
-		deleteBtn = (Button) switcher.findViewById(R.id.widget_ti_deleteBtn);
+		//label = (TextView) switcher.findViewById(R.id.widget_ti_label);
+		label = (TextView) switcher.getChildAt(0);
+		//input = (EditText) switcher.findViewById(R.id.widget_ti_editText);
+		//deleteBtn = (Button) switcher.findViewById(R.id.widget_ti_deleteBtn);
+		input = (EditText) ((RelativeLayout) switcher.getChildAt(1)).getChildAt(0);
+		deleteBtn = (Button) ((RelativeLayout) switcher.getChildAt(1)).getChildAt(1);
 		
 		//interpret the custom xml attributes
 		CharSequence s = a.getString(R.styleable.TextInputWidget_align);
@@ -134,6 +138,12 @@ public class TextInputWidget extends ViewSwitcher
 			this.editable = editable;
 		}
 	}
+	
+	@Override
+	protected void dispatchRestoreInstanceState(android.util.SparseArray<android.os.Parcelable> container) 
+	{
+		
+	};
 	
 	/**
 	 * Set the editable input and non-editable label text.
