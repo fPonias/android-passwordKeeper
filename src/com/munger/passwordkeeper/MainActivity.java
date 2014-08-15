@@ -108,6 +108,9 @@ public class MainActivity extends ActionBarActivity
 		String path = getFilesDir().getAbsolutePath() + "/saved/";
 		File fpath = new File(path);
 		
+		if (!fpath.exists())
+			fpath.mkdirs();
+		
 		if (fpath.list().length > 0)
 			return;
 		
