@@ -14,4 +14,4 @@ The included project files work with Eclipse.  Dependencies include the android-
  implementations of both that I found on the Google.  The first being the RSA Data Security, Inc. MD5 Message Digest Algorithm
  and the second being the Byte-oriented AES-256 implementation by Ilya O. Levin and Hal Finney
  
- 
+ If you don't want to bother with setting up the project, there's a precompiled apk in the root directory called PasswordKeeper.apk 
