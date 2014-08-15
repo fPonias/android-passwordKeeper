@@ -4,20 +4,20 @@
     android:layout_height="match_parent" 
     xmlns:app="http://schemas.android.com/apk/res/com.munger.passwordkeeper"
 >
-
-    
-	<com.munger.passwordkeeper.widget.TextInputWidget
+	<com.munger.passwordkeeper.view.widget.TextInputWidget
 	    android:id="@+id/viewdetail_namelbl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:noDelete="true"
+        app:hint="Detail name"
     />
-	<com.munger.passwordkeeper.widget.TextInputWidget
+	<com.munger.passwordkeeper.view.widget.TextInputWidget
 	    android:id="@+id/viewdetail_locationlbl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/viewdetail_namelbl"
         app:noDelete="true"
+        app:hint="URL / Location"
     />
     
     
@@ -28,7 +28,7 @@
         android:layout_below="@+id/viewdetail_locationlbl"
     >
         <!--
-        <com.munger.passwordkeeper.widget.DetailItemWidget
+        <com.munger.passwordkeeper.view.widget.DetailItemWidget
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         -->

@@ -3,5 +3,6 @@
     <declare-styleable name="TextInputWidget">
         <attr name="noDelete" format="boolean" />
         <attr name="align" format="string" />
+        <attr name="hint" format="string" />
     </declare-styleable>
 </resources>

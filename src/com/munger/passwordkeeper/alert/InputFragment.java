@@ -10,12 +10,22 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+/**
+ * popup that asks the user for a text input.
+ *
+ */
 public class InputFragment extends DialogFragment 
 {
-	private String message;
-	private String prompt;
-	private Listener listener;
+	/** The message to display above the input */ protected String message;
+	/** The message to display in the blank input */ protected String prompt;
+	/** The okay/cancel handler */ protected Listener listener;
 	
+	/**
+	 * Create a new alert that has an input box, an okay, and cancel button
+	 * @param message the message to display above the input
+	 * @param prompt the message to display in the blank input
+	 * @param l the listener that handles the okay and cancel events
+	 */
 	public InputFragment(String message, String prompt, Listener l)
 	{
 		super();
@@ -24,8 +34,14 @@ public class InputFragment extends DialogFragment
 		listener = l;
 	}
 	
-	private EditText inputView = null;
+	/**
+	 * The input view
+	 */
+	protected EditText inputView = null;
 	
+	/**
+	 * grab references to all the alert components and setup event handlers.
+	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) 
 	{
@@ -33,6 +49,7 @@ public class InputFragment extends DialogFragment
 		inputView.setHint(prompt);
 		inputView.setSingleLine();
 		
+		//submit on keyboard enter
 		inputView.setOnKeyListener(new View.OnKeyListener() {public boolean onKey(View v, int keyCode, KeyEvent event) 
 		{
 			if (keyCode == KeyEvent.KEYCODE_ENTER)
@@ -48,8 +65,7 @@ public class InputFragment extends DialogFragment
 		builder.setView(inputView);
 		builder.setMessage(message);
 		
-		//we want the dialog listener to give the option to close this dialogue
-		//so the action okay handler is below
+		//this is a blank handler, the real one is in the onStart method
 		builder.setPositiveButton("Okay", null);
 		
 		builder.setNegativeButton("Cacnel", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) 
@@ -68,25 +84,40 @@ public class InputFragment extends DialogFragment
 	    if(d != null)
 	    {
 	    	//this is the actual okay handler
+	    	//it was created like this so the event listener would have the chance to keep the alert open 
 	        Button positiveButton = (Button) d.getButton(Dialog.BUTTON_POSITIVE);
 	        positiveButton.setOnClickListener(new View.OnClickListener() {public void onClick(View v)
             {
-				okay();
+	        	okay();
             }});
 	    }
 	}
 	
-	public void okay()
+	/**
+	 * The default action to take when the okay button is pressed.
+	 */
+	protected void okay()
 	{
 		boolean passed = listener.okay(inputView.getText().toString());
         
-		if(passed)
-            dismiss();
+    	if(passed)
+    		dismiss();
 	}
 	
+	/**
+	 * Use this interface to handle okay and cancel events from this popup.
+	 */
 	public static interface Listener
 	{
-		public boolean okay(String password);
+		/**
+		 * This is called when okay is clicked with the text currently in the input.
+		 * @param inputText the final text the user input.
+		 * @return return true if you want the dialog to close, false if you want it to stay open.
+		 */
+		public boolean okay(String inputText);
+		/**
+		 * This is called when cancel is clicked.
+		 */
 		public void cancel();
 	}
 }

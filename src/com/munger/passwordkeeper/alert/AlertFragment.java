@@ -6,10 +6,19 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
+/**
+ * Popup fragment that contains an alert message and an okay button.
+ * There's nothing special about this and frankly I'm surpised Android doesn't have a simpler way to do this.
+ *
+ */
 public class AlertFragment extends DialogFragment
 {
 	private String message;
 	
+	/**
+	 * Display an alert with the specified message.
+	 * @param message
+	 */
 	public AlertFragment(String message)
 	{
 		super();

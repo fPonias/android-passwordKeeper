@@ -336,6 +336,14 @@ theme attribute (in the form
 containing a value of this type.
          */
         public static final int height=0x7f010026;
+        /** <p>Must be a string value, using '\\;' to escape characters such as '\\n' or '\\uxxxx' for a unicode character.
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int hint=0x7f010070;
         /**  Specifies a drawable to use for the 'home as up' indicator. 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
@@ -1259,13 +1267,14 @@ containing a value of this type.
         public static final int fragment_importfile=0x7f03001a;
         public static final int fragment_main=0x7f03001b;
         public static final int fragment_selectfile=0x7f03001c;
-        public static final int fragment_viewdetail=0x7f03001d;
-        public static final int fragment_viewfile=0x7f03001e;
-        public static final int support_simple_spinner_dropdown_item=0x7f03001f;
-        public static final int widget_detailitem=0x7f030020;
-        public static final int widget_fileitem=0x7f030021;
-        public static final int widget_text=0x7f030022;
-        public static final int widget_textinput=0x7f030023;
+        public static final int fragment_splashscreen=0x7f03001d;
+        public static final int fragment_viewdetail=0x7f03001e;
+        public static final int fragment_viewfile=0x7f03001f;
+        public static final int support_simple_spinner_dropdown_item=0x7f030020;
+        public static final int widget_detailitem=0x7f030021;
+        public static final int widget_fileitem=0x7f030022;
+        public static final int widget_text=0x7f030023;
+        public static final int widget_textinput=0x7f030024;
     }
     public static final class menu {
         public static final int blank=0x7f0c0000;
@@ -1315,9 +1324,8 @@ containing a value of this type.
         /**  Description of a share target (both in the list of such or the default share button) in a ShareActionProvider (share UI). [CHAR LIMIT=NONE] 
          */
         public static final int abc_shareactionprovider_share_with_application=0x7f0a000b;
-        public static final int action_settings=0x7f0a000f;
+        public static final int action_settings=0x7f0a000e;
         public static final int app_name=0x7f0a000d;
-        public static final int hello_world=0x7f0a000e;
     }
     public static final class style {
         /** 
@@ -3014,13 +3022,15 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
            <colgroup align="left" />
            <tr><th>Attribute</th><th>Description</th></tr>
            <tr><td><code>{@link #TextInputWidget_align com.munger.passwordkeeper:align}</code></td><td></td></tr>
+           <tr><td><code>{@link #TextInputWidget_hint com.munger.passwordkeeper:hint}</code></td><td></td></tr>
            <tr><td><code>{@link #TextInputWidget_noDelete com.munger.passwordkeeper:noDelete}</code></td><td></td></tr>
            </table>
            @see #TextInputWidget_align
+           @see #TextInputWidget_hint
            @see #TextInputWidget_noDelete
          */
         public static final int[] TextInputWidget = {
-            0x7f01006e, 0x7f01006f
+            0x7f01006e, 0x7f01006f, 0x7f010070
         };
         /**
           <p>This symbol is the offset where the {@link com.munger.passwordkeeper.R.attr#align}
@@ -3036,6 +3046,20 @@ containing a value of this type.
           @attr name com.munger.passwordkeeper:align
         */
         public static final int TextInputWidget_align = 1;
+        /**
+          <p>This symbol is the offset where the {@link com.munger.passwordkeeper.R.attr#hint}
+          attribute's value can be found in the {@link #TextInputWidget} array.
+
+
+          <p>Must be a string value, using '\\;' to escape characters such as '\\n' or '\\uxxxx' for a unicode character.
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name com.munger.passwordkeeper:hint
+        */
+        public static final int TextInputWidget_hint = 2;
         /**
           <p>This symbol is the offset where the {@link com.munger.passwordkeeper.R.attr#noDelete}
           attribute's value can be found in the {@link #TextInputWidget} array.
