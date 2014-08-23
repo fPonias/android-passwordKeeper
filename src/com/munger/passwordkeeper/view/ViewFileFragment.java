@@ -208,7 +208,7 @@ public class ViewFileFragment extends Fragment
 				
 				try
 				{
-					document.saveToFile(file);
+					document.saveToFile();
 				}
 				catch(Exception e){
 					Log.e("passwordkeeper", "failed to save file " + file);
@@ -430,7 +430,7 @@ public class ViewFileFragment extends Fragment
 				//save the changes permanently
 				try
 				{
-					document.saveToFile(file);
+					document.saveToFile();
 				}
 				catch(Exception e){
 					Log.e("passwordkeeper", "failed to save file " + file);

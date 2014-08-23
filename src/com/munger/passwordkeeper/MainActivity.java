@@ -3,7 +3,10 @@ package com.munger.passwordkeeper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -13,6 +16,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
+import com.dropbox.sync.android.DbxAccount;
+import com.dropbox.sync.android.DbxAccountManager;
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.struct.PasswordDetails;
@@ -37,6 +42,9 @@ public class MainActivity extends ActionBarActivity
 	/** Fragment for viewing a detail in a document */ private ViewDetailFragment viewDetailFragment;
 	/** Fragment for importing an external document */ private ImportFileFragment importFileFragment;
 	
+	private DbxAccountManager dropboxAcctMgr;
+	private DbxAccount dropboxAcct;
+	private boolean hasDropboxLink;
 	
 	/**
 	 * Gather fragments and bring up the initial screen.
@@ -47,6 +55,18 @@ public class MainActivity extends ActionBarActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		//setup dropbox
+	    hasDropboxLink = false;
+	    dropboxAcctMgr = DbxAccountManager.getInstance(this.getApplicationContext(), "5xyvkb536ur7sue", "w6wthm9amap6xo4");
+
+		if (dropboxAcctMgr.hasLinkedAccount()) 
+		{
+			hasDropboxLink = true;
+	        dropboxAcct = dropboxAcctMgr.getLinkedAccount();
+		}
+		
+		
+		//import the sample data if there is no new data
 		try
 		{
 			setupSample();
@@ -71,10 +91,13 @@ public class MainActivity extends ActionBarActivity
 		{
 			if (savedInstanceState.containsKey("document"))
 			{
+				String doc = savedInstanceState.getString("document");
+				String name = savedInstanceState.getString("name");
+				PasswordDocument.Type t = PasswordDocument.Type.values()[savedInstanceState.getInt("type")];
 				password = savedInstanceState.getString("password");
 				currentDoc = savedInstanceState.getString("file");
-				document = new PasswordDocument(this, password);
-				document.fromString(savedInstanceState.getString("document"), false);
+				document = new PasswordDocument(this, name, t, password);
+				document.fromString(doc, false);
 			}
 			
 			if (savedInstanceState.containsKey("details"))
@@ -121,10 +144,10 @@ public class MainActivity extends ActionBarActivity
 			return;
 		
 		InputStream ins = getAssets().open("sample");
-		PasswordDocument doc = new PasswordDocument(this);
+		PasswordDocument doc = new PasswordDocument(this, "password is sample", PasswordDocument.Type.FILE);
 		doc.importFromStream(ins);
 		doc.setPassword("sample");
-		doc.saveToFile("password is sample");
+		doc.saveToFile();
 	}
 	
 	/** Keep track of the editable state of this Activity */ private boolean editable = false;
@@ -293,11 +316,11 @@ public class MainActivity extends ActionBarActivity
 		this.currentDoc = file;
 		this.password = password;
 		
-		document = new PasswordDocument(this, password);
+		document = new PasswordDocument(this, file, PasswordDocument.Type.FILE, password);
 		
 		try
 		{
-			document.loadFromFile(file);
+			document.loadFromFile(true);
 		}
 		catch(IOException e){
 			Log.v("password", "failed to load file");
@@ -415,7 +438,7 @@ public class MainActivity extends ActionBarActivity
 		
 		try
 		{
-			document.saveToFile(currentDoc);
+			document.saveToFile();
 		}
 		catch(IOException e){
 			AlertFragment inDialog = new AlertFragment("Unable to save file: " + currentDoc);
@@ -447,7 +470,7 @@ public class MainActivity extends ActionBarActivity
 	{
 		try
 		{
-			document = new PasswordDocument(this);
+			document = new PasswordDocument(this, path, PasswordDocument.Type.FILE);
 			document.importFromFile(path);
 			
 			onBackPressed();
@@ -459,5 +482,68 @@ public class MainActivity extends ActionBarActivity
 			inDialog.show(getSupportFragmentManager(), "invalid_fragment");
 			return;
 		}
+	}
+	
+	public boolean hasDropbox()
+	{
+		return hasDropboxLink;
+	}
+	
+	public DbxAccountManager getDropboxManager()
+	{
+		return dropboxAcctMgr;
+	}
+	
+	public DbxAccount getDropboxAccount()
+	{
+		return dropboxAcct;
+	}
+	
+	public void startDropbox()
+	{
+		dropboxAcctMgr.startLink(this, 1);
+	}
+	
+	public static interface dropboxListener
+	{
+		public void connected();
+	}
+	
+	private ArrayList<dropboxListener> dblisteners = new ArrayList<dropboxListener>();
+	
+	public void addDropboxListener(dropboxListener listener)
+	{
+		if (dblisteners.contains(listener))
+			return;
+		
+		dblisteners.add(listener);
+	}
+	
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) 
+	{
+	    if (requestCode == 1) 
+	    {
+	        if (resultCode == Activity.RESULT_OK) 
+	        {
+	            dropboxAcct = dropboxAcctMgr.getLinkedAccount();
+	            hasDropboxLink = true;
+	            
+	            int sz = dblisteners.size();
+	            for (int i = 0; i < sz; i++)
+	            {
+	            	dropboxListener l = dblisteners.get(i);
+	            	l.connected();
+	            }
+	        } 
+	        else 
+	        {
+	        	
+	        }
+	    } 
+	    else 
+	    {
+	        super.onActivityResult(requestCode, resultCode, data);
+	    }
 	}
 }

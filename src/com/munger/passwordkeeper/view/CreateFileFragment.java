@@ -171,17 +171,18 @@ public class CreateFileFragment extends Fragment
 		{
 			PasswordDocument doc = null;
 			if (type == TYPE_CREATE)
-				doc = new PasswordDocument(parent, pass1);
+				doc = new PasswordDocument(parent, name, PasswordDocument.Type.FILE, pass1);
 			else if (type == TYPE_IMPORT)
 			{
 				doc = parent.document;
+				doc.name = name;
 				doc.setPassword(pass1);
 			}
 			
 			//save the new document and tell the activity to open it
 			try
 			{
-				doc.saveToFile(name);
+				doc.saveToFile();
 				parent.onBackPressed();
 				parent.openFile(name);
 			}

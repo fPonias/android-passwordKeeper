@@ -12,6 +12,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import com.dropbox.sync.android.DbxDatastore;
+import com.dropbox.sync.android.DbxException;
+import com.dropbox.sync.android.DbxFields;
+import com.dropbox.sync.android.DbxRecord;
+import com.dropbox.sync.android.DbxTable;
+import com.munger.passwordkeeper.MainActivity;
+
 import android.content.Context;
 import android.util.Log;
 
@@ -28,23 +35,37 @@ public class PasswordDocument
 
 	/** the contents of this document */ public ArrayList<PasswordDetails> details;
 	/** unique id for the next detail */ private int nextIndex;
+	public String name;
+	private static String rootPath;
 	
-	public PasswordDocument(Context c)
+	public static enum Type
+	{
+		NONE, FILE, DROPBOX
+	};
+	
+	public Type type;
+	public String id;
+	
+	public PasswordDocument(Context c, String name, Type t)
 	{
 		context = c;
 		encoder = null;
 		details = new ArrayList<PasswordDetails>();
 		lastLoad = 0;
 		nextIndex = 0;
+		this.name = name;
+		type = t;
+		id = "";
+		
+		if (rootPath == null)
+			rootPath = c.getFilesDir().getAbsolutePath() + "/saved/";
 	}
 	
-	public PasswordDocument(Context c, String password)
+	public PasswordDocument(Context c, String name, Type t, String password)
 	{
-		context = c;
+		this(c, name, t);
+		
 		encoder = new AES256(password);
-		details = new ArrayList<PasswordDetails>();
-		lastLoad = 0;
-		nextIndex = 0;
 	}
 	
 	public void setIndex(PasswordDetails dets)
@@ -161,9 +182,9 @@ public class PasswordDocument
 	 * @param name
 	 * @throws IOException
 	 */
-	public void saveToFile(String name) throws IOException
+	public void saveToFile() throws IOException
 	{
-		String path = context.getFilesDir().getAbsolutePath() + "/saved/" + name;
+		String path = rootPath + name;
 		File target = new File(path);
 		String content = toString(true);
 		FileOutputStream fos = new FileOutputStream(target);
@@ -173,14 +194,20 @@ public class PasswordDocument
 		lastLoad = System.currentTimeMillis();
 	}
 	
-	public void forceLoadFromFile(String name) throws FileNotFoundException, IOException
+	public void forceLoad() throws FileNotFoundException, IOException
 	{
-		loadFromFile(name, true);
+		if (type == Type.FILE)
+			loadFromFile(true);
+		else if (type == Type.DROPBOX)
+		{}
 	}
 	
-	public void loadFromFile(String name) throws FileNotFoundException, IOException
+	public void load() throws FileNotFoundException, IOException
 	{
-		loadFromFile(name, false);
+		if (type == Type.FILE)
+			loadFromFile(false);
+		else if (type == Type.DROPBOX)
+		{}
 	}
 	
 	/**
@@ -190,9 +217,9 @@ public class PasswordDocument
 	 * @throws FileNotFoundException if the file doesn't exist
 	 * @throws IOException if the file couldn't be loaded
 	 */
-	public void loadFromFile(String name, boolean force) throws FileNotFoundException, IOException
+	public void loadFromFile(boolean force) throws FileNotFoundException, IOException
 	{
-		String path = context.getFilesDir().getAbsolutePath() + "/saved/" + name;
+		String path = rootPath + name;
 		File target = new File(path);
 		
 
@@ -348,7 +375,7 @@ public class PasswordDocument
 	 */
 	public static void deleteFile(Context c, String name)
 	{
-		String path = c.getFilesDir().getAbsolutePath() + "/saved/" + name;
+		String path = rootPath + name;
 		File target = new File(path);
 		target.delete();
 	}
@@ -366,7 +393,7 @@ public class PasswordDocument
 		if (password.length() == 0)
 			return false;
 		
-		String path = c.getFilesDir().getAbsolutePath() + "/saved/" + name;
+		String path = rootPath + name;
 		File target = new File(path);
 		boolean ret = false;
 		BufferedReader reader = null;
@@ -392,6 +419,47 @@ public class PasswordDocument
 		finally{
 			if (reader != null)
 				try{reader.close();}catch(Exception e){}
+		}
+		
+		return ret;
+	}
+	
+	public static ArrayList<PasswordDocument> getList(MainActivity act)
+	{
+		ArrayList<PasswordDocument> ret = new ArrayList<PasswordDocument>();
+		
+		//get a list of files
+		File f = new File(rootPath);
+		String[] list = f.list();
+		
+		for (String item : list)
+		{
+			PasswordDocument i = new PasswordDocument(act, item, Type.FILE);
+			ret.add(i);
+		}
+		
+		
+		//get a list of dropbox entries
+		if (act.hasDropbox())
+		{
+			try
+			{
+				DbxDatastore store = DbxDatastore.openDefault(act.getDropboxAccount());
+				DbxTable docsTbl = store.getTable("documents");
+				
+				DbxTable.QueryResult results = docsTbl.query();
+				
+				while(results.iterator().hasNext())
+				{
+					DbxRecord row = results.iterator().next();
+					PasswordDocument i = new PasswordDocument(act, row.getString("name"), Type.DROPBOX);
+					i.id = row.getId();
+					ret.add(i);
+				}
+			}
+			catch(DbxException e){
+				Log.v("password", "failed to open dropbox entries");
+			}
 		}
 		
 		return ret;
