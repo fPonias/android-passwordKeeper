@@ -112,9 +112,9 @@ public class ViewFileFragment extends Fragment
 						that.parent.deleteClicked(ret.getDetails());
 					}
 				});
-				
-				ret.setEditable(parent.editable);
 			}
+			
+			ret.setEditable(parent.editable);
 			
 			return ret;
 		}
