@@ -882,11 +882,13 @@ containing a value of this type.
         public static final int abc_split_action_bar_is_narrow=0x7f060002;
     }
     public static final class color {
-        public static final int abc_search_url_text_holo=0x7f070004;
+        public static final int abc_search_url_text_holo=0x7f070006;
         public static final int abc_search_url_text_normal=0x7f070000;
         public static final int abc_search_url_text_pressed=0x7f070002;
         public static final int abc_search_url_text_selected=0x7f070001;
+        public static final int black=0x7f070005;
         public static final int red=0x7f070003;
+        public static final int white=0x7f070004;
     }
     public static final class dimen {
         /**  Default height of an action bar. 
@@ -1110,9 +1112,10 @@ containing a value of this type.
         public static final int ic_action_web_site=0x7f02005c;
         public static final int ic_launcher=0x7f02005d;
         public static final int ic_lock_keys=0x7f02005e;
+        public static final int lock_keys=0x7f02005f;
     }
     public static final class id {
-        public static final int action_addfile=0x7f050064;
+        public static final int action_addfile=0x7f050066;
         public static final int action_bar=0x7f05001c;
         public static final int action_bar_activity_content=0x7f050015;
         public static final int action_bar_container=0x7f05001b;
@@ -1121,16 +1124,16 @@ containing a value of this type.
         public static final int action_bar_subtitle=0x7f050023;
         public static final int action_bar_title=0x7f050022;
         public static final int action_context_bar=0x7f05001d;
-        public static final int action_detail_copy=0x7f05005f;
-        public static final int action_detail_paste=0x7f050060;
-        public static final int action_detail_random=0x7f050061;
-        public static final int action_dropbox=0x7f050066;
-        public static final int action_edit=0x7f050063;
-        public static final int action_import=0x7f050065;
+        public static final int action_detail_copy=0x7f050061;
+        public static final int action_detail_paste=0x7f050062;
+        public static final int action_detail_random=0x7f050063;
+        public static final int action_dropbox=0x7f050068;
+        public static final int action_edit=0x7f050065;
+        public static final int action_import=0x7f050067;
         public static final int action_menu_divider=0x7f050016;
         public static final int action_menu_presenter=0x7f050017;
         public static final int action_mode_close_button=0x7f050024;
-        public static final int action_search=0x7f050062;
+        public static final int action_search=0x7f050064;
         public static final int activity_chooser_view_content=0x7f050025;
         public static final int always=0x7f05000b;
         public static final int beginning=0x7f050011;
@@ -1144,11 +1147,11 @@ containing a value of this type.
         public static final int createfile_password2ipt=0x7f050040;
         public static final int createfile_title=0x7f05003d;
         public static final int default_activity_button=0x7f050028;
-        public static final int detailitem_deletebtn=0x7f050056;
-        public static final int detailitem_keyinput=0x7f050054;
-        public static final int detailitem_keylabel=0x7f050052;
-        public static final int detailitem_valueinput=0x7f050055;
-        public static final int detailitem_valuelabel=0x7f050053;
+        public static final int detailitem_deletebtn=0x7f050058;
+        public static final int detailitem_keyinput=0x7f050056;
+        public static final int detailitem_keylabel=0x7f050054;
+        public static final int detailitem_valueinput=0x7f050057;
+        public static final int detailitem_valuelabel=0x7f050055;
         public static final int dialog=0x7f05000e;
         public static final int disableHome=0x7f050008;
         public static final int dropdown=0x7f05000f;
@@ -1156,13 +1159,14 @@ containing a value of this type.
         public static final int end=0x7f050013;
         public static final int expand_activities_button=0x7f050026;
         public static final int expanded_menu=0x7f05002c;
-        public static final int fileitem_icon=0x7f050057;
-        public static final int fileitem_label=0x7f050058;
+        public static final int fileitem_icon=0x7f050059;
+        public static final int fileitem_label=0x7f05005a;
         public static final int home=0x7f050014;
         public static final int homeAsUp=0x7f050005;
         public static final int icon=0x7f05002a;
         public static final int ifRoom=0x7f05000a;
         public static final int image=0x7f050027;
+        public static final int imageView1=0x7f05004c;
         public static final int import_filelist=0x7f050045;
         public static final int import_pathinput=0x7f050046;
         public static final int import_refreshbtn=0x7f050044;
@@ -1197,23 +1201,24 @@ containing a value of this type.
         public static final int split_action_bar=0x7f05001e;
         public static final int submit_area=0x7f050039;
         public static final int tabMode=0x7f050002;
+        public static final int textView1=0x7f05004b;
         public static final int title=0x7f05002b;
         public static final int top_action_bar=0x7f050020;
         public static final int up=0x7f050021;
         public static final int useLogo=0x7f050003;
-        public static final int viewdetail_addbtn=0x7f05004e;
-        public static final int viewdetail_itemlist=0x7f05004d;
-        public static final int viewdetail_locationlbl=0x7f05004c;
-        public static final int viewdetail_namelbl=0x7f05004b;
-        public static final int viewfile_addbtn=0x7f050051;
-        public static final int viewfile_detaillist=0x7f050050;
-        public static final int viewfile_name=0x7f05004f;
-        public static final int widget_t_deleteBtn=0x7f05005a;
-        public static final int widget_t_label=0x7f050059;
-        public static final int widget_ti_deleteBtn=0x7f05005e;
-        public static final int widget_ti_editText=0x7f05005d;
-        public static final int widget_ti_editView=0x7f05005c;
-        public static final int widget_ti_label=0x7f05005b;
+        public static final int viewdetail_addbtn=0x7f050050;
+        public static final int viewdetail_itemlist=0x7f05004f;
+        public static final int viewdetail_locationlbl=0x7f05004e;
+        public static final int viewdetail_namelbl=0x7f05004d;
+        public static final int viewfile_addbtn=0x7f050053;
+        public static final int viewfile_detaillist=0x7f050052;
+        public static final int viewfile_name=0x7f050051;
+        public static final int widget_t_deleteBtn=0x7f05005c;
+        public static final int widget_t_label=0x7f05005b;
+        public static final int widget_ti_deleteBtn=0x7f050060;
+        public static final int widget_ti_editText=0x7f05005f;
+        public static final int widget_ti_editView=0x7f05005e;
+        public static final int widget_ti_label=0x7f05005d;
         public static final int withText=0x7f05000c;
     }
     public static final class integer {
