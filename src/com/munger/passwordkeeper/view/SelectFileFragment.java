@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.DropBoxManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -16,15 +15,13 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
 
-import com.dropbox.sync.android.DbxAccount;
-import com.dropbox.sync.android.DbxAccountManager;
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.struct.PasswordDocument;
-import com.munger.passwordkeeper.struct.PasswordDocument.Type;
+import com.munger.passwordkeeper.struct.PasswordDocumentDropbox;
+import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.widget.FileItemWidget;
 
 /**
@@ -91,7 +88,7 @@ public class SelectFileFragment extends Fragment
 
 				Resources r = getContext().getResources();
 								
-				if (d.type == PasswordDocument.Type.FILE)
+				if (d instanceof PasswordDocumentFile)
 				{
 					Drawable dr = r.getDrawable(R.drawable.ic_action_storage);
 					setIcon(dr);
@@ -128,7 +125,7 @@ public class SelectFileFragment extends Fragment
 				ret.setDocument(details);
 				ret.setOnClickListener(new View.OnClickListener() {public void onClick(View v) 
 				{
-					that.parent.parent.openFile(details.name);
+					that.parent.parent.openFile(details);
 				}});
 			}
 		
@@ -197,7 +194,7 @@ public class SelectFileFragment extends Fragment
 				parent.startDropbox();
 			else
 			{
-				//create dropbox file
+				parent.addFile(CreateFileFragment.TYPE_CREATE_DROPBOX);
 			}
 		}});
 		
@@ -262,8 +259,10 @@ public class SelectFileFragment extends Fragment
 			return;
 		
 		//update the file list
-		PasswordDocument d = new PasswordDocument(parent, "tmp", PasswordDocument.Type.NONE);
-		ArrayList<PasswordDocument> files = PasswordDocument.getList(parent);
+		@SuppressWarnings("unused")
+		PasswordDocument d = new PasswordDocumentFile(parent, "tmp");
+		ArrayList<PasswordDocument> files = PasswordDocumentFile.getList(parent);
+		files.addAll(PasswordDocumentDropbox.getList(parent));
 		fileListAdapter.clear();
 		fileListAdapter.addAll(files);		
 		fileListAdapter.notifyDataSetChanged();
@@ -283,7 +282,7 @@ public class SelectFileFragment extends Fragment
 		{
 			public void okay() 
 			{
-				parent.removeFile(doc.name);
+				doc.delete();
 				that.onResume();
 			}
 			
