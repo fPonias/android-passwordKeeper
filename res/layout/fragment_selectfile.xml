@@ -2,29 +2,40 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.munger.passwordkeeper.MainActivity$PlaceholderFragment" >
 
-    <FrameLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_above="@+id/selectfile_dropboxbtn"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:scrollbarAlwaysDrawVerticalTrack="false"
-        android:scrollbars="vertical" >
-
-        <LinearLayout
-            android:id="@+id/selectfile_filelist"
+    <ListView android:id="@+id/selectfile_filelist"
             android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical"
+    		android:layout_above="@+id/selectfile_addFileBtns"
+    >
+        	
+    </ListView>
+
+    <LinearLayout
+        android:id="@+id/selectfile_addFileBtns"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/selectfile_addfile"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:layout_weight=".5"
+            android:text="Create"
+            android:textSize="18sp" />
 
-        </LinearLayout>
-
-    </FrameLayout>
+        <Button
+            android:id="@+id/selectfile_dropbox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".5"
+            android:text="Dropbox Link"
+            android:textSize="18sp" />
+    </LinearLayout>
 
 </RelativeLayout>

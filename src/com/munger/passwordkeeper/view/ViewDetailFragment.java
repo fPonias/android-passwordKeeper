@@ -28,6 +28,7 @@ import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 import com.munger.passwordkeeper.view.widget.TextInputWidget;
 
@@ -54,9 +55,14 @@ public class ViewDetailFragment extends Fragment
 	@Override
 	public void onSaveInstanceState(Bundle outState) 
 	{
-		outState.putString("file", parent.currentDoc);
+		if (details != null && parent.document instanceof PasswordDocumentFile)
+		{
+			outState.putString("file", parent.document.name);
+		}
+		//else if (details != null &&)
+		
 		outState.putString("password", parent.password);
-		outState.putInt("index", details.index);
+		outState.putString("index", details.index);
 	};
 	
 	@Override
@@ -70,7 +76,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			String file = savedInstanceState.getString("file");
 			String password = savedInstanceState.getString("password");
-			int index = savedInstanceState.getInt("index");
+			String index = savedInstanceState.getString("index");
 			
 			parent.setFile(file, password);
 			parent.setDetails(index);

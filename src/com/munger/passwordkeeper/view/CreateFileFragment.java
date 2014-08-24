@@ -15,6 +15,8 @@ import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.struct.PasswordDocument;
+import com.munger.passwordkeeper.struct.PasswordDocumentDropbox;
+import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 
 /**
  * User interface used to gather information in creating a new passwordDocument
@@ -42,6 +44,7 @@ public class CreateFileFragment extends Fragment
 	
 	/** Create a new document */ public static final int TYPE_CREATE = 1;
 	/** Import the new document */ public static final int TYPE_IMPORT = 2;
+	/** Create a new dropbox document */ public static final int TYPE_CREATE_DROPBOX = 3;
 	
 	/**
 	 * Type TYPE_CREATE or TYPE_IMPORT?
@@ -64,7 +67,7 @@ public class CreateFileFragment extends Fragment
 	 */
 	public void settype(int type)
 	{
-		if (type != TYPE_CREATE && type != TYPE_IMPORT)
+		if (type != TYPE_CREATE && type != TYPE_IMPORT && type != TYPE_CREATE_DROPBOX)
 		{
 			return;
 		}
@@ -117,6 +120,10 @@ public class CreateFileFragment extends Fragment
 		if (type == TYPE_CREATE)
 		{
 			nameLbl.setText("Document creation details");
+		}
+		else if (type == TYPE_CREATE_DROPBOX)
+		{
+			nameLbl.setText("Dropbox creation details");
 		}
 		else
 		{
@@ -171,24 +178,20 @@ public class CreateFileFragment extends Fragment
 		{
 			PasswordDocument doc = null;
 			if (type == TYPE_CREATE)
-				doc = new PasswordDocument(parent, pass1);
+				doc = new PasswordDocumentFile(parent, name, pass1);
+			else if (type == TYPE_CREATE_DROPBOX)
+				doc = new PasswordDocumentDropbox(parent, name, pass1);
 			else if (type == TYPE_IMPORT)
 			{
 				doc = parent.document;
+				doc.name = name;
 				doc.setPassword(pass1);
 			}
 			
 			//save the new document and tell the activity to open it
-			try
-			{
-				doc.saveToFile(name);
-				parent.onBackPressed();
-				parent.openFile(name);
-			}
-			catch(IOException e){
-				AlertFragment frag = new AlertFragment("failed to create new password file " + name);
-				frag.show(parent.getSupportFragmentManager(), "invalid_fragment");
-			}
+			doc.save();
+			parent.onBackPressed();
+			parent.openFile(doc);
 		}
 	}
 }

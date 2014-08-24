@@ -171,7 +171,7 @@ public class ViewFileFragment extends Fragment
 			parent.fragmentExists(this);
 		}
 		
-		setDocument(parent.currentDoc, parent.document);
+		setDocument(parent.document);
 	};
 	
 	/**
@@ -208,7 +208,7 @@ public class ViewFileFragment extends Fragment
 				
 				try
 				{
-					document.saveToFile(file);
+					document.save();
 				}
 				catch(Exception e){
 					Log.e("passwordkeeper", "failed to save file " + file);
@@ -344,10 +344,10 @@ public class ViewFileFragment extends Fragment
 	 * @param file
 	 * @param document
 	 */
-	public void setDocument(String file, PasswordDocument document)
+	public void setDocument(PasswordDocument document)
 	{
 		this.document = document;
-		this.file = file;
+		this.file = document.name;
 		
 		if (root != null)
 		{
@@ -430,7 +430,7 @@ public class ViewFileFragment extends Fragment
 				//save the changes permanently
 				try
 				{
-					document.saveToFile(file);
+					document.save();
 				}
 				catch(Exception e){
 					Log.e("passwordkeeper", "failed to save file " + file);

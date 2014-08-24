@@ -5,51 +5,49 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import android.content.Context;
 import android.util.Log;
+
+import com.munger.passwordkeeper.MainActivity;
 
 /**
  * A data structure that contains a list of password details and information for encrypting to the file system.
  * @author codymunger
  *
  */
-public class PasswordDocument 
+public abstract class PasswordDocument 
 {
-	/** android context used for saving the files and printing to the log */private Context context;
-	/** encoder used to encrypt the document contents */ private AES256 encoder;
-	/** date of the last load to avoid unneeded decryptions */ private long lastLoad;
+	/** android context used for saving the files and printing to the log */protected MainActivity context;
+	/** encoder used to encrypt the document contents */ protected AES256 encoder;
+	/** date of the last load to avoid unneeded decryptions */ protected long lastLoad;
 
 	/** the contents of this document */ public ArrayList<PasswordDetails> details;
-	/** unique id for the next detail */ private int nextIndex;
+	/** unique id for the next detail */ protected int nextIndex;
+	public String name;
 	
-	public PasswordDocument(Context c)
+	public PasswordDocument(MainActivity c, String name)
 	{
 		context = c;
 		encoder = null;
 		details = new ArrayList<PasswordDetails>();
 		lastLoad = 0;
 		nextIndex = 0;
+		this.name = name;
 	}
 	
-	public PasswordDocument(Context c, String password)
+	public PasswordDocument(MainActivity c, String name, String password)
 	{
-		context = c;
-		encoder = new AES256(password);
-		details = new ArrayList<PasswordDetails>();
-		lastLoad = 0;
-		nextIndex = 0;
+		this(c, name);
+		setPassword(password);
 	}
 	
 	public void setIndex(PasswordDetails dets)
 	{
-		dets.index = nextIndex;
+		dets.index = Integer.valueOf(nextIndex).toString();
 		nextIndex++;
 	}
 		
@@ -156,92 +154,12 @@ public class PasswordDocument
 	    }
 	}
 	
-	/**
-	 * Encrypt and save the current document contents to file
-	 * @param name
-	 * @throws IOException
-	 */
-	public void saveToFile(String name) throws IOException
-	{
-		String path = context.getFilesDir().getAbsolutePath() + "/saved/" + name;
-		File target = new File(path);
-		String content = toString(true);
-		FileOutputStream fos = new FileOutputStream(target);
-		fos.write(content.getBytes());
-		fos.close();
-		
-		lastLoad = System.currentTimeMillis();
-	}
-	
-	public void forceLoadFromFile(String name) throws FileNotFoundException, IOException
-	{
-		loadFromFile(name, true);
-	}
-	
-	public void loadFromFile(String name) throws FileNotFoundException, IOException
-	{
-		loadFromFile(name, false);
-	}
-	
-	/**
-	 * Reload the document from the stored file
-	 * @param name the name of the file to load
-	 * @param force true if you want to ignore the value of lastLoad and reload the contents anyway.  False if you only reload when the file has been updated.
-	 * @throws FileNotFoundException if the file doesn't exist
-	 * @throws IOException if the file couldn't be loaded
-	 */
-	public void loadFromFile(String name, boolean force) throws FileNotFoundException, IOException
-	{
-		String path = context.getFilesDir().getAbsolutePath() + "/saved/" + name;
-		File target = new File(path);
-		
+	abstract public void save();
+	abstract public void load(boolean force);
+	abstract public void delete();
+	abstract public boolean testPassword();
 
-		long lastMod = target.lastModified();
-		
-		//quit if the file was loaded before the target file was last modified
-		if (!force && lastLoad > lastMod)
-			return;
-		
-		lastLoad = System.currentTimeMillis();
-		
-		
-		details = new ArrayList<PasswordDetails>();
-		BufferedReader reader = new BufferedReader(new FileReader(target));
-		
-		//load up the details one line at a time
-		String line;
-		boolean first = true;
-		int i = 0;
-		while ((line = reader.readLine()) != null)
-		{
-    		if (line.length() > 0)
-    		{
-    			String dec = encoder.decode(line);
-                
-                if (first)
-                {
-                	//the encrypted file will always started with an encrypted "test string"
-                	if (!dec.equals("test string"))
-                	{
-                		reader.close();
-                		return;
-                	}
-                	
-                	first = false;
-                }
-                else
-                {
-                	PasswordDetails item = new PasswordDetails();
-                	item.fromString(dec);
-                	details.add(item);
-                	item.setIndex(i);
-                	i++;
-                }
-            }
-        }
-		
-		reader.close();
-	}
+
 	
 	/**
 	 * Older versions of this program I have running on my laptop export the files in a different format.
@@ -270,7 +188,7 @@ public class PasswordDocument
 		if (ret != null)
 			throw(ret);
 	}
-	
+		
 	/**
 	 * Older versions of this program I have running on my laptop export the files in a different format.
 	 * This function reads stream in the older format.
@@ -300,7 +218,7 @@ public class PasswordDocument
 					{
 						if (dets != null)
 						{
-							dets.index = details.size() + 1;
+							dets.index = Integer.valueOf(details.size() + 1).toString();
 							details.add(dets);
 							i++;
 						}
@@ -308,7 +226,7 @@ public class PasswordDocument
 						dets = new PasswordDetails();
 						dets.location = line.substring(10);
 						dets.name = dets.location;
-						dets.index = i;
+						dets.index = Integer.valueOf(i).toString();
 					}
 					else if (line.startsWith("name: "))
 					{
@@ -339,61 +257,5 @@ public class PasswordDocument
 		
 		if (ret != null)
 			throw(ret);
-	}
-	
-	/**
-	 * Delete the target file from the filesystem
-	 * @param c the context used for determining where the save directory is
-	 * @param name the name of the file to delete
-	 */
-	public static void deleteFile(Context c, String name)
-	{
-		String path = c.getFilesDir().getAbsolutePath() + "/saved/" + name;
-		File target = new File(path);
-		target.delete();
-	}
-	
-	/**
-	 * Test the provided password on the target file.
-	 * The first line should decrypt to "test string" if the password and the file are correct.
-	 * @param c the context used to determine where the save directory is
-	 * @param name the name of the file to test
-	 * @param password the password to use in the decryption test
-	 * @return return true if the password and document match; false if they do not.
-	 */
-	public static boolean testPassword(Context c, String name, String password)
-	{
-		if (password.length() == 0)
-			return false;
-		
-		String path = c.getFilesDir().getAbsolutePath() + "/saved/" + name;
-		File target = new File(path);
-		boolean ret = false;
-		BufferedReader reader = null;
-		AES256 encoder = new AES256(password);
-		
-		//read a single line and decrypt
-		try
-		{
-			reader = new BufferedReader(new FileReader(target));
-			
-			String line = reader.readLine();
-			
-    		if (line.length() > 0)
-    		{
-    			String dec = encoder.decode(line);
-    			if (dec.equals("test string"))
-    				ret = true;
-    		}
-		}
-		catch(Exception e){
-		}
-		//cleanup gracefully
-		finally{
-			if (reader != null)
-				try{reader.close();}catch(Exception e){}
-		}
-		
-		return ret;
 	}
 }

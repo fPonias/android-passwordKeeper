@@ -22,7 +22,7 @@ public class PasswordDetails implements Parcelable
 	 * It became necessary as sometimes the entire data structure was rewritten on an edit
 	 * and there was no way to link it to the original details object
 	 */
-	public int index;
+	public String index;
 	
 	/**
 	 * Key/Value pairs intrinsically linked to the base location of these details.
@@ -31,6 +31,7 @@ public class PasswordDetails implements Parcelable
 	{
 		public String key;
 		public String value;
+		public String id;
 		
 		public Pair()
 		{
@@ -56,15 +57,15 @@ public class PasswordDetails implements Parcelable
 		name = "";
 		location = "";
 		details = new ArrayList<Pair>();
-		index = 0;
+		index = "0";
 	}
 	
 	public void setIndex(int i)
 	{
-		index = i;
+		index = Integer.valueOf(i).toString();
 	}
 	
-	public int getIndex()
+	public String getIndex()
 	{
 		return index;
 	}
@@ -159,7 +160,7 @@ public class PasswordDetails implements Parcelable
 	        }
 	        else if (line.startsWith("id: "))
 	        {
-	        	index = Integer.valueOf(line.substring(4));
+	        	index = line.substring(4);
 	        }
 	        else if (line.startsWith("\tkey: "))
 	        {

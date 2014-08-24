@@ -3,18 +3,26 @@ package com.munger.passwordkeeper.view;
 import java.io.File;
 import java.util.ArrayList;
 
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
 
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
-import com.munger.passwordkeeper.view.widget.TextInputWidget;
+import com.munger.passwordkeeper.struct.PasswordDocument;
+import com.munger.passwordkeeper.struct.PasswordDocumentDropbox;
+import com.munger.passwordkeeper.struct.PasswordDocumentFile;
+import com.munger.passwordkeeper.view.widget.FileItemWidget;
 
 /**
  * This fragment allows the user to select a file from the saved files directory and have the activity load it up
@@ -24,10 +32,14 @@ public class SelectFileFragment extends Fragment
 	private MainActivity parent;
 	private View rootView;
 	
-	private ArrayList<String> fileList;
+	private ArrayList<PasswordDocument> fileList;
 	private String targetDir;
 
-	private LinearLayout listView;
+	private View buttonsView;
+	private Button newFileButton;
+	private Button newDropboxButton;
+	private ListView listView;
+	private FileListAdapter fileListAdapter;
 	
 	public SelectFileFragment()
 	{
@@ -39,12 +51,101 @@ public class SelectFileFragment extends Fragment
 		return "Select";
 	}
 	
+	private static class FileListAdapter extends ArrayAdapter<PasswordDocument>
+	{
+		private SelectFileFragment parent;
+		
+		/**
+		 * Constructor.
+		 * @param parent The fragment this object belongs to for passing events on to.
+		 * @param context The application context
+		 * @param objects the list of object to covert to the list
+		 */
+		public FileListAdapter(SelectFileFragment parent, Context context, ArrayList<PasswordDocument> fileList) 
+		{
+			super(context, 0, fileList);
+			
+			this.parent = parent;
+		}
+		
+		/**
+		 * extention of the fileitem widget that adds fragment specific event handlers to the widget
+		 * fileitemwidget display a file item in the directory with an icon and name.
+		 */
+		private static class MyFileItemWidget extends FileItemWidget
+		{
+			private PasswordDocument doc;
+
+			public MyFileItemWidget(Context context) 
+			{
+				super(context);
+			}
+			
+			public void setDocument(PasswordDocument d)
+			{
+				//set the label with the file name
+				super.setLabel(d.name);
+
+				Resources r = getContext().getResources();
+								
+				if (d instanceof PasswordDocumentFile)
+				{
+					Drawable dr = r.getDrawable(R.drawable.ic_action_storage);
+					setIcon(dr);
+				}
+				else
+				{
+					Drawable dr = r.getDrawable(R.drawable.ic_action_web_site);
+					setIcon(dr);
+				}
+			}
+		}
+		
+		/**
+		 * Render the list item to a widget
+		 */
+		@Override
+		public View getView(int position, View convertView, ViewGroup par) 
+		{
+			final MyFileItemWidget ret;
+			final FileListAdapter that = this;
+			final PasswordDocument details = getItem(position);
+			
+			//if we're recycling the view
+			if (convertView != null)
+			{
+				ret = (MyFileItemWidget) convertView;
+				ret.setDocument(details);
+			}
+			//if it's a new view
+			//setup event listeners as well
+			else
+			{
+				ret = new MyFileItemWidget(this.parent.parent);
+				ret.setDocument(details);
+				ret.setOnClickListener(new View.OnClickListener() {public void onClick(View v) 
+				{
+					that.parent.parent.openFile(details);
+				}});
+			}
+		
+			return ret;
+		}
+	}
+	
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) 
+	{
+		this.parent = (MainActivity) getActivity();
+	    super.onCreate(savedInstanceState);
+	};
+	
 	/**
 	 * get references to important components and update visual components
 	 */
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
 	{
-		this.parent = (MainActivity) getActivity();
 		targetDir = parent.getFilesDir().getAbsolutePath() + "/saved";
 
 		setHasOptionsMenu(true);
@@ -57,7 +158,45 @@ public class SelectFileFragment extends Fragment
 		
 		rootView = inflater.inflate(R.layout.fragment_selectfile, container, false);
 		
-		listView = (LinearLayout) rootView.findViewById(R.id.selectfile_filelist);
+		listView = (ListView) rootView.findViewById(R.id.selectfile_filelist);
+		fileList = new ArrayList<PasswordDocument>();
+		fileListAdapter = new FileListAdapter(this, parent, fileList);
+		listView.setAdapter(fileListAdapter);
+		
+		buttonsView = rootView.findViewById(R.id.selectfile_addFileBtns);
+		newFileButton = (Button) rootView.findViewById(R.id.selectfile_addfile);
+		newDropboxButton = (Button) rootView.findViewById(R.id.selectfile_dropbox);
+		
+		newFileButton.setOnClickListener(new View.OnClickListener() {public void onClick(View v) 
+		{
+			parent.addFile(CreateFileFragment.TYPE_CREATE);
+		}});
+		
+		MainActivity.dropboxListener listener = new MainActivity.dropboxListener() 
+		{
+			public void connected() 
+			{
+				if (parent.hasDropbox())
+				{
+					newDropboxButton.setText("Dropbox Create");
+				}
+				else
+				{
+					newDropboxButton.setText("Dropbox Connect");
+				}
+			}
+		};
+		parent.addDropboxListener(listener);
+		
+		newDropboxButton.setOnClickListener(new View.OnClickListener() {public void onClick(View v)
+		{
+			if (!parent.hasDropbox())
+				parent.startDropbox();
+			else
+			{
+				parent.addFile(CreateFileFragment.TYPE_CREATE_DROPBOX);
+			}
+		}});
 		
 		return rootView;
 	}
@@ -104,13 +243,7 @@ public class SelectFileFragment extends Fragment
 		if (rootView == null)
 			return;
 		
-		//bring up the delete button on all listed files
-		int sz = listView.getChildCount();
-		for (int i = 0; i < sz; i++)
-		{
-			TextInputWidget ti = (TextInputWidget) listView.getChildAt(i);
-			ti.setEditable(editable);
-		}
+		buttonsView.setVisibility(editable ? View.VISIBLE : View.GONE);
 	}
 	
 	@Override
@@ -122,64 +255,18 @@ public class SelectFileFragment extends Fragment
 	
 	public void update()
 	{	
-		//update the file list
-		File dir = new File(targetDir);
-		String[] files = dir.list();
-		fileList = new ArrayList<String>();
-		
-		for (String file : files)
-		{
-			fileList.add(file);
-		}
-		
 		if (rootView == null)
 			return;
-			
-		//setup create or reuse filelist widgets
-		int i = 0;
-		int sz = listView.getChildCount();
-		for (String file : fileList)
-		{
-			final TextInputWidget widget;
-			
-			//if the widget exists then recycle it
-			if (i < sz)
-			{
-				widget = (TextInputWidget) listView.getChildAt(i);
-				widget.setText(file);
-			}
-			//otherwise create the widget
-			//and setup event handlers
-			else
-			{
-				widget = new TextInputWidget(getActivity());
-				widget.setText(file);
-				
-				//open the file on tap
-				widget.setLabelClickedListener(new TextInputWidget.LabelClickedListener() {public void clicked() 
-				{
-					parent.openFile(widget.getText());
-				}});
-
-				//delete the file is the delete button is pressed
-				widget.setDeleteClickedListener(new TextInputWidget.DeleteClickedListener() {public void clicked() 
-				{
-					deleteFile(widget.getText());
-				}});
-
-				listView.addView(widget);
-			}
-			
-			i++;
-		}
-
-		//remove non-recycled views
-		int flsz = fileList.size();
-		for (i = flsz; i < sz; i++)
-		{
-			listView.removeViewAt(flsz);
-		}
 		
+		//update the file list
+		@SuppressWarnings("unused")
+		PasswordDocument d = new PasswordDocumentFile(parent, "tmp");
+		ArrayList<PasswordDocument> files = PasswordDocumentFile.getList(parent);
+		files.addAll(PasswordDocumentDropbox.getList(parent));
+		fileListAdapter.clear();
+		fileListAdapter.addAll(files);		
+		fileListAdapter.notifyDataSetChanged();
+				
 		setEditable(((MainActivity) getActivity()).getEditable());
 	}
 		
@@ -188,14 +275,14 @@ public class SelectFileFragment extends Fragment
 	 * Bring up a prompt to ask the user if they really want to delete the selected file.
 	 * @param name the name of the file to be deleted.
 	 */
-	private void deleteFile(final String name)
+	private void deleteFile(final PasswordDocument doc)
 	{
 		final SelectFileFragment that = this;
-		ConfirmFragment frag = new ConfirmFragment("Are you sure you want to delete " + name + "?", new ConfirmFragment.Listener() 
+		ConfirmFragment frag = new ConfirmFragment("Are you sure you want to delete " + doc.name + "?", new ConfirmFragment.Listener() 
 		{
 			public void okay() 
 			{
-				parent.removeFile(name);
+				doc.delete();
 				that.onResume();
 			}
 			

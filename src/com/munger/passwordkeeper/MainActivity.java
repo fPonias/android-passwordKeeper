@@ -3,7 +3,10 @@ package com.munger.passwordkeeper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -13,10 +16,13 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
+import com.dropbox.sync.android.DbxAccount;
+import com.dropbox.sync.android.DbxAccountManager;
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDocument;
+import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.CreateFileFragment;
 import com.munger.passwordkeeper.view.ImportFileFragment;
 import com.munger.passwordkeeper.view.SelectFileFragment;
@@ -37,6 +43,9 @@ public class MainActivity extends ActionBarActivity
 	/** Fragment for viewing a detail in a document */ private ViewDetailFragment viewDetailFragment;
 	/** Fragment for importing an external document */ private ImportFileFragment importFileFragment;
 	
+	private DbxAccountManager dropboxAcctMgr;
+	private DbxAccount dropboxAcct;
+	private boolean hasDropboxLink;
 	
 	/**
 	 * Gather fragments and bring up the initial screen.
@@ -47,6 +56,18 @@ public class MainActivity extends ActionBarActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		//setup dropbox
+	    hasDropboxLink = false;
+	    dropboxAcctMgr = DbxAccountManager.getInstance(this.getApplicationContext(), "5xyvkb536ur7sue", "w6wthm9amap6xo4");
+
+		if (dropboxAcctMgr.hasLinkedAccount()) 
+		{
+			hasDropboxLink = true;
+	        dropboxAcct = dropboxAcctMgr.getLinkedAccount();
+		}
+		
+		
+		//import the sample data if there is no new data
 		try
 		{
 			setupSample();
@@ -71,10 +92,12 @@ public class MainActivity extends ActionBarActivity
 		{
 			if (savedInstanceState.containsKey("document"))
 			{
+				String doc = savedInstanceState.getString("document");
+				String name = savedInstanceState.getString("name");
 				password = savedInstanceState.getString("password");
 				currentDoc = savedInstanceState.getString("file");
-				document = new PasswordDocument(this, password);
-				document.fromString(savedInstanceState.getString("document"), false);
+				document = new PasswordDocumentFile(this, name, password);
+				document.fromString(doc, false);
 			}
 			
 			if (savedInstanceState.containsKey("details"))
@@ -85,6 +108,7 @@ public class MainActivity extends ActionBarActivity
 			}
 		}
 	}
+	
 	
 	public void fragmentExists(Fragment frag)
 	{
@@ -121,10 +145,10 @@ public class MainActivity extends ActionBarActivity
 			return;
 		
 		InputStream ins = getAssets().open("sample");
-		PasswordDocument doc = new PasswordDocument(this);
+		PasswordDocument doc = new PasswordDocumentFile(this, "password is sample");
 		doc.importFromStream(ins);
 		doc.setPassword("sample");
-		doc.saveToFile("password is sample");
+		doc.save();
 	}
 	
 	/** Keep track of the editable state of this Activity */ private boolean editable = false;
@@ -211,10 +235,10 @@ public class MainActivity extends ActionBarActivity
 	 * Proceed to openFile2 if the password is correct.
 	 * @param file the name of the file in the filesystem to decode.
 	 */
-	public void openFile(final String file)
+	public void openFile(final PasswordDocument doc)
 	{
 		final MainActivity that = this;
-		currentDoc = file;
+		currentDoc = doc.name;
 		
 		//create an okay/cancel password dialog to get the document password
 		PasswordFragment inDialog = new PasswordFragment("Input the document password", "password", new PasswordFragment.Listener() 
@@ -222,7 +246,9 @@ public class MainActivity extends ActionBarActivity
 			//attempt to decode the file with the provided password
 			public boolean okay(String password) 
 			{
-				boolean passed = PasswordDocument.testPassword(that, file, password);
+				document = doc;
+				doc.setPassword(password);
+				boolean passed = document.testPassword();
 				
 				//display an error of failure
 				if (!passed)
@@ -234,7 +260,8 @@ public class MainActivity extends ActionBarActivity
 				//move on to actually opening the file otherwise
 				else
 				{
-					openFile2(file, password);
+					that.password = password;
+					openFile2();
 					return true;
 				}
 			}
@@ -252,11 +279,11 @@ public class MainActivity extends ActionBarActivity
 	 * @param file the name of the file to load in the filesystem.
 	 * @param password the password used to decrypt the file.
 	 */
-	private void openFile2(String file, String password)
+	private void openFile2()
 	{
 		try
 		{
-			setFile(file, password);
+			document.load(true);
 			
 			//open the file viewer fragment
 			FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
@@ -275,7 +302,7 @@ public class MainActivity extends ActionBarActivity
 			//make the entries clickable on first view
 			setEditable(false);
 			
-			viewFileFragment.setDocument(file, document);
+			viewFileFragment.setDocument(document);
 			
 			//setup the back button
 			trans.replace(R.id.container, viewFileFragment);
@@ -283,35 +310,33 @@ public class MainActivity extends ActionBarActivity
 			trans.commit();
 		}
 		catch(Exception e){
-			AlertFragment frag = new AlertFragment("Failed to open the document: " + file);
+			AlertFragment frag = new AlertFragment("Failed to open the document: " + document.name);
 			frag.show(getSupportFragmentManager(), "invalid_fragment");
 		}
 	}
 	
-	public void setFile(String file, String password)
+	public void setFile(String name, String password)
 	{
-		this.currentDoc = file;
+		currentDoc = name;
+		document = new PasswordDocumentFile(this, name, password);
 		this.password = password;
+		boolean passed = document.testPassword();
 		
-		document = new PasswordDocument(this, password);
-		
-		try
-		{
-			document.loadFromFile(file);
-		}
-		catch(IOException e){
-			Log.v("password", "failed to load file");
-		}
+		//display an error of failure
+		if (!passed)
+			document = null;
+		else
+			document.load(true);
 	}
 	
-	public void setDetails(int index)
+	public void setDetails(String index)
 	{
 		int sz = document.details.size();
 		for (int i = 0; i < sz; i++)
 		{
 			PasswordDetails dets = document.details.get(i);
 			
-			if (dets.index == index)
+			if (dets.index.equals(index))
 			{
 				details = dets;
 				break;
@@ -325,7 +350,7 @@ public class MainActivity extends ActionBarActivity
 	 */
 	public void addFile(int type)
 	{
-		if (!(type == CreateFileFragment.TYPE_CREATE || type == CreateFileFragment.TYPE_IMPORT))
+		if (!(type == CreateFileFragment.TYPE_CREATE || type == CreateFileFragment.TYPE_IMPORT || type == CreateFileFragment.TYPE_CREATE_DROPBOX))
 			return;
 			
 		//open the create file fragment
@@ -344,9 +369,9 @@ public class MainActivity extends ActionBarActivity
 	 * Delete the specified file from the file system irrecoverably.
 	 * @param name the name of the file the delete.
 	 */
-	public void removeFile(String name)
+	public void removeFile()
 	{
-		PasswordDocument.deleteFile(this, name);
+		document.delete();
 	}
 	
 	/**
@@ -413,14 +438,7 @@ public class MainActivity extends ActionBarActivity
 		document.details.remove(listIdx);
 		document.details.add(listIdx, detail);
 		
-		try
-		{
-			document.saveToFile(currentDoc);
-		}
-		catch(IOException e){
-			AlertFragment inDialog = new AlertFragment("Unable to save file: " + currentDoc);
-			inDialog.show(getSupportFragmentManager(), "invalid_fragment");
-		}
+		document.save();
 	}
 	
 	/**
@@ -447,7 +465,7 @@ public class MainActivity extends ActionBarActivity
 	{
 		try
 		{
-			document = new PasswordDocument(this);
+			document = new PasswordDocumentFile(this, path);
 			document.importFromFile(path);
 			
 			onBackPressed();
@@ -459,5 +477,68 @@ public class MainActivity extends ActionBarActivity
 			inDialog.show(getSupportFragmentManager(), "invalid_fragment");
 			return;
 		}
+	}
+	
+	public boolean hasDropbox()
+	{
+		return hasDropboxLink;
+	}
+	
+	public DbxAccountManager getDropboxManager()
+	{
+		return dropboxAcctMgr;
+	}
+	
+	public DbxAccount getDropboxAccount()
+	{
+		return dropboxAcct;
+	}
+	
+	public void startDropbox()
+	{
+		dropboxAcctMgr.startLink(this, 1);
+	}
+	
+	public static interface dropboxListener
+	{
+		public void connected();
+	}
+	
+	private ArrayList<dropboxListener> dblisteners = new ArrayList<dropboxListener>();
+	
+	public void addDropboxListener(dropboxListener listener)
+	{
+		if (dblisteners.contains(listener))
+			return;
+		
+		dblisteners.add(listener);
+	}
+	
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) 
+	{
+	    if (requestCode == 1) 
+	    {
+	        if (resultCode == Activity.RESULT_OK) 
+	        {
+	            dropboxAcct = dropboxAcctMgr.getLinkedAccount();
+	            hasDropboxLink = true;
+	            
+	            int sz = dblisteners.size();
+	            for (int i = 0; i < sz; i++)
+	            {
+	            	dropboxListener l = dblisteners.get(i);
+	            	l.connected();
+	            }
+	        } 
+	        else 
+	        {
+	        	
+	        }
+	    } 
+	    else 
+	    {
+	        super.onActivityResult(requestCode, resultCode, data);
+	    }
 	}
 }
