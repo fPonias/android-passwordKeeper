@@ -1115,6 +1115,7 @@ containing a value of this type.
         public static final int lock_keys=0x7f02005f;
     }
     public static final class id {
+        public static final int action_about=0x7f050069;
         public static final int action_addfile=0x7f050066;
         public static final int action_bar=0x7f05001c;
         public static final int action_bar_activity_content=0x7f050015;
@@ -1273,18 +1274,19 @@ containing a value of this type.
         public static final int abc_search_view=0x7f030016;
         public static final int abc_simple_decor=0x7f030017;
         public static final int activity_main=0x7f030018;
-        public static final int fragment_createfile=0x7f030019;
-        public static final int fragment_importfile=0x7f03001a;
-        public static final int fragment_main=0x7f03001b;
-        public static final int fragment_selectfile=0x7f03001c;
-        public static final int fragment_splashscreen=0x7f03001d;
-        public static final int fragment_viewdetail=0x7f03001e;
-        public static final int fragment_viewfile=0x7f03001f;
-        public static final int support_simple_spinner_dropdown_item=0x7f030020;
-        public static final int widget_detailitem=0x7f030021;
-        public static final int widget_fileitem=0x7f030022;
-        public static final int widget_text=0x7f030023;
-        public static final int widget_textinput=0x7f030024;
+        public static final int fragment_about=0x7f030019;
+        public static final int fragment_createfile=0x7f03001a;
+        public static final int fragment_importfile=0x7f03001b;
+        public static final int fragment_main=0x7f03001c;
+        public static final int fragment_selectfile=0x7f03001d;
+        public static final int fragment_splashscreen=0x7f03001e;
+        public static final int fragment_viewdetail=0x7f03001f;
+        public static final int fragment_viewfile=0x7f030020;
+        public static final int support_simple_spinner_dropdown_item=0x7f030021;
+        public static final int widget_detailitem=0x7f030022;
+        public static final int widget_fileitem=0x7f030023;
+        public static final int widget_text=0x7f030024;
+        public static final int widget_textinput=0x7f030025;
     }
     public static final class menu {
         public static final int detail_action=0x7f0c0000;

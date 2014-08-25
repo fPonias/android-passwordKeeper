@@ -150,7 +150,17 @@ public class PasswordDocumentDropbox extends PasswordDocument
 		
 		return ret;
 	}
+	
+	public PasswordDocumentDropbox convertLocal(PasswordDocumentFile file)
+	{
+		PasswordDocumentDropbox ret = new PasswordDocumentDropbox(file.context, file.name);
+		ret.encoder = file.encoder;
+		String contents = file.toString();
+		ret.fromString(contents, false);
 		
+		return ret;
+	}
+	
 	public static ArrayList<PasswordDocument> getList(MainActivity c)
 	{
 		ArrayList<PasswordDocument> ret = new ArrayList<PasswordDocument>();

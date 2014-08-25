@@ -23,6 +23,7 @@ import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
+import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
 import com.munger.passwordkeeper.view.ImportFileFragment;
 import com.munger.passwordkeeper.view.SelectFileFragment;
@@ -540,5 +541,17 @@ public class MainActivity extends ActionBarActivity
 	    {
 	        super.onActivityResult(requestCode, resultCode, data);
 	    }
+	}
+	
+	public void about()
+	{
+		//open the file viewer fragment
+		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
+		AboutFragment frag = new AboutFragment();
+		
+		//setup the back button
+		trans.replace(R.id.container, frag);
+		trans.addToBackStack(AboutFragment.getName());
+		trans.commit();
 	}
 }

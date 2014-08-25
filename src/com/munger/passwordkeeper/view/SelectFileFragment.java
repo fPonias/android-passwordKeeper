@@ -227,6 +227,10 @@ public class SelectFileFragment extends Fragment
 		{
 			parent.openImportFile();
 		}
+		else if (id == R.id.action_about)
+		{
+			parent.about();
+		}
 		
 		return true;
 	}

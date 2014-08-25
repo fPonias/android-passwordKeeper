@@ -8,4 +8,5 @@
     <item android:id="@+id/action_addfile" android:title="Create" app:showAsAction="collapseActionView"></item>
     <item android:id="@+id/action_import" android:title="Import" app:showAsAction="collapseActionView"></item>
     <item android:id="@+id/action_dropbox" android:title="Dropbox" app:showAsAction="collapseActionView"></item>
+    <item android:id="@+id/action_about" android:title="About ..." app:showAsAction="collapseActionView"></item>
 </menu>

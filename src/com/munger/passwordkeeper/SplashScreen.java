@@ -5,6 +5,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 
+/**
+ * Splash screen Activity shows the splash screen layout and then calls the real main activity
+ * after 2.5 seconds.
+ *
+ */
 public class SplashScreen extends Activity 
 {
     // Splash screen timer
