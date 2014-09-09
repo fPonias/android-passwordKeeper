@@ -238,13 +238,6 @@ public class ViewFileFragment extends Fragment
 		return root;
 	}
 	
-	@Override
-	public void onPause() 
-	{
-		parent.reset();
-		super.onPause();
-	};
-	
 	/**
 	 * Filter the list of detials down to matching details.
 	 * Detail names are the only thing search.  Matches detail names that contain the search string anywhere in the string.

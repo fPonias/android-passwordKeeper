@@ -54,6 +54,11 @@ import com.munger.passwordkeeper.view.ViewFileFragment;
  */
 public class MainActivity extends ActionBarActivity 
 {	
+	static
+	{
+		System.loadLibrary("DropboxSync");
+	}
+	
 	/** Fragment for selecting an existing document */ private SelectFileFragment selectFileFragment;
 	/** Fragment for creating a new document */ private CreateFileFragment createFileFragment;
 	/** Fragment for viewing an existing document */ private ViewFileFragment viewFileFragment;
@@ -63,6 +68,10 @@ public class MainActivity extends ActionBarActivity
 	private DbxAccountManager dropboxAcctMgr;
 	private DbxAccount dropboxAcct;
 	private boolean hasDropboxLink;
+	private Object quitLock = new Object();
+	private Long quitTime;
+	private Long quitDelta = 90000L;
+	private Thread quitThread;
 	
 	/**
 	 * Gather fragments and bring up the initial screen.
@@ -125,6 +134,7 @@ public class MainActivity extends ActionBarActivity
 			}
 		}
 	}
+
 	
 	
 	public void fragmentExists(Fragment frag)
@@ -228,16 +238,6 @@ public class MainActivity extends ActionBarActivity
 			setEditable(false);
 		}
 	};
-	
-	public void reset()
-	{
-		//FragmentManager fm = getSupportFragmentManager();
-		//int sz = fm.getBackStackEntryCount();
-		//for(int i = 0; i < sz; i++)
-		//{    
-		//	fm.popBackStack();
-		//}
-	}
 	
 	/** 
 	 * The current document containing passwords.  

@@ -97,9 +97,9 @@ public class ViewDetailFragment extends Fragment
 			parent.setFile(file, password);
 			parent.setDetails(index);
 			parent.fragmentExists(this);
+			
+			setDetails(parent.getDetails());
 		}
-		
-		setDetails(parent.getDetails());
 	};
 	
 	/**

@@ -31,6 +31,11 @@ import com.munger.passwordkeeper.MainActivity;
 
 public class PasswordDocumentDropbox extends PasswordDocument 
 {
+	static
+	{
+		System.loadLibrary("DropboxSync");
+	}
+	
 	private DbxAccount account;
 	private DbxPath path;
 	private DbxFileSystem dbfs;
@@ -183,6 +188,12 @@ public class PasswordDocumentDropbox extends PasswordDocument
 		
 		try
 		{
+			DbxAccount acct = c.getDropboxAccount();
+			
+			if (acct == null)
+				return ret;
+			
+			
 			DbxFileSystem dbfs = DbxFileSystem.forAccount(c.getDropboxAccount());
 			List<DbxFileInfo> files = dbfs.listFolder(new DbxPath(""));
 			
