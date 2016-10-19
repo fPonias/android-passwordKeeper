@@ -1,0 +1,84 @@
+package com.munger.passwordkeeper.helpers;
+
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
+import android.view.View;
+import android.view.ViewTreeObserver;
+
+import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.R;
+
+import java.util.ArrayList;
+
+/**
+ * Created by codymunger on 10/18/16.
+ */
+
+public class KeyboardListener
+{
+    private MainActivity parent;
+    private boolean isOpen = false;
+
+    public KeyboardListener(final MainActivity parent)
+    {
+        this.parent = parent;
+
+        keyboardChangedListeners = new ArrayList<>();
+
+        final View activityRootView = parent.findViewById(R.id.container);
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener()
+        {
+            @Override
+            public void onGlobalLayout()
+            {
+                int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
+                if (heightDiff > dpToPx(200))
+                {
+                    if (isOpen)
+                        return;
+
+                    isOpen = true;
+                    int sz = keyboardChangedListeners.size();
+                    for (int i = sz - 1; i >= 0; i--)
+                        keyboardChangedListeners.get(i).OnKeyboardOpened();
+                }
+                else
+                {
+                    if (!isOpen)
+                        return;
+
+                    isOpen = false;
+                    int sz = keyboardChangedListeners.size();
+                    for (int i = sz - 1; i >= 0; i--)
+                        keyboardChangedListeners.get(i).OnKeyboardClosed();
+                }
+            }
+        });
+    }
+
+    public float dpToPx(float valueInDp)
+    {
+        DisplayMetrics metrics = parent.getResources().getDisplayMetrics();
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
+    }
+
+    public interface OnKeyboardChangedListener
+    {
+        void OnKeyboardOpened();
+        void OnKeyboardClosed();
+    }
+
+    private ArrayList<OnKeyboardChangedListener> keyboardChangedListeners;
+
+    public void addKeyboardChangedListener(OnKeyboardChangedListener listener)
+    {
+        if (!keyboardChangedListeners.contains(listener))
+            keyboardChangedListeners.add(listener);
+    }
+
+    public void removeKeyboardChangedListener(OnKeyboardChangedListener listener)
+    {
+        if (keyboardChangedListeners.contains(listener))
+            keyboardChangedListeners.remove(listener);
+    }
+}
