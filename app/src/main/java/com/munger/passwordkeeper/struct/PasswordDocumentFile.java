@@ -20,7 +20,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		super(c, name);
 		
 		if (rootPath == null)
-			rootPath = c.getFilesDir().getAbsolutePath() + "/saved/";
+			rootPath = c.getFilesDir().getAbsolutePath() + "/";
 	}
 	
 	public PasswordDocumentFile(MainActivity c, String name, String password)
@@ -45,6 +45,9 @@ public class PasswordDocumentFile extends PasswordDocument
 		
 		try
 		{
+			if (!target.exists())
+				target.createNewFile();
+
 			FileOutputStream fos = new FileOutputStream(target);
 			fos.write(content.getBytes());
 			fos.close();

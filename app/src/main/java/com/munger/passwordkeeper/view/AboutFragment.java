@@ -27,7 +27,6 @@ import android.view.ViewGroup;
 
 public class AboutFragment extends Fragment
 {
-	private MainActivity parent;
 	private View root;
 
 	/**
@@ -44,7 +43,6 @@ public class AboutFragment extends Fragment
 	 */
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
 	{
-		this.parent = (MainActivity) getActivity();
 		root = inflater.inflate(R.layout.fragment_about, container, false);
 		return root;
 	}	

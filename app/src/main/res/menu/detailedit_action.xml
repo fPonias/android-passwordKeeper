@@ -6,11 +6,14 @@
     
     <item android:id="@+id/action_detail_copy"
           android:title="copy"
+          android:icon="@drawable/ic_content_copy_black_24dp"
           app:showAsAction="always" />
     <item android:id="@+id/action_detail_paste"
           android:title="paste"
+          android:icon="@drawable/ic_content_paste_black_24dp"
           app:showAsAction="always" />
     <item android:id="@+id/action_detail_random"
           android:title="random"
+          android:icon="@drawable/ic_security_black_24dp"
           app:showAsAction="always" />
 </menu>

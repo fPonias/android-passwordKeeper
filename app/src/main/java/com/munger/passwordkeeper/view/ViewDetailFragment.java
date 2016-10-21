@@ -43,6 +43,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.android.internal.util.Predicate;
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
@@ -54,7 +55,6 @@ import com.munger.passwordkeeper.view.widget.TextInputWidget;
 
 public class ViewDetailFragment extends Fragment 
 {
-	private MainActivity parent;
 	private View root = null;
 	
 	private TextInputWidget nameLabel;
@@ -75,12 +75,12 @@ public class ViewDetailFragment extends Fragment
 	@Override
 	public void onSaveInstanceState(Bundle outState) 
 	{
-		if (details != null && parent.document instanceof PasswordDocumentFile)
+		if (details != null && MainActivity.getInstance().document instanceof PasswordDocumentFile)
 		{
-			outState.putString("file", parent.document.name);
+			outState.putString("file", MainActivity.getInstance().document.name);
 		}
 		
-		outState.putString("password", parent.password);
+		outState.putString("password", MainActivity.getInstance().password);
 		outState.putString("index", details.index);
 	};
 	
@@ -89,22 +89,20 @@ public class ViewDetailFragment extends Fragment
 	{
 		super.onCreate(savedInstanceState);
 		
-		parent = (MainActivity) getActivity();
-		
 		if (savedInstanceState != null)
 		{
 			String password = savedInstanceState.getString("password");
 			String index = savedInstanceState.getString("index");
 			
-			parent.setFile(password);
-			parent.setDetails(index);
-			parent.fragmentExists(this);
+			MainActivity.getInstance().setFile(password);
+			MainActivity.getInstance().setDetails(index);
+			MainActivity.getInstance().fragmentExists(this);
 			
-			setDetails(parent.getDetails());
+			setDetails(MainActivity.getInstance().getDetails());
 		}
 		else
 		{
-			parent.keyboardListener.addKeyboardChangedListener(new KeyboardListener.OnKeyboardChangedListener()
+			MainActivity.getInstance().keyboardListener.addKeyboardChangedListener(new KeyboardListener.OnKeyboardChangedListener()
 			{
 				public void OnKeyboardOpened()
 				{
@@ -136,7 +134,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom)
 			{
-				View newFocus = parent.getCurrentFocus();
+				View newFocus = MainActivity.getInstance().getCurrentFocus();
 				long newFocusStamp = System.currentTimeMillis();
 				long diff = newFocusStamp - lastFocusStamp;
 				Log.d("password", "last focus diff " + diff);
@@ -184,7 +182,7 @@ public class ViewDetailFragment extends Fragment
 			
 			actionSelected = (TextView) v;
 			selectText(actionSelected, true);
-			actionMode = parent.startActionMode(actionCallback);
+			actionMode = MainActivity.getInstance().startActionMode(actionCallback);
 			return true;
 		}};
 
@@ -353,8 +351,8 @@ public class ViewDetailFragment extends Fragment
 
 	private void setupFields()
 	{
-		pairListAdapter = new DetailArrayAdapter(this, parent, details.details);
-		filterAdapter = new DetailArrayAdapter(this, parent, filtered);
+		pairListAdapter = new DetailArrayAdapter(this, MainActivity.getInstance(), details.details);
+		filterAdapter = new DetailArrayAdapter(this, MainActivity.getInstance(), filtered);
 		itemList.setAdapter(pairListAdapter);
 
 		nameLabel.setText(details.name);
@@ -363,25 +361,29 @@ public class ViewDetailFragment extends Fragment
 	
 	private boolean editable = false;
 
-	public void setEditable(boolean editable)
+	public void setEditable(final boolean editable)
 	{
 		this.editable = editable;
-		setupEditable();
 
-		if (editable)
-		{
-			nameLabel.requestFocus();
-			InputMethodManager imm = (InputMethodManager) parent.getSystemService(Context.INPUT_METHOD_SERVICE);
-			imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
-		}
+		if (root == null)
+			return;
 
 		if (isVisible())
 		{
 			if (!editable && originalDetails != null && originalDetails.diff(details))
 			{
-				saveDetails();
+				saveDetails(new Predicate<Boolean>() {public boolean apply(Boolean aBoolean)
+				{
+					if (aBoolean)
+						setupEditable();
+					return true;
+				}});
+
+				return;
 			}
 		}
+
+		setupEditable();
 	}
 
 	public boolean backPressed()
@@ -390,7 +392,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			//if there are changes that need to be saved, a confirmation popup is brought up and the back action is cancelled.
 			goingBack = true;
-			saveDetails();
+			saveDetails(null);
 			return false;
 		}
 		
@@ -401,27 +403,49 @@ public class ViewDetailFragment extends Fragment
 
 	private void saveDetails()
 	{
-		ConfirmFragment frag = new ConfirmFragment("Save changes?", new ConfirmFragment.Listener() 
+		saveDetails(null);
+	}
+
+	private void saveDetails(final Predicate<Boolean> callback)
+	{
+		ConfirmFragment frag = new ConfirmFragment("Save changes?", new ConfirmFragment.Listener()
 		{
 			public void okay() 
 			{
-				//save the details and initiate a new back action, 
-				//this will succeed because the two copies of the details will be identical.
-				parent.saveDetail(details);
-				originalDetails = details;
+				MainActivity.getInstance().saveDetail(details);
+				setDetails(details);
 				
 				if (!goingBack)
 					onResume();
 				else
-					parent.onBackPressed();
+					MainActivity.getInstance().onBackPressed();
+
+				if (callback != null)
+					callback.apply(true);
 			}
 			
-			public void cancel() 
+			public void discard()
 			{
 				setDetails(originalDetails);
+
+				if (!goingBack)
+					onResume();
+				else
+					MainActivity.getInstance().onBackPressed();
+
+				if (callback != null)
+					callback.apply(true);
+			}
+
+			public void cancel()
+			{
+				onResume();
+
+				if (callback != null)
+					callback.apply(false);
 			}
 		});
-		frag.show(parent.getSupportFragmentManager(), "confirm_fragment");
+		frag.show(MainActivity.getInstance().getSupportFragmentManager(), "confirm_fragment");
 	}
 
 	private static class PairDetailItemWidget extends DetailItemWidget
@@ -578,7 +602,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			int id = item.getItemId();
 			
-			ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+			ClipboardManager clipboard = (ClipboardManager) MainActivity.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
 			
 			if (id == R.id.action_detail_copy)
 			{
@@ -593,7 +617,7 @@ public class ViewDetailFragment extends Fragment
 				if (sz > 0)
 				{
 					ClipData.Item it = clip.getItemAt(0);
-					String data = it.coerceToText(parent).toString();
+					String data = it.coerceToText(MainActivity.getInstance()).toString();
 					actionSelected.setText(data);
 				}
 			}
@@ -658,6 +682,11 @@ public class ViewDetailFragment extends Fragment
 		
 		nameLabel.setEditable(editable);
 
+		if (editable)
+		{
+			nameLabel.requestFocus();
+		}
+
 		if (editable && nameLabel.getText().equals("new entry"))
 		{
 			nameLabel.setText("");
@@ -687,7 +716,9 @@ public class ViewDetailFragment extends Fragment
 			if (item != null)
 				item.setEditable(editable);
 		}
-		
+
+		MainActivity.getInstance().keyboardListener.forceOpenKeyboard(editable);
+
 		root.invalidate();
 	}
 }

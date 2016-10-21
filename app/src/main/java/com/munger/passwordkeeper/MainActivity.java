@@ -5,13 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
@@ -21,12 +19,18 @@ import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
-import com.munger.passwordkeeper.view.ImportFileFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 
 public class MainActivity extends AppCompatActivity
 {
+	private volatile static MainActivity instance = null;
+
+	public static MainActivity getInstance()
+	{
+		return instance;
+	}
+
 	public PasswordDocument document;
 	public String password;
 
@@ -35,7 +39,6 @@ public class MainActivity extends AppCompatActivity
 	private CreateFileFragment createFileFragment;
 	private ViewFileFragment viewFileFragment;
 	private ViewDetailFragment viewDetailFragment;
-	private ImportFileFragment importFileFragment;
 	private Object quitLock = new Object();
 	private Long quitTime;
 	private Long quitDelta = 90000L;
@@ -46,6 +49,8 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
+		instance = this;
+
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -55,7 +60,6 @@ public class MainActivity extends AppCompatActivity
 			keyboardListener = new KeyboardListener(this);
 
 			viewDetailFragment = null;
-			importFileFragment = null;
 			createFileFragment = null;
 
 			setPasswordFile();
@@ -101,8 +105,6 @@ public class MainActivity extends AppCompatActivity
 			viewDetailFragment = (ViewDetailFragment) frag;
 		else if (frag instanceof ViewFileFragment)
 			viewFileFragment = (ViewFileFragment) frag;
-		else if (frag instanceof ImportFileFragment)
-			importFileFragment = (ImportFileFragment) frag;
 		else if (frag instanceof CreateFileFragment)
 			createFileFragment = (CreateFileFragment) frag;
 	};
@@ -242,6 +244,7 @@ public class MainActivity extends AppCompatActivity
 
 	public void setFile(String password)
 	{
+		this.password = password;
 		document.setPassword(password);
 		openFile();
 	}
@@ -277,22 +280,22 @@ public class MainActivity extends AppCompatActivity
 		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
 		viewDetailFragment = new ViewDetailFragment();
 
-		if (details.name.isEmpty() || (details.name.equals("new entry") && details.location.isEmpty() && details.details.size() == 0))
+		if (details.name.isEmpty() || (details.name.equals("new details") && details.location.isEmpty()))
 		{
 			if (details.details.size() == 0)
-			{
 				details.details.add(new PasswordDetails.Pair());
-				setEditable(true);
-			}
+
+			viewDetailFragment.setEditable(true);
 		}
 		else
-			setEditable(editable);
+			viewDetailFragment.setEditable(editable);
 
 
 		viewDetailFragment.setDetails(details);
 		trans.replace(R.id.container, viewDetailFragment);
 		trans.addToBackStack(ViewDetailFragment.getName());
 		trans.commit();
+
 	}
 
 	public void saveDetail(PasswordDetails detail)
@@ -316,19 +319,6 @@ public class MainActivity extends AppCompatActivity
 		document.details.add(listIdx, detail);
 
 		document.save();
-	}
-
-	public void openImportFile()
-	{
-		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
-		importFileFragment = new ImportFileFragment();
-
-		File sdcardDir = Environment.getExternalStorageDirectory();
-		importFileFragment.setDirectory(sdcardDir.getAbsolutePath());
-
-		trans.replace(R.id.container, importFileFragment);
-		trans.addToBackStack(ImportFileFragment.getName());
-		trans.commit();
 	}
 
 	public void importFile(String path)

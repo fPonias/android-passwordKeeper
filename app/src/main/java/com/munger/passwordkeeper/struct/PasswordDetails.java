@@ -1,19 +1,3 @@
-/**
- * Copyright 2014 Cody Munger
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.munger.passwordkeeper.struct;
 
 import java.util.ArrayList;
@@ -21,28 +5,14 @@ import java.util.ArrayList;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-/**
- * A struct that contains specific details for the PasswordDocument
- * Details are composed of a name, URL or location, and key/value pairs associated with this location.
- * Each key/value pair in meant to be a username/password pair or perhaps a question/answer pair.
- * All values can be blank if necessary.
- */
 public class PasswordDetails implements Parcelable
 {
 	public String name;
 	public String location;
 	public ArrayList<Pair> details;
-	
-	/**
-	 * index is a unique identifier for these details usable more by the containing password document.
-	 * It became necessary as sometimes the entire data structure was rewritten on an edit
-	 * and there was no way to link it to the original details object
-	 */
+
 	public String index;
-	
-	/**
-	 * Key/Value pairs intrinsically linked to the base location of these details.
-	 */
+
 	public static class Pair
 	{
 		public String key;
@@ -102,12 +72,7 @@ public class PasswordDetails implements Parcelable
 		
 		return ret;
 	}
-	
-	/**
-	 * check if the provided details are the same as this object's details
-	 * @param dets the details to compare to this one's
-	 * @return true if they are both the same and false if they differ.  This does not check if the index ids are the same.
-	 */
+
 	public boolean diff(PasswordDetails dets)
 	{
 		if (!dets.name.equals(name))
@@ -133,10 +98,7 @@ public class PasswordDetails implements Parcelable
 		
 		return false;
 	}
-	
-	/**
-	 * Convert the details to a string for easier debugging and encrypting.
-	 */
+
 	public String toString()
 	{
 		StringBuilder builder = new StringBuilder();
@@ -153,11 +115,6 @@ public class PasswordDetails implements Parcelable
 		return builder.toString();
 	}
 
-	/**
-	 * decode a serialized string.
-	 * Most likely used after decryption
-	 * @param source
-	 */
 	public void fromString(String source)
 	{
 		details = new ArrayList<Pair>();

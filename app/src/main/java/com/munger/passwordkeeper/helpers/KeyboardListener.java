@@ -1,9 +1,11 @@
 package com.munger.passwordkeeper.helpers;
 
+import android.content.Context;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
@@ -80,5 +82,24 @@ public class KeyboardListener
     {
         if (keyboardChangedListeners.contains(listener))
             keyboardChangedListeners.remove(listener);
+    }
+
+    public void forceOpenKeyboard(boolean open)
+    {
+        InputMethodManager imm = (InputMethodManager) parent.getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        if (open)
+        {
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        }
+        else
+        {
+            View focus = parent.getCurrentFocus();
+
+            if (focus == null)
+                return;
+
+            imm.hideSoftInputFromWindow(focus.getWindowToken(), 0);
+        }
     }
 }

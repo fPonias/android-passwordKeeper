@@ -33,8 +33,6 @@ import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 
 public class CreateFileFragment extends Fragment
 {
-	private MainActivity parent;
-	
 	public CreateFileFragment()
 	{
 
@@ -67,8 +65,6 @@ public class CreateFileFragment extends Fragment
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
 	{
-		this.parent = (MainActivity) getActivity();
-
 		root = inflater.inflate(R.layout.fragment_createfile, container, false);
 		nameLbl = (TextView) root.findViewById(R.id.createfile_title);
 		okayBtn = (Button) root.findViewById(R.id.createfile_okaybtn);
@@ -108,15 +104,15 @@ public class CreateFileFragment extends Fragment
 		if (!valid)
 		{
 			AlertFragment frag = new AlertFragment(message);
-			frag.show(parent.getSupportFragmentManager(), "invalid_fragment");
+			frag.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
 		}
 		else
 		{
-			parent.document.setPassword(pass1);
+			MainActivity.getInstance().document.setPassword(pass1);
 
-			parent.document.save();
-			parent.onBackPressed();
-			parent.openFile();
+			MainActivity.getInstance().document.save();
+			MainActivity.getInstance().onBackPressed();
+			MainActivity.getInstance().openFile();
 		}
 	}
 }

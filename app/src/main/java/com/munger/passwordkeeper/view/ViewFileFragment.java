@@ -28,7 +28,6 @@ import com.munger.passwordkeeper.view.widget.TextWidget;
 
 public class ViewFileFragment extends Fragment 
 {
-	private MainActivity parent;
 	private View root;
 	
 	private TextView title;
@@ -121,7 +120,7 @@ public class ViewFileFragment extends Fragment
 	@Override
 	public void onSaveInstanceState(Bundle outState) 
 	{
-		outState.putString("password", parent.password);
+		outState.putString("password", MainActivity.getInstance().password);
 	};
 	
 	@Override
@@ -129,24 +128,21 @@ public class ViewFileFragment extends Fragment
 	{
 		super.onCreate(savedInstanceState);
 		
-		parent = (MainActivity) getActivity();
-		
 		if (savedInstanceState != null)
 		{
 			String password = savedInstanceState.getString("password");
 			
-			parent.setFile(password);
-			parent.fragmentExists(this);
+			MainActivity.getInstance().setFile(password);
+			MainActivity.getInstance().fragmentExists(this);
 		}
 		
-		setDocument(parent.document);
+		setDocument(MainActivity.getInstance().document);
 	};
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
 	{
 		final ViewFileFragment that = this;
-		this.parent = (MainActivity) getActivity();
 		
 		setHasOptionsMenu(true);
 		
@@ -326,7 +322,7 @@ public class ViewFileFragment extends Fragment
 
 	private void openDetail(final PasswordDetails dets)
 	{
-		parent.openDetail(dets);
+		MainActivity.getInstance().openDetail(dets);
 	}
 
 	private void deleteClicked(final PasswordDetails dets)
@@ -360,7 +356,10 @@ public class ViewFileFragment extends Fragment
 			public void cancel() 
 			{	
 			}
+
+			public void discard()
+			{}
 		});
-		frag.show(parent.getSupportFragmentManager(), "confirm_fragment");
+		frag.show(MainActivity.getInstance().getSupportFragmentManager(), "confirm_fragment");
 	}
 }
