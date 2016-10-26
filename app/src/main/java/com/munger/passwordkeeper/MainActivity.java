@@ -14,6 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
+import com.munger.passwordkeeper.struct.Config;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
@@ -32,19 +33,24 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	public PasswordDocument document;
+	private PasswordDetails details;
 	public String password;
+
+	public Config config;
 
 	public KeyboardListener keyboardListener;
 
 	private CreateFileFragment createFileFragment;
 	private ViewFileFragment viewFileFragment;
 	private ViewDetailFragment viewDetailFragment;
+
 	private Object quitLock = new Object();
 	private Long quitTime;
 	private Long quitDelta = 90000L;
 	private Thread quitThread;
+
 	private boolean editable = false;
-	private PasswordDetails details;
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -58,6 +64,14 @@ public class MainActivity extends AppCompatActivity
 		if (savedInstanceState == null)
 		{
 			keyboardListener = new KeyboardListener(this);
+
+			try
+			{
+				config = Config.load();
+			}
+			catch(Exception e){
+				throw new RuntimeException("system config not present");
+			}
 
 			viewDetailFragment = null;
 			createFileFragment = null;
@@ -86,7 +100,7 @@ public class MainActivity extends AppCompatActivity
 
 	protected void setPasswordFile()
 	{
-		document = new PasswordDocumentFile(this, "passwords");
+		document = new PasswordDocumentFile(this, config.localDataFilePath);
 
 		if (!((PasswordDocumentFile)document).exists())
 		{

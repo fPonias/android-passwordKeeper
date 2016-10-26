@@ -18,9 +18,20 @@ public class PasswordDocumentFile extends PasswordDocument
 	public PasswordDocumentFile(MainActivity c, String name)
 	{
 		super(c, name);
-		
+
 		if (rootPath == null)
 			rootPath = c.getFilesDir().getAbsolutePath() + "/";
+
+		if (name.indexOf("/") != -1)
+		{
+			int idx = name.lastIndexOf("/");
+
+			if (name.startsWith("/"))
+				rootPath = "";
+
+			rootPath += name.substring(0, idx + 1);
+			this.name = name.substring(idx + 1);
+		}
 	}
 	
 	public PasswordDocumentFile(MainActivity c, String name, String password)
