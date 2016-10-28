@@ -7,11 +7,16 @@ import android.os.Parcelable;
 
 public class PasswordDetails implements Parcelable
 {
+	public String id;
 	public String name;
 	public String location;
-	public ArrayList<Pair> details;
 
-	public String index;
+	protected ArrayList<Pair> details;
+
+	public ArrayList<Pair> getList()
+	{
+		return details;
+	}
 
 	public static class Pair
 	{
@@ -21,47 +26,92 @@ public class PasswordDetails implements Parcelable
 		
 		public Pair()
 		{
+			id = "";
 			key = "";
 			value = "";
 		}
 		
 		public Pair(String key, String value)
 		{
+			this.id = generateId();
+			this.key = key;
+			this.value = value;
+		}
+
+		public Pair(String id, String key, String value)
+		{
+			this.id = id;
 			this.key = key;
 			this.value = value;
 		}
 		
 		public Pair copy()
 		{
-			Pair ret = new Pair(key, value);
+			Pair ret = new Pair(id, key, value);
+			return ret;
+		}
+
+		public static String generateId()
+		{
+			long timestamp = System.currentTimeMillis();
+			long rand = (long) Math.floor(Math.random() * 10000.0);
+			String ret = timestamp + "-" + rand;
 			return ret;
 		}
 	}
 	
 	public PasswordDetails()
 	{
+		id = "";
 		name = "";
 		location = "";
 		details = new ArrayList<Pair>();
-		index = "0";
 	}
-	
-	public void setIndex(int i)
+
+	public int count()
 	{
-		index = Integer.valueOf(i).toString();
+		return details.size();
 	}
-	
-	public String getIndex()
+
+	public void addPair(Pair p)
 	{
-		return index;
+		addPair(p, false);
 	}
-	
+
+	public Pair getPairAt(int index)
+	{
+		return details.get(index);
+	}
+
+	public void addPair(Pair p, boolean keepId)
+	{
+		if (!keepId)
+			p.id = Pair.generateId();
+
+		details.add(p);
+	}
+
+	public void removePair(Pair p)
+	{
+		int idx = -1;
+		int sz = details.size();
+		for (int i = 0; i < sz; i++)
+		{
+			Pair oldPair = details.get(i);
+			if (oldPair.id.equals(p.id))
+			{
+				details.remove(i);
+				return;
+			}
+		}
+	}
+
 	public PasswordDetails copy()
 	{
 		PasswordDetails ret = new PasswordDetails();
+		ret.id = id;
 		ret.name = name;
 		ret.location = location;
-		ret.index = index;
 		
 		int sz = details.size();
 		for (int i = 0; i < sz; i++)
@@ -75,6 +125,9 @@ public class PasswordDetails implements Parcelable
 
 	public boolean diff(PasswordDetails dets)
 	{
+		if (!dets.id.equals(id))
+			return true;
+
 		if (!dets.name.equals(name))
 			return true;
 		
@@ -89,7 +142,9 @@ public class PasswordDetails implements Parcelable
 		{
 			Pair det1 = dets.details.get(i);
 			Pair det2 = details.get(i);
-			
+
+			if (!det1.id.equals(det2.id))
+				return true;
 			if (!det1.key.equals(det2.key))
 				return true;
 			if (!det1.value.equals(det2.value))
@@ -102,12 +157,13 @@ public class PasswordDetails implements Parcelable
 	public String toString()
 	{
 		StringBuilder builder = new StringBuilder();
+		builder.append("id: ").append(id).append('\n');
 		builder.append("location: ").append(location).append('\n');
 		builder.append("name: ").append(name).append('\n');
-		builder.append("id: ").append(index).append('\n');
 
 		for (Pair item : details)
 		{
+			builder.append("\tpairid: ").append(item.id).append('\n');
 			builder.append("\tkey: ").append(item.key).append('\n');
 			builder.append("\tvalue: ").append(item.value).append('\n');
 		}
@@ -123,7 +179,11 @@ public class PasswordDetails implements Parcelable
 	    String[] parts = source.split("\n");
 	    for (String line : parts)
 	    {
-	        if (line.startsWith("name: "))
+			if (line.startsWith("id: "))
+			{
+				id = line.substring(5);
+			}
+	        else if (line.startsWith("name: "))
 	        {
 	        	name = line.substring(6);
 	        }
@@ -131,13 +191,13 @@ public class PasswordDetails implements Parcelable
 	        {
 	        	location = line.substring(10);
 	        }
-	        else if (line.startsWith("id: "))
-	        {
-	        	index = line.substring(4);
-	        }
+			else if (line.startsWith("\tpairid: "))
+			{
+				curPair = new Pair();
+				curPair.id = line.substring(9);
+			}
 	        else if (line.startsWith("\tkey: "))
 	        {
-	        	curPair = new Pair();
 	        	curPair.key = line.substring(6);
 	        }
 	        else if (line.startsWith("\tvalue: "))
@@ -148,9 +208,26 @@ public class PasswordDetails implements Parcelable
 	    }
 	}
 
-	@Override
-	public int describeContents() {
-		// TODO Auto-generated method stub
+	public static Parcelable.Creator<PasswordDetails> CREATOR = new Creator<PasswordDetails>()
+	{
+		@Override
+		public PasswordDetails createFromParcel(Parcel source)
+		{
+			String str = source.readString();
+			PasswordDetails ret = new PasswordDetails();
+			ret.fromString(str);
+			return ret;
+		}
+
+		@Override
+		public PasswordDetails[] newArray(int size)
+		{
+			return new PasswordDetails[size];
+		}
+	};
+
+	public int describeContents()
+	{
 		return 0;
 	}
 

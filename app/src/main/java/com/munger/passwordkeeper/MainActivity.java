@@ -234,12 +234,9 @@ public class MainActivity extends AppCompatActivity
 			FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
 			viewFileFragment = new ViewFileFragment();
 
-			if (document.details.size() == 0)
+			if (document.count() == 0)
 			{
-				PasswordDetails det = new PasswordDetails();
-				det.name = "new entry";
-				document.setIndex(det);
-				document.details.add(det);
+				document.addEmptyEntry();
 			}
 
 			setEditable(false);
@@ -273,19 +270,10 @@ public class MainActivity extends AppCompatActivity
 		return details;
 	}
 
-	public void setDetails(String index)
+	public void setDetails(String id)
 	{
-		int sz = document.details.size();
-		for (int i = 0; i < sz; i++)
-		{
-			PasswordDetails dets = document.details.get(i);
-
-			if (dets.index.equals(index))
-			{
-				details = dets;
-				break;
-			}
-		}
+		PasswordDetails dets = document.getDetails(id);
+		details = dets;
 	}
 
 	public void openDetail(PasswordDetails detail)
@@ -294,10 +282,10 @@ public class MainActivity extends AppCompatActivity
 		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
 		viewDetailFragment = new ViewDetailFragment();
 
-		if (details.name.isEmpty() || (details.name.equals("new details") && details.location.isEmpty()))
+		if (details.name.isEmpty() || (details.name.equals(PasswordDocument.emptyEntryTitle) && details.location.isEmpty()))
 		{
-			if (details.details.size() == 0)
-				details.details.add(new PasswordDetails.Pair());
+			if (details.count() == 0)
+				details.addPair(new PasswordDetails.Pair());
 
 			viewDetailFragment.setEditable(true);
 		}
@@ -314,24 +302,7 @@ public class MainActivity extends AppCompatActivity
 
 	public void saveDetail(PasswordDetails detail)
 	{
-		int listIdx = -1;
-		int sz = document.details.size();
-		for (int i = 0; i < sz; i++)
-		{
-			PasswordDetails d = document.details.get(i);
-			if (d.index == detail.index)
-			{
-				listIdx = i;
-				break;
-			}
-		}
-
-		if (listIdx == -1)
-			return;
-
-		document.details.remove(listIdx);
-		document.details.add(listIdx, detail);
-
+		document.replaceDetails(detail);
 		document.save();
 	}
 

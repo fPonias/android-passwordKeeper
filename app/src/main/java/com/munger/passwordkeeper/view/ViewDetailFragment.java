@@ -49,6 +49,7 @@ import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 import com.munger.passwordkeeper.view.widget.TextInputWidget;
@@ -81,7 +82,7 @@ public class ViewDetailFragment extends Fragment
 		}
 		
 		outState.putString("password", MainActivity.getInstance().password);
-		outState.putString("index", details.index);
+		outState.putString("id", details.id);
 	};
 	
 	@Override
@@ -92,10 +93,10 @@ public class ViewDetailFragment extends Fragment
 		if (savedInstanceState != null)
 		{
 			String password = savedInstanceState.getString("password");
-			String index = savedInstanceState.getString("index");
+			String id = savedInstanceState.getString("id");
 			
 			MainActivity.getInstance().setFile(password);
-			MainActivity.getInstance().setDetails(index);
+			MainActivity.getInstance().setDetails(id);
 			MainActivity.getInstance().fragmentExists(this);
 			
 			setDetails(MainActivity.getInstance().getDetails());
@@ -218,14 +219,16 @@ public class ViewDetailFragment extends Fragment
 	private DetailArrayAdapter filterAdapter = null;
 	private ArrayList<PasswordDetails.Pair> filtered = new ArrayList<PasswordDetails.Pair>();
 
-	public ArrayList<PasswordDetails.Pair> searchDetails(ArrayList<PasswordDetails.Pair> orig, String search)
+	public ArrayList<PasswordDetails.Pair> searchDetails(PasswordDetails orig, String search)
 	{
 		ArrayList<PasswordDetails.Pair> ret = new ArrayList<PasswordDetails.Pair>();
 		
 		search = search.toLowerCase();
-		
-		for (PasswordDetails.Pair pair : orig)
+
+		int sz = orig.count();
+		for(int i = 0; i < sz; i++)
 		{
+			PasswordDetails.Pair pair = orig.getPairAt(i);
 			if (pair.key.toLowerCase().contains(search) || pair.value.toLowerCase().contains(search))
 			{
 				ret.add(pair);
@@ -264,7 +267,7 @@ public class ViewDetailFragment extends Fragment
 				{
 					if (details != null)
 					{
-						filtered = searchDetails(details.details, arg0);
+						filtered = searchDetails(details, arg0);
 
 						filterAdapter.clear();
 						filterAdapter.addAll(filtered);
@@ -315,7 +318,7 @@ public class ViewDetailFragment extends Fragment
 
 	private void deletePair(PasswordDetails.Pair p)
 	{
-		details.details.remove(p);
+		details.removePair(p);
 		pairListAdapter.notifyDataSetChanged();
 		
 		if (useFiltered)
@@ -331,10 +334,11 @@ public class ViewDetailFragment extends Fragment
 	private void addPair()
 	{
 		PasswordDetails.Pair pair = new PasswordDetails.Pair();
-		details.details.add(pair);
+		pair.id = PasswordDetails.Pair.generateId();
+		details.addPair(pair);
 		pairListAdapter.notifyDataSetChanged();
 
-		nextSelect = details.details.size() - 1;
+		nextSelect = details.count() - 1;
 		itemList.setSelection(nextSelect);
 	}
 
@@ -351,8 +355,8 @@ public class ViewDetailFragment extends Fragment
 
 	private void setupFields()
 	{
-		pairListAdapter = new DetailArrayAdapter(this, MainActivity.getInstance(), details.details);
-		filterAdapter = new DetailArrayAdapter(this, MainActivity.getInstance(), filtered);
+
+		pairListAdapter = new DetailArrayAdapter(this, MainActivity.getInstance(), details.getList());
 		itemList.setAdapter(pairListAdapter);
 
 		nameLabel.setText(details.name);
@@ -530,7 +534,7 @@ public class ViewDetailFragment extends Fragment
 	{
 		private ViewDetailFragment host;
 		
-		public DetailArrayAdapter(ViewDetailFragment host, Context context, List<PasswordDetails.Pair> objects) 
+		public DetailArrayAdapter(ViewDetailFragment host, Context context, ArrayList<PasswordDetails.Pair> objects)
 		{
 			super(context, 0, objects);
 			
@@ -687,23 +691,25 @@ public class ViewDetailFragment extends Fragment
 			nameLabel.requestFocus();
 		}
 
-		if (editable && nameLabel.getText().equals("new entry"))
+		if (editable && nameLabel.getText().equals(PasswordDocument.emptyEntryTitle))
 		{
 			nameLabel.setText("");
 			nameLabel.requestFocus();
 		}
 		else if (!editable && nameLabel.getText().isEmpty())
-			nameLabel.setText("new entry");
+			nameLabel.setText(PasswordDocument.emptyEntryTitle);
 
 		locationLabel.setEditable(editable);
 		
 		addButton.setVisibility(editable ? View.VISIBLE : View.GONE);
 		
-		int sz = details.details.size();
+		int sz = details.count();
 		
 		if (sz == 0)
 		{
-			pairListAdapter.add(new PasswordDetails.Pair());
+			PasswordDetails.Pair p = new PasswordDetails.Pair();
+			p.id = PasswordDetails.Pair.generateId();
+			pairListAdapter.add(p);
 			pairListAdapter.notifyDataSetChanged();
 		}
 		

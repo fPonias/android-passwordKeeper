@@ -17,7 +17,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	
 	public PasswordDocumentFile(MainActivity c, String name)
 	{
-		super(c, name);
+		super(name);
 
 		if (rootPath == null)
 			rootPath = c.getFilesDir().getAbsolutePath() + "/";
@@ -65,7 +65,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		}
 		catch(IOException e){
 			AlertFragment inDialog = new AlertFragment("Unable to save file: " + name);
-			inDialog.show(context.getSupportFragmentManager(), "invalid_fragment");
+			inDialog.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
 		}
 		
 		lastLoad = System.currentTimeMillis();
@@ -94,7 +94,6 @@ public class PasswordDocumentFile extends PasswordDocument
 
 			String line;
 			boolean first = true;
-			int i = 0;
 			while ((line = reader.readLine()) != null)
 			{
 	    		if (line.length() > 0)
@@ -114,16 +113,14 @@ public class PasswordDocumentFile extends PasswordDocument
 	                {
 	                	PasswordDetails item = new PasswordDetails();
 	                	item.fromString(dec);
-	                	details.add(item);
-	                	item.setIndex(i);
-	                	i++;
+						putDetails(item, true);
 	                }
 	            }
 	        }
 		}
 		catch(IOException e){
 			AlertFragment inDialog = new AlertFragment("Unable to load file: " + name);
-			inDialog.show(context.getSupportFragmentManager(), "invalid_fragment");
+			inDialog.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
 		}
 		finally{
 			if (reader != null)

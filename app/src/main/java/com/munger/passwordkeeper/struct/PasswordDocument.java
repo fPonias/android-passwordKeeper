@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
 
 import android.util.Log;
 
@@ -16,34 +18,25 @@ import com.munger.passwordkeeper.MainActivity;
 
 public abstract class PasswordDocument 
 {
-	protected MainActivity context;
 	protected AES256 encoder;
 	protected long lastLoad;
 
-	public ArrayList<PasswordDetails> details;
-	protected int nextIndex;
+	protected ArrayList<PasswordDetails> details;
 	public String name;
 	
-	public PasswordDocument(MainActivity c, String name)
+	public PasswordDocument(String name)
 	{
-		context = c;
 		encoder = null;
 		details = new ArrayList<PasswordDetails>();
+		detailsIndex = new HashMap<String, PasswordDetails>();
 		lastLoad = 0;
-		nextIndex = 0;
 		this.name = name;
 	}
 	
-	public PasswordDocument(MainActivity c, String name, String password)
+	public PasswordDocument(String name, String password)
 	{
-		this(c, name);
+		this(name);
 		setPassword(password);
-	}
-	
-	public void setIndex(PasswordDetails dets)
-	{
-		dets.index = Integer.valueOf(nextIndex).toString();
-		nextIndex++;
 	}
 
 	public void setPassword(String password)
@@ -130,7 +123,86 @@ public abstract class PasswordDocument
 	abstract public void delete();
 	abstract public boolean testPassword();
 
+	protected HashMap<String, PasswordDetails> detailsIndex;
 
+	public int count()
+	{
+		return details.size();
+	}
+
+	public void putDetails(PasswordDetails dets)
+	{
+		putDetails(dets, false);
+	}
+
+	public void putDetails(PasswordDetails dets, boolean keepId)
+	{
+		if (!keepId)
+			dets.id = generateId();
+
+		details.add(dets);
+		detailsIndex.put(dets.id, dets);
+	}
+
+	public static String emptyEntryTitle = "new entry";
+
+	public PasswordDetails addEmptyEntry()
+	{
+		PasswordDetails det = new PasswordDetails();
+		det.name = emptyEntryTitle;
+		putDetails(det);
+
+		return det;
+	}
+
+	private String generateId()
+	{
+		long timestamp = System.currentTimeMillis();
+		long rand = (long) Math.floor(Math.random() * 10000.0);
+		String ret = timestamp + "-" + rand;
+		return ret;
+	}
+
+	public void replaceDetails(PasswordDetails dets)
+	{
+		if (!detailsIndex.containsKey(dets.id))
+			return;
+
+		PasswordDetails oldDets = detailsIndex.get(dets.id);
+		int idx = details.indexOf(oldDets);
+		details.remove(idx);
+		details.add(idx, dets);
+
+		detailsIndex.remove(dets.id);
+		detailsIndex.put(dets.id, dets);
+	}
+
+	public PasswordDetails getDetails(int index)
+	{
+		return details.get(index);
+	}
+
+	public PasswordDetails getDetails(String id)
+	{
+		return detailsIndex.get(id);
+	}
+
+	public void removeDetails(PasswordDetails dets)
+	{
+		if (!detailsIndex.containsKey(dets.id))
+			return;
+
+		PasswordDetails oldDets = detailsIndex.get(dets.id);
+		int idx = details.indexOf(oldDets);
+		details.remove(idx);
+
+		detailsIndex.remove(dets.id);
+	}
+
+	public ArrayList<PasswordDetails> getDetailsList()
+	{
+		return details;
+	}
 
 	public void importFromFile(String path) throws FileNotFoundException, IOException
 	{
@@ -169,27 +241,37 @@ public abstract class PasswordDocument
 			{
 				if (line.length() > 0)
 				{
-					if (line.startsWith("location: ") && !line.equals("location: "))
+					if (line.startsWith("id: ") && !line.equals("id: "))
 					{
 						if (dets != null)
 						{
-							dets.index = Integer.valueOf(details.size() + 1).toString();
 							details.add(dets);
 							i++;
 						}
 						
 						dets = new PasswordDetails();
+						dets.id = line.substring(5);
+
+						detailsIndex.put(dets.id, dets);
+					}
+					if (line.startsWith("location: "))
+					{
 						dets.location = line.substring(10);
 						dets.name = dets.location;
-						dets.index = Integer.valueOf(i).toString();
 					}
 					else if (line.startsWith("name: "))
 					{
 						dets.name = line.substring(6);
 					}
-					else if (line.startsWith("\tkey: "))
+					else if (line.startsWith("pairid: "))
 					{
 						pair = new PasswordDetails.Pair();
+						pair.id = line.substring(9);
+
+						String key = dets.id + ":" + pair.id;
+					}
+					else if (line.startsWith("\tkey: "))
+					{
 						pair.key = line.substring(6);
 					}
 					else if (line.startsWith("\tvalue: "))

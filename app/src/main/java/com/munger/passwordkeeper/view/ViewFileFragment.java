@@ -160,9 +160,8 @@ public class ViewFileFragment extends Fragment
 		{
 			if (document != null)
 			{
-				PasswordDetails details = new PasswordDetails();
-				details.name = "new details";
-				that.detailListAdapter.add(details);
+				PasswordDetails details = document.addEmptyEntry();
+				//that.detailListAdapter.add(details);
 				
 				try
 				{
@@ -180,13 +179,15 @@ public class ViewFileFragment extends Fragment
 		return root;
 	}
 
-	private ArrayList<PasswordDetails> searchDetails(ArrayList<PasswordDetails> details, String search)
+	private ArrayList<PasswordDetails> searchDetails(PasswordDocument details, String search)
 	{
 		search = search.toLowerCase();
 		ArrayList<PasswordDetails> ret = new ArrayList<PasswordDetails>();
-		
-		for (PasswordDetails dets : document.details)
+
+		int sz = details.count();
+		for (int i = 0; i < sz; i++)
 		{
+			PasswordDetails dets = details.getDetails(i);
 			if (dets.name.toLowerCase().contains(search))
 				ret.add(dets);
 		}
@@ -229,7 +230,7 @@ public class ViewFileFragment extends Fragment
 				{
 					if (document != null)
 					{
-						filtered = searchDetails(document.details, arg0);
+						filtered = searchDetails(document, arg0);
 
 						filterAdapter.clear();
 						filterAdapter.addAll(filtered);
@@ -285,7 +286,7 @@ public class ViewFileFragment extends Fragment
 
 	private void setupDetailListAdapter()
 	{
-		detailListAdapter = new DetailListAdapter(this, getActivity(), this.document.details);
+		detailListAdapter = new DetailListAdapter(this, getActivity(), this.document.getDetailsList());
 		filterAdapter = new DetailListAdapter(this, getActivity(), this.filtered);
 		
 		detailList.setAdapter(detailListAdapter);
@@ -332,7 +333,7 @@ public class ViewFileFragment extends Fragment
 		{
 			public void okay() 
 			{
-				document.details.remove(dets);
+				document.removeDetails(dets);
 				detailListAdapter.remove(dets);
 				detailListAdapter.notifyDataSetChanged();
 
