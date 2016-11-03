@@ -13,6 +13,12 @@
         android:icon="@drawable/ic_edit_black_24dp"
         android:title="edit"
         app:showAsAction="always" />
+
+    <item android:id="@+id/action_settings"
+          android:icon="@drawable/ic_settings_black_24dp"
+          android:title="settings"
+          app:showAsAction="always" />
+
 <!--
     <item android:id="@+id/action_import" android:title="Import ..." app:showAsAction="collapseActionView"></item>
     <item android:id="@+id/action_import" android:title=" ..." app:showAsAction="collapseActionView"></item>

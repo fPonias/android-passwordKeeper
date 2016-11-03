@@ -4,4 +4,19 @@
     <string name="app_name">Password Crypt</string>
     <string name="action_settings">Settings</string>
 
+    <string-array name="timeoutStrings">
+        <item>1 min</item>
+        <item>2 mins</item>
+        <item>5 mins</item>
+        <item>10 mins</item>
+        <item>never</item>
+    </string-array>
+
+    <string-array name="timeoutValues">
+        <item>1</item>
+        <item>2</item>
+        <item>5</item>
+        <item>10</item>
+        <item>-1</item>
+    </string-array>
 </resources>
