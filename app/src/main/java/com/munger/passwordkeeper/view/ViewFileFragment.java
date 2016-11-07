@@ -108,7 +108,7 @@ public class ViewFileFragment extends Fragment
 			details = dets;
 			
 			if (details != null)
-				setText(dets.name);
+				setText(dets.getName());
 		}
 		
 		public PasswordDetails getDetails()
@@ -188,7 +188,7 @@ public class ViewFileFragment extends Fragment
 		for (int i = 0; i < sz; i++)
 		{
 			PasswordDetails dets = details.getDetails(i);
-			if (dets.name.toLowerCase().contains(search))
+			if (dets.getName().toLowerCase().contains(search))
 				ret.add(dets);
 		}
 		
@@ -329,7 +329,7 @@ public class ViewFileFragment extends Fragment
 	private void deleteClicked(final PasswordDetails dets)
 	{
 		final ViewFileFragment that = this;
-		ConfirmFragment frag = new ConfirmFragment("Delete \"" + dets.name + "\"?", new ConfirmFragment.Listener() 
+		ConfirmFragment frag = new ConfirmFragment("Delete \"" + dets.getName() + "\"?", new ConfirmFragment.Listener()
 		{
 			public void okay() 
 			{

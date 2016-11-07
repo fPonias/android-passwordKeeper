@@ -12,6 +12,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.WindowManager;
 
@@ -19,7 +20,9 @@ import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.struct.Config;
+import com.munger.passwordkeeper.struct.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.AboutFragment;
@@ -93,7 +96,14 @@ public class MainActivity extends AppCompatActivity
 				String name = savedInstanceState.getString("name");
 				password = savedInstanceState.getString("password");
 				document = new PasswordDocumentFile(this, name, password);
-				document.fromString(doc, false);
+
+				try
+				{
+					document.fromString(doc, false);
+				}
+				catch(Exception e){
+					Log.e("password", "failed to load file " + doc);
+				}
 			}
 
 			if (savedInstanceState.containsKey("details"))
@@ -131,30 +141,6 @@ public class MainActivity extends AppCompatActivity
 		else if (frag instanceof SettingsFragment)
 			settingsFragment = (SettingsFragment) frag;
 	};
-
-	private void setupSample() throws IOException
-	{
-		String path = getFilesDir().getAbsolutePath() + "/saved/";
-		File fpath = new File(path);
-
-		if (!fpath.exists())
-			fpath.mkdirs();
-
-		if (fpath.list().length > 0)
-			return;
-
-		path += "password is sample";
-		File f = new File(path);
-
-		if (f.exists())
-			return;
-
-		InputStream ins = getAssets().open("sample");
-		PasswordDocument doc = new PasswordDocumentFile(this, "password is sample");
-		doc.importFromStream(ins);
-		doc.setPassword("sample");
-		doc.save();
-	}
 
 	public boolean getEditable()
 	{
@@ -291,6 +277,10 @@ public class MainActivity extends AppCompatActivity
 		}
 	}
 
+	public void importFile(String path)
+	{
+	}
+
 	public void setFile(String password)
 	{
 		this.password = password;
@@ -318,20 +308,11 @@ public class MainActivity extends AppCompatActivity
 	{
 		details = detail;
 		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
+
 		viewDetailFragment = new ViewDetailFragment();
-
-		if (details.name.isEmpty() || (details.name.equals(PasswordDocument.emptyEntryTitle) && details.location.isEmpty()))
-		{
-			if (details.count() == 0)
-				details.addPair(new PasswordDetails.Pair());
-
-			viewDetailFragment.setEditable(true);
-		}
-		else
-			viewDetailFragment.setEditable(editable);
-
-
 		viewDetailFragment.setDetails(details);
+		viewDetailFragment.setEditable(editable);
+
 		trans.replace(R.id.container, viewDetailFragment);
 		trans.addToBackStack(ViewDetailFragment.getName());
 		trans.commit();
@@ -340,23 +321,13 @@ public class MainActivity extends AppCompatActivity
 
 	public void saveDetail(PasswordDetails detail)
 	{
-		document.replaceDetails(detail);
-		document.save();
-	}
-
-	public void importFile(String path)
-	{
 		try
 		{
-			document = new PasswordDocumentFile(this, path);
-			document.importFromFile(path);
-
-			onBackPressed();
+			document.replaceDetails(detail);
+			document.save();
 		}
 		catch(Exception e){
-			AlertFragment inDialog = new AlertFragment("Unable to import file: " + path);
-			inDialog.show(getSupportFragmentManager(), "invalid_fragment");
-			return;
+			Log.e("password", "failed to update password file");
 		}
 	}
 

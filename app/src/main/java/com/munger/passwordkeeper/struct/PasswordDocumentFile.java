@@ -113,7 +113,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	                {
 	                	PasswordDetails item = new PasswordDetails();
 	                	item.fromString(dec);
-						putDetails(item, true);
+						putDetails(item);
 	                }
 	            }
 	        }
