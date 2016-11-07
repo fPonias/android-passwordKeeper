@@ -3,14 +3,17 @@ package com.munger.passwordkeeper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
@@ -23,6 +26,7 @@ import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
+import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 
@@ -46,6 +50,7 @@ public class MainActivity extends AppCompatActivity
 	private CreateFileFragment createFileFragment;
 	private ViewFileFragment viewFileFragment;
 	private ViewDetailFragment viewDetailFragment;
+	private SettingsFragment settingsFragment;
 
 	private Object quitLock = new Object();
 	private Long quitTime;
@@ -78,6 +83,7 @@ public class MainActivity extends AppCompatActivity
 
 			viewDetailFragment = null;
 			createFileFragment = null;
+			settingsFragment = null;
 
 			setPasswordFile();
 		}
@@ -131,6 +137,8 @@ public class MainActivity extends AppCompatActivity
 			viewFileFragment = (ViewFileFragment) frag;
 		else if (frag instanceof CreateFileFragment)
 			createFileFragment = (CreateFileFragment) frag;
+		else if (frag instanceof SettingsFragment)
+			settingsFragment = (SettingsFragment) frag;
 	};
 
 	public boolean getEditable()
@@ -176,6 +184,35 @@ public class MainActivity extends AppCompatActivity
 				setEditable(false);
 			}
 		}
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		int id = item.getItemId();
+
+		if (id == R.id.action_edit)
+		{
+			setEditable(!editable);
+			return true;
+		}
+		else if (id == R.id.action_settings)
+		{
+			openSettings();
+			return true;
+		}
+
+		return false;
+	};
+
+	public void openSettings()
+	{
+		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
+		settingsFragment = new SettingsFragment();
+
+		trans.replace(R.id.container, settingsFragment);
+		trans.addToBackStack(SettingsFragment.getName());
+		trans.commit();
 	}
 
 	protected void getPassword()
@@ -239,6 +276,10 @@ public class MainActivity extends AppCompatActivity
 		}
 	}
 
+	public void importFile(String path)
+	{
+	}
+
 	public void setFile(String password)
 	{
 		this.password = password;
@@ -297,5 +338,26 @@ public class MainActivity extends AppCompatActivity
 		trans.replace(R.id.container, frag);
 		trans.addToBackStack(AboutFragment.getName());
 		trans.commit();
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+	{
+		for(IPermissionResult listener : permissionResults)
+			listener.result(requestCode);
+
+		permissionResults = new ArrayList<>();
+	}
+
+	public interface IPermissionResult
+	{
+		void result(int requestCode);
+	}
+
+	private ArrayList<IPermissionResult> permissionResults = new ArrayList<>();
+
+	public void addPermisionResultListener(IPermissionResult listener)
+	{
+		permissionResults.add(listener);
 	}
 }

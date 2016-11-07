@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference android:key="settings_saveToCloud"
+                        android:title="Sync data to Google Drive"
+                        android:defaultValue="false"
+        />
+    <ListPreference android:key="settings_timeout"
+                    android:title="Idle Timeout"
+                    android:defaultValue="5"
+                    android:entryValues="@array/timeoutValues"
+                    android:entries="@array/timeoutStrings"
+        />
+    <Preference android:key="settings_changePassword"
+                android:title="Change Password ..." />
+    <Preference android:key="settings_importFile"
+                android:title="Import old data ..." />
+    <Preference android:key="settings_about"
+                android:title="About Password Crypt ..." />
+
+</PreferenceScreen>
