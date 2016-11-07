@@ -31,6 +31,7 @@ public class PasswordFragment extends InputFragment
 	public PasswordFragment(String message, String prompt, Listener l)
 	{
 		super(message, prompt, l);
+		setCancelEnabled(false);
 	}
 	
 	@Override

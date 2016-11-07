@@ -125,7 +125,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
     private void doDriveCleanup()
     {
-        
+
     }
 
     private void loadSettings()
