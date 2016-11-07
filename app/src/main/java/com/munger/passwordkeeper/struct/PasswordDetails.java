@@ -7,65 +7,120 @@ import android.os.Parcelable;
 
 public class PasswordDetails implements Parcelable
 {
-	public String id;
-	public String name;
-	public String location;
+	private String id;
+	private String name;
+	private String location;
 
-	protected ArrayList<Pair> details;
+	private ArrayList<PasswordDetailsPair> details;
 
-	public ArrayList<Pair> getList()
+	private PasswordDocumentHistory.HistoryEventListener historyListener;
+	private PasswordDocumentHistory history;
+
+	public ArrayList<PasswordDetailsPair> getList()
 	{
 		return details;
 	}
 
-	public static class Pair
+	public PasswordDetails(String id)
 	{
-		public String key;
-		public String value;
-		public String id;
-		
-		public Pair()
-		{
-			id = "";
-			key = "";
-			value = "";
-		}
-		
-		public Pair(String key, String value)
-		{
-			this.id = generateId();
-			this.key = key;
-			this.value = value;
-		}
+		this();
 
-		public Pair(String id, String key, String value)
-		{
-			this.id = id;
-			this.key = key;
-			this.value = value;
-		}
-		
-		public Pair copy()
-		{
-			Pair ret = new Pair(id, key, value);
-			return ret;
-		}
-
-		public static String generateId()
-		{
-			long timestamp = System.currentTimeMillis();
-			long rand = (long) Math.floor(Math.random() * 10000.0);
-			String ret = timestamp + "-" + rand;
-			return ret;
-		}
+		this.id = id;
 	}
-	
+
 	public PasswordDetails()
 	{
-		id = "";
+		id = generateId();
 		name = "";
 		location = "";
-		details = new ArrayList<Pair>();
+		details = new ArrayList<PasswordDetailsPair>();
+
+		historyListener = new PasswordDocumentHistory.HistoryEventListener() {public void occurred(HistoryEventFactory.HistoryEvent event)
+		{
+			event.id = id;
+			notifyListeners(event);
+		}};
+		history = new PasswordDocumentHistory();
+	}
+
+	public static String generateId()
+	{
+		long timestamp = System.currentTimeMillis();
+		long rand = (long) Math.floor(Math.random() * 10000.0);
+		String ret = timestamp + "-" + rand;
+		return ret;
+	}
+
+	public String getId()
+	{
+		return id;
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	public String getLocation()
+	{
+		return location;
+	}
+
+	public void setName(String value)
+	{
+		name = value;
+
+		HistoryEventFactory.PasswordDetailsUpdate evt = new HistoryEventFactory.PasswordDetailsUpdate();
+		evt.id = id;
+		evt.property = "name";
+		evt.value = value;
+
+		notifyListeners(evt);
+	}
+
+	public void setLocation(String value)
+	{
+		location = value;
+
+		HistoryEventFactory.PasswordDetailsUpdate evt = new HistoryEventFactory.PasswordDetailsUpdate();
+		evt.id = id;
+		evt.property = "location";
+		evt.value = value;
+
+		notifyListeners(evt);
+	}
+
+	private ArrayList<PasswordDocumentHistory.HistoryEventListener> listeners = new ArrayList<>();
+
+	public void addListener(PasswordDocumentHistory.HistoryEventListener listener)
+	{
+		if (listeners.contains(listener))
+			return;
+
+		else listeners.add(listener);
+	}
+
+	public void removeListener(PasswordDocumentHistory.HistoryEventListener listener)
+	{
+		listeners.remove(listener);
+	}
+
+	private void notifyListeners(HistoryEventFactory.HistoryEvent evt)
+	{
+		for(PasswordDocumentHistory.HistoryEventListener listener : listeners)
+			listener.occurred(evt);
+
+		history.addEvent(evt);
+	}
+
+	public void setHistory(PasswordDocumentHistory history)
+	{
+		this.history = history;
+	}
+
+	public PasswordDocumentHistory getHistory()
+	{
+		return history;
 	}
 
 	public int count()
@@ -73,34 +128,56 @@ public class PasswordDetails implements Parcelable
 		return details.size();
 	}
 
-	public void addPair(Pair p)
-	{
-		addPair(p, false);
-	}
-
-	public Pair getPairAt(int index)
+	public PasswordDetailsPair getPair(int index)
 	{
 		return details.get(index);
 	}
 
-	public void addPair(Pair p, boolean keepId)
+	public PasswordDetailsPair getPair(String id)
 	{
-		if (!keepId)
-			p.id = Pair.generateId();
+		int sz = details.size();
+		for (int i = 0; i < sz; i++)
+		{
+			PasswordDetailsPair p = details.get(i);
+			if (p.getId().equals(id))
+				return p;
+		}
 
-		details.add(p);
+		return null;
 	}
 
-	public void removePair(Pair p)
+	public void addPair(PasswordDetailsPair p)
+	{
+		details.add(p);
+
+		p.addListener(historyListener);
+
+		HistoryEventFactory.DetailsPairCreate evt = new HistoryEventFactory.DetailsPairCreate();
+		evt.id = id;
+		evt.pairid = p.getId();
+
+		notifyListeners(evt);
+	}
+
+	public void removePair(PasswordDetailsPair p)
 	{
 		int idx = -1;
 		int sz = details.size();
 		for (int i = 0; i < sz; i++)
 		{
-			Pair oldPair = details.get(i);
-			if (oldPair.id.equals(p.id))
+			PasswordDetailsPair oldPair = details.get(i);
+			if (oldPair.getId().equals(p.getId()))
 			{
 				details.remove(i);
+
+				oldPair.removeListener(historyListener);
+
+				HistoryEventFactory.DetailsPairDelete evt = new HistoryEventFactory.DetailsPairDelete();
+				evt.id = id;
+				evt.pairid = p.getId();
+
+				notifyListeners(evt);
+
 				return;
 			}
 		}
@@ -116,8 +193,16 @@ public class PasswordDetails implements Parcelable
 		int sz = details.size();
 		for (int i = 0; i < sz; i++)
 		{
-			Pair p = details.get(i);
-			ret.details.add(p.copy());
+			PasswordDetailsPair p = details.get(i);
+			PasswordDetailsPair copy = p.copy();
+			ret.details.add(copy);
+			copy.addListener(ret.historyListener);
+		}
+
+		sz = history.count();
+		for (int i = 0; i < sz; i++)
+		{
+			ret.history.addEvent(history.getEvent(i));
 		}
 		
 		return ret;
@@ -140,14 +225,10 @@ public class PasswordDetails implements Parcelable
 		int sz = details.size();
 		for (int i = 0; i < sz; i++)
 		{
-			Pair det1 = dets.details.get(i);
-			Pair det2 = details.get(i);
+			PasswordDetailsPair det1 = dets.details.get(i);
+			PasswordDetailsPair det2 = details.get(i);
 
-			if (!det1.id.equals(det2.id))
-				return true;
-			if (!det1.key.equals(det2.key))
-				return true;
-			if (!det1.value.equals(det2.value))
+			if (det1.diff(det2))
 				return true;
 		}
 		
@@ -161,11 +242,9 @@ public class PasswordDetails implements Parcelable
 		builder.append("location: ").append(location).append('\n');
 		builder.append("name: ").append(name).append('\n');
 
-		for (Pair item : details)
+		for (PasswordDetailsPair item : details)
 		{
-			builder.append("\tpairid: ").append(item.id).append('\n');
-			builder.append("\tkey: ").append(item.key).append('\n');
-			builder.append("\tvalue: ").append(item.value).append('\n');
+			builder.append(item.toString());
 		}
 		
 		return builder.toString();
@@ -173,8 +252,8 @@ public class PasswordDetails implements Parcelable
 
 	public void fromString(String source)
 	{
-		details = new ArrayList<Pair>();
-	    Pair curPair = null;
+		details = new ArrayList<PasswordDetailsPair>();
+		PasswordDetailsPair curPair = null;
 	    
 	    String[] parts = source.split("\n");
 	    for (String line : parts)
@@ -193,16 +272,15 @@ public class PasswordDetails implements Parcelable
 	        }
 			else if (line.startsWith("\tpairid: "))
 			{
-				curPair = new Pair();
-				curPair.id = line.substring(9);
+				curPair = new PasswordDetailsPair(line.substring(9));
 			}
 	        else if (line.startsWith("\tkey: "))
 	        {
-	        	curPair.key = line.substring(6);
+	        	curPair.setKey(line.substring(6));
 	        }
 	        else if (line.startsWith("\tvalue: "))
 	        {
-	        	curPair.value = line.substring(8);
+	        	curPair.setValue(line.substring(8));
 	        	details.add(curPair);
 	        }
 	    }
