@@ -66,6 +66,7 @@ public abstract class PasswordDocument
 
 		if (encrypt)
 		{
+
 			histOut = encoder.encode(histOut);
 		}
 
@@ -84,10 +85,21 @@ public abstract class PasswordDocument
 				return;
 
 			text = text.substring(12);
+			text = encoder.decode(text);
 	    }
 
 		history.fromString(text);
+		playHistory();
+	}
+
+	public void playHistory() throws PasswordDocumentHistory.HistoryPlaybackException
+	{
 		history.playHistory(this, 0);
+
+		for(PasswordDetails dets : details)
+		{
+			dets.setHistory(new PasswordDocumentHistory());
+		}
 	}
 	
 	abstract public void save();

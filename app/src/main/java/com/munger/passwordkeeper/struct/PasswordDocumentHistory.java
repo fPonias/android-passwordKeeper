@@ -44,6 +44,11 @@ public class PasswordDocumentHistory
         return history.get(index);
     }
 
+    public void playHistory(PasswordDocument document) throws HistoryPlaybackException
+    {
+        playHistory(document, 0);
+    }
+
     public void playHistory(PasswordDocument document, int sequenceStart) throws HistoryPlaybackException
     {
         int startIdx = findClosestIndex(sequenceStart);

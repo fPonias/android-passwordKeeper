@@ -65,6 +65,9 @@ public class PasswordDetailsPair
 
     public void setKey(String value)
     {
+        if (value.equals(key))
+            return;
+
         key = value;
 
         HistoryEventFactory.DetailsPairUpdate evt = new HistoryEventFactory.DetailsPairUpdate();
@@ -77,6 +80,9 @@ public class PasswordDetailsPair
 
     public void setValue(String value)
     {
+        if (value.equals(this.value))
+            return;
+
         this.value = value;
 
         HistoryEventFactory.DetailsPairUpdate evt = new HistoryEventFactory.DetailsPairUpdate();

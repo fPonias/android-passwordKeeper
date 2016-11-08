@@ -92,33 +92,26 @@ public class PasswordDocumentFile extends PasswordDocument
 		{
 			reader = new BufferedReader(new FileReader(target));
 
-			String line;
-			boolean first = true;
-			while ((line = reader.readLine()) != null)
+			String line = reader.readLine();
+			if (line != null && line.length() > 0)
 			{
-	    		if (line.length() > 0)
-	    		{
-	    			String dec = encoder.decode(line);
-	                
-	                if (first)
-	                {
-	                	if (!dec.equals("test string"))
-	                	{
-	                		break;
-	                	}
-	                	
-	                	first = false;
-	                }
-	                else
-	                {
-	                	PasswordDetails item = new PasswordDetails();
-	                	item.fromString(dec);
-						putDetails(item);
-	                }
-	            }
-	        }
+				String dec = encoder.decode(line);
+
+				if (!dec.equals("test string"))
+					return;
+			}
+
+			line = reader.readLine();
+			if (line != null && line.length() > 0)
+			{
+				String dec = encoder.decode(line);
+
+				history = new PasswordDocumentHistory();
+				history.fromString(dec);
+				playHistory();
+			}
 		}
-		catch(IOException e){
+		catch(Exception e){
 			AlertFragment inDialog = new AlertFragment("Unable to load file: " + name);
 			inDialog.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
 		}

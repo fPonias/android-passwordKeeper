@@ -69,7 +69,7 @@ public class HistoryEventFactory
             {
                 spcIdx = nextSpcIdx + 1;
                 nextSpcIdx = input.indexOf(' ', spcIdx);
-                String part = input.substring(spcIdx, nextSpcIdx);
+                String part = (nextSpcIdx > -1) ? input.substring(spcIdx, nextSpcIdx) : input.substring(spcIdx);
 
                 if (idx == 0)
                     id = part;
@@ -138,9 +138,9 @@ public class HistoryEventFactory
             if (dets == null)
                 throw new PasswordDocumentHistory.HistoryPlaybackException();
 
-            if (property == "name")
+            if (property.equals("name"))
                 dets.setName(value);
-            else if (property == "location")
+            else if (property.equals("location"))
                 dets.setLocation(value);
             else
                 throw new PasswordDocumentHistory.HistoryPlaybackException();
@@ -167,7 +167,7 @@ public class HistoryEventFactory
         public void fromString(String input)
         {
             int spcIdx = input.indexOf(' ');
-            String part = input.substring(0, spcIdx);
+            String part = (spcIdx > -1) ? input.substring(0, spcIdx) : input.substring(0);
 
             pairid = part;
 
@@ -226,9 +226,9 @@ public class HistoryEventFactory
                 throw new PasswordDocumentHistory.HistoryPlaybackException();
 
 
-            if (property == "key")
+            if (property.equals("key"))
                 pair.setKey(value);
-            else if (property == "value")
+            else if (property.equals("value"))
                 pair.setValue(value);
             else
                 throw new PasswordDocumentHistory.HistoryPlaybackException();

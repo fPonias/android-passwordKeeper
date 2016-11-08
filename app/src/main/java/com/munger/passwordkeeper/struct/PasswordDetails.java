@@ -68,6 +68,9 @@ public class PasswordDetails implements Parcelable
 
 	public void setName(String value)
 	{
+		if (value.equals(name))
+			return;
+
 		name = value;
 
 		HistoryEventFactory.PasswordDetailsUpdate evt = new HistoryEventFactory.PasswordDetailsUpdate();
@@ -80,6 +83,9 @@ public class PasswordDetails implements Parcelable
 
 	public void setLocation(String value)
 	{
+		if (value.equals(location))
+			return;
+
 		location = value;
 
 		HistoryEventFactory.PasswordDetailsUpdate evt = new HistoryEventFactory.PasswordDetailsUpdate();
