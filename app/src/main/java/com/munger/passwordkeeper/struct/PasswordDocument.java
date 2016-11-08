@@ -102,9 +102,9 @@ public abstract class PasswordDocument
 		}
 	}
 	
-	abstract public void save();
-	abstract public void load(boolean force);
-	abstract public void delete();
+	abstract public void save() throws Exception;
+	abstract public void load(boolean force) throws Exception;
+	abstract public void delete() throws Exception;
 	abstract public boolean testPassword();
 
 	protected HashMap<String, PasswordDetails> detailsIndex;
@@ -183,5 +183,10 @@ public abstract class PasswordDocument
 	public ArrayList<PasswordDetails> getDetailsList()
 	{
 		return details;
+	}
+
+	public void appendDocument(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
+	{
+		playSubHistory(doc.history);
 	}
 }

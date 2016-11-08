@@ -25,6 +25,8 @@ import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
+import com.munger.passwordkeeper.struct.PasswordDocumentFileImport;
+import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
 import com.munger.passwordkeeper.view.SettingsFragment;
@@ -95,7 +97,7 @@ public class MainActivity extends AppCompatActivity
 				String doc = savedInstanceState.getString("document");
 				String name = savedInstanceState.getString("name");
 				password = savedInstanceState.getString("password");
-				document = new PasswordDocumentFile(this, name, password);
+				document = new PasswordDocumentFile(name, password);
 
 				try
 				{
@@ -117,7 +119,7 @@ public class MainActivity extends AppCompatActivity
 
 	protected void setPasswordFile()
 	{
-		document = new PasswordDocumentFile(this, config.localDataFilePath);
+		document = new PasswordDocumentFile(config.localDataFilePath);
 
 		if (!((PasswordDocumentFile)document).exists())
 		{
@@ -279,6 +281,16 @@ public class MainActivity extends AppCompatActivity
 
 	public void importFile(String path)
 	{
+		try
+		{
+			PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
+			fileImport.load(false);
+			document.appendDocument(fileImport);
+		}
+		catch(Exception e){
+			AlertFragment frag = new AlertFragment("Failed to import the document: " + path);
+			frag.show(getSupportFragmentManager(), "invalid_fragment");
+		}
 	}
 
 	public void setFile(String password)
@@ -290,7 +302,14 @@ public class MainActivity extends AppCompatActivity
 
 	public void removeFile()
 	{
-		document.delete();
+		try
+		{
+			document.delete();
+		}
+		catch(Exception e){
+			AlertFragment frag = new AlertFragment("Failed to delete the document: " + document.name);
+			frag.show(getSupportFragmentManager(), "invalid_fragment");
+		}
 	}
 
 	public PasswordDetails getDetails()

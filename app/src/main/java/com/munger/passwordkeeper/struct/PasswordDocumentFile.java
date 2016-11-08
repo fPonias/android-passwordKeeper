@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import com.munger.passwordkeeper.MainActivity;
@@ -15,12 +16,12 @@ public class PasswordDocumentFile extends PasswordDocument
 {
 	private static String rootPath;
 	
-	public PasswordDocumentFile(MainActivity c, String name)
+	public PasswordDocumentFile(String name)
 	{
 		super(name);
 
 		if (rootPath == null)
-			rootPath = c.getFilesDir().getAbsolutePath() + "/";
+			rootPath = MainActivity.getInstance().getFilesDir().getAbsolutePath() + "/";
 
 		if (name.indexOf("/") != -1)
 		{
@@ -34,9 +35,9 @@ public class PasswordDocumentFile extends PasswordDocument
 		}
 	}
 	
-	public PasswordDocumentFile(MainActivity c, String name, String password)
+	public PasswordDocumentFile(String name, String password)
 	{
-		this(c, name);
+		this(name);
 		setPassword(password);
 	}
 
@@ -48,30 +49,23 @@ public class PasswordDocumentFile extends PasswordDocument
 		return target.exists();
 	}
 
-	public void save()
+	public void save() throws IOException
 	{
 		String path = rootPath + name;
 		File target = new File(path);
 		String content = toString(true);
-		
-		try
-		{
-			if (!target.exists())
-				target.createNewFile();
 
-			FileOutputStream fos = new FileOutputStream(target);
-			fos.write(content.getBytes());
-			fos.close();
-		}
-		catch(IOException e){
-			AlertFragment inDialog = new AlertFragment("Unable to save file: " + name);
-			inDialog.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
-		}
+		if (!target.exists())
+			target.createNewFile();
+
+		FileOutputStream fos = new FileOutputStream(target);
+		fos.write(content.getBytes());
+		fos.close();
 		
 		lastLoad = System.currentTimeMillis();
 	}
 
-	public void load(boolean force)
+	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		String path = rootPath + name;
 		File target = new File(path);
@@ -87,37 +81,26 @@ public class PasswordDocumentFile extends PasswordDocument
 		
 		details = new ArrayList<PasswordDetails>();
 		BufferedReader reader = null;
-		
-		try
+
+		reader = new BufferedReader(new FileReader(target));
+
+		String line = reader.readLine();
+		if (line != null && line.length() > 0)
 		{
-			reader = new BufferedReader(new FileReader(target));
+			String dec = encoder.decode(line);
 
-			String line = reader.readLine();
-			if (line != null && line.length() > 0)
-			{
-				String dec = encoder.decode(line);
-
-				if (!dec.equals("test string"))
-					return;
-			}
-
-			line = reader.readLine();
-			if (line != null && line.length() > 0)
-			{
-				String dec = encoder.decode(line);
-
-				history = new PasswordDocumentHistory();
-				history.fromString(dec);
-				playHistory();
-			}
+			if (!dec.equals("test string"))
+				return;
 		}
-		catch(Exception e){
-			AlertFragment inDialog = new AlertFragment("Unable to load file: " + name);
-			inDialog.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
-		}
-		finally{
-			if (reader != null)
-				try{reader.close();} catch(IOException e){}
+
+		line = reader.readLine();
+		if (line != null && line.length() > 0)
+		{
+			String dec = encoder.decode(line);
+
+			history = new PasswordDocumentHistory();
+			history.fromString(dec);
+			playHistory();
 		}
 	}
 	
@@ -161,7 +144,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		target.delete();
 	}
 	
-	public static ArrayList<PasswordDocument> getList(MainActivity act)
+	public static ArrayList<PasswordDocument> getList()
 	{
 		ArrayList<PasswordDocument> ret = new ArrayList<PasswordDocument>();
 
@@ -170,7 +153,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		
 		for (String item : list)
 		{
-			PasswordDocument i = new PasswordDocumentFile(act, item);
+			PasswordDocument i = new PasswordDocumentFile(item);
 			ret.add(i);
 		}
 		

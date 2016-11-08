@@ -16,6 +16,8 @@
 
 package com.munger.passwordkeeper.view;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -110,7 +112,21 @@ public class CreateFileFragment extends Fragment
 		{
 			MainActivity.getInstance().document.setPassword(pass1);
 
-			MainActivity.getInstance().document.save();
+			try
+			{
+				MainActivity.getInstance().document.save();
+			}
+			catch(Exception e){
+				AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+				builder.setMessage(message);
+				builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+				{
+					System.exit(0);
+				}});
+				builder.create();
+				return;
+			}
+
 			MainActivity.getInstance().onBackPressed();
 			MainActivity.getInstance().openFile();
 		}
