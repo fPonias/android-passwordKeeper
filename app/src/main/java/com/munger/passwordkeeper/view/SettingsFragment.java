@@ -1,5 +1,7 @@
 package com.munger.passwordkeeper.view;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.preference.CheckBoxPreference;
@@ -19,6 +21,7 @@ import android.widget.TextView;
 
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
+import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.FileDialog;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 
@@ -31,6 +34,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
     ListPreference timeoutList;
     Preference changePasswordBtn;
     Preference importFileBtn;
+    Preference deleteBtn;
     Preference aboutBtn;
 
     public static String getName()
@@ -64,11 +68,18 @@ public class SettingsFragment extends PreferenceFragmentCompat
         timeoutList = (ListPreference) findPreference("settings_timeout");
         changePasswordBtn = findPreference("settings_changePassword");
         importFileBtn = findPreference("settings_importFile");
+        deleteBtn = findPreference("settings_deleteFile");
         aboutBtn = findPreference("settings_about");
 
         importFileBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {public boolean onPreferenceClick(Preference preference)
         {
             doImport();
+            return false;
+        }});
+
+        deleteBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {public boolean onPreferenceClick(Preference preference)
+        {
+            doDelete();
             return false;
         }});
 
@@ -107,10 +118,32 @@ public class SettingsFragment extends PreferenceFragmentCompat
         fileDialog.addFileListener(new FileDialog.FileSelectedListener() {public void fileSelected(File file)
         {
             Log.d(getClass().getName(), "selected file " + file.toString());
-            MainActivity.getInstance().importFile(file.getPath());
+            boolean success = MainActivity.getInstance().importFile(file.getPath());
+
+            if (success)
+                MainActivity.getInstance().onBackPressed();
         }});
 
         fileDialog.showDialog();
+    }
+
+    private void doDelete()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setMessage("Are you sure you want to delete all of your password data?");
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+        {
+            MainActivity.getInstance().deleteData();
+            MainActivity.getInstance().deleteRemoteData();
+        }});
+        builder.setNeutralButton("No", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+        {
+        }});
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        return;
     }
 
     private void doPasswordChange()

@@ -320,8 +320,7 @@ public class ViewDetailFragment extends Fragment
 
 	private void addPair()
 	{
-		PasswordDetailsPair pair = new PasswordDetailsPair();
-		details.addPair(pair);
+		PasswordDetailsPair pair = details.addEmptyPair();
 		pairListAdapter.notifyDataSetChanged();
 
 		nextSelect = details.count() - 1;
@@ -710,8 +709,7 @@ public class ViewDetailFragment extends Fragment
 		
 		if (sz == 0)
 		{
-			PasswordDetailsPair p = new PasswordDetailsPair();
-			pairListAdapter.add(p);
+			PasswordDetailsPair p = details.addEmptyPair();
 			pairListAdapter.notifyDataSetChanged();
 		}
 		

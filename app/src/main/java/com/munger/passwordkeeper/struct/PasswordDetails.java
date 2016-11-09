@@ -21,14 +21,14 @@ public class PasswordDetails implements Parcelable
 		return details;
 	}
 
-	public PasswordDetails(String id)
+	PasswordDetails(String id)
 	{
 		this();
 
 		this.id = id;
 	}
 
-	public PasswordDetails()
+	PasswordDetails()
 	{
 		id = generateId();
 		name = "";
@@ -150,6 +150,21 @@ public class PasswordDetails implements Parcelable
 		}
 
 		return null;
+	}
+
+	public PasswordDetailsPair addEmptyPair()
+	{
+		PasswordDetailsPair pair = new PasswordDetailsPair();
+
+		pair.addListener(historyListener);
+
+		HistoryEventFactory.DetailsPairCreate evt = new HistoryEventFactory.DetailsPairCreate();
+		evt.id = id;
+		evt.pairid = pair.getId();
+
+		notifyListeners(evt);
+
+		return pair;
 	}
 
 	public void addPair(PasswordDetailsPair p)

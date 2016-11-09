@@ -179,7 +179,7 @@ public class FileDialog
 
     private void fireFileSelectedEvent(final File file)
     {
-        fileListenerList.fireEvent(new ListenerList.FireHandler<FileSelectedListener>() {public void fireEvent(FileSelectedListener listener)
+        fileListenerList.fireEvent(new FireHandler<FileSelectedListener>() {public void fireEvent(FileSelectedListener listener)
         {
             listener.fileSelected(file);
         }});
@@ -187,7 +187,7 @@ public class FileDialog
 
     private void fireDirectorySelectedEvent(final File directory)
     {
-        dirListenerList.fireEvent(new ListenerList.FireHandler<DirectorySelectedListener>() {public void fireEvent(DirectorySelectedListener listener)
+        dirListenerList.fireEvent(new FireHandler<DirectorySelectedListener>() {public void fireEvent(DirectorySelectedListener listener)
         {
             listener.directorySelected(directory);
         }});
@@ -220,7 +220,12 @@ public class FileDialog
         fileList = new String[sz];
         for (int i = 0; i < sz; i++)
         {
-            fileList[i] = r.get(i).getName();
+            File f = r.get(i);
+
+            if (f.isDirectory())
+                fileList[i] = f.getName() + '/';
+            else
+                fileList[i] = f.getName();
         }
     }
 
@@ -264,38 +269,39 @@ public class FileDialog
     {
         this.fileEndsWith = fileEndsWith != null ? fileEndsWith.toLowerCase() : fileEndsWith;
     }
-}
-
-class ListenerList<L>
-{
-    private List<L> listenerList = new ArrayList<L>();
 
     public interface FireHandler<L>
     {
         void fireEvent(L listener);
     }
 
-    public void add(L listener)
+    class ListenerList<L>
     {
-        listenerList.add(listener);
-    }
+        private List<L> listenerList = new ArrayList<L>();
 
-    public void fireEvent(FireHandler<L> fireHandler)
-    {
-        List<L> copy = new ArrayList<L>(listenerList);
-        for (L l : copy)
+
+        public void add(L listener)
         {
-            fireHandler.fireEvent(l);
+            listenerList.add(listener);
         }
-    }
 
-    public void remove(L listener)
-    {
-        listenerList.remove(listener);
-    }
+        public void fireEvent(FireHandler<L> fireHandler)
+        {
+            List<L> copy = new ArrayList<L>(listenerList);
+            for (L l : copy)
+            {
+                fireHandler.fireEvent(l);
+            }
+        }
 
-    public List<L> getListenerList()
-    {
-        return listenerList;
+        public void remove(L listener)
+        {
+            listenerList.remove(listener);
+        }
+
+        public List<L> getListenerList()
+        {
+            return listenerList;
+        }
     }
 }

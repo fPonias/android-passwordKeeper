@@ -77,7 +77,6 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
                 throw new IOException("line " + line + " could add pair to null details");
 
             PasswordDetailsPair pair = parsePair(line);
-            currentDets.addPair(pair);
         }
     }
 
@@ -90,8 +89,7 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
 
         if (parts.length >= 2)
         {
-            PasswordDetailsPair pair = new PasswordDetailsPair();
-            dets.addPair(pair);
+            PasswordDetailsPair pair = dets.addEmptyPair();
             pair.setKey(parts[1]);
 
             if (parts.length >= 3)
@@ -99,8 +97,6 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
 
             if (parts.length >= 4)
                 throw new IOException("line " + line + " had too many fields for details line");
-
-            dets.addPair(pair);
         }
 
         return dets;
@@ -113,8 +109,7 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
 
         if (parts.length >= 1)
         {
-            pair = new PasswordDetailsPair();
-            currentDets.addPair(pair);
+            pair = currentDets.addEmptyPair();
             pair.setKey(parts[0]);
 
             if (parts.length >= 2)

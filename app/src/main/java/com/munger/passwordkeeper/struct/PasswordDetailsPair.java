@@ -8,26 +8,26 @@ public class PasswordDetailsPair
     private String value;
     private String id;
 
-    public PasswordDetailsPair()
+    PasswordDetailsPair()
     {
         id = generateId();
         key = "";
         value = "";
     }
 
-    public PasswordDetailsPair(String id)
+    PasswordDetailsPair(String id)
     {
         this.id = id;
     }
 
-    public PasswordDetailsPair(String key, String value)
+    PasswordDetailsPair(String key, String value)
     {
         this.id = generateId();
         this.key = key;
         this.value = value;
     }
 
-    public PasswordDetailsPair(String id, String key, String value)
+    PasswordDetailsPair(String id, String key, String value)
     {
         this.id = id;
         this.key = key;

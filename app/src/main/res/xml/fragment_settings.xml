@@ -14,6 +14,8 @@
                 android:title="Change Password ..." />
     <Preference android:key="settings_importFile"
                 android:title="Import old data ..." />
+    <Preference android:key="settings_deleteFile"
+                android:title="Delete all data ..." />
     <Preference android:key="settings_about"
                 android:title="About Password Crypt ..." />
 

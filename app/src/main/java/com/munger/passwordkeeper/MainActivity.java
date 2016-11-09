@@ -94,25 +94,10 @@ public class MainActivity extends AppCompatActivity
 		{
 			if (savedInstanceState.containsKey("document"))
 			{
-				String doc = savedInstanceState.getString("document");
-				String name = savedInstanceState.getString("name");
-				password = savedInstanceState.getString("password");
-				document = new PasswordDocumentFile(name, password);
-
-				try
-				{
-					document.fromString(doc, false);
-				}
-				catch(Exception e){
-					Log.e("password", "failed to load file " + doc);
-				}
 			}
 
 			if (savedInstanceState.containsKey("details"))
 			{
-				String detStr = savedInstanceState.getString("details");
-				details = new PasswordDetails();
-				details.fromString(detStr);
 			}
 		}
 	}
@@ -279,18 +264,44 @@ public class MainActivity extends AppCompatActivity
 		}
 	}
 
-	public void importFile(String path)
+	public boolean importFile(String path)
 	{
 		try
 		{
 			PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
 			fileImport.load(false);
 			document.appendDocument(fileImport);
+			document.save();
 		}
 		catch(Exception e){
 			AlertFragment frag = new AlertFragment("Failed to import the document: " + path);
 			frag.show(getSupportFragmentManager(), "invalid_fragment");
+			return false;
 		}
+
+		AlertFragment frag = new AlertFragment("Successfully imported!");
+		frag.show(getSupportFragmentManager(), "invalid_fragment");
+		return true;
+	}
+
+	public void deleteData()
+	{
+		try
+		{
+			document.delete();
+		}
+		catch(Exception e){
+			AlertFragment frag = new AlertFragment("Failed to delete local password data");
+			frag.show(getSupportFragmentManager(), "invalid_fragment");
+			return;
+		}
+
+		setPasswordFile();
+	}
+
+	public void deleteRemoteData()
+	{
+
 	}
 
 	public void setFile(String password)
