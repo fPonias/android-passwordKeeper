@@ -67,16 +67,13 @@ public class PasswordDocumentFile extends PasswordDocument
 		lastLoad = System.currentTimeMillis();
 	}
 
+	private LoadUpdate loadUpdate = null;
+
 	public void load(final LoadUpdate update) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
-		encoder.setDecodeCallback(new AES256.DecodeCallback() {public void callback(float progress)
-		{
-			update.callback(progress);
-		}});
-
+		loadUpdate = update;
 		load(false);
-
-		encoder.setDecodeCallback(null);
+		loadUpdate = null;
 	}
 
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
@@ -110,7 +107,15 @@ public class PasswordDocumentFile extends PasswordDocument
 		line = reader.readLine();
 		if (line != null && line.length() > 0)
 		{
-			String dec = encoder.decode(line);
+			ThreadedCallbackWaiter decodeCallback = new ThreadedCallbackWaiter(new ThreadedCallbackWaiter.Callback() {public void callback(float progress)
+			{
+				if (loadUpdate != null)
+					loadUpdate.callback(progress);
+			}});
+
+			String dec = encoder.decode(line, decodeCallback);
+
+			decodeCallback.CleanUp();
 
 			history = new PasswordDocumentHistory();
 			history.fromString(dec);

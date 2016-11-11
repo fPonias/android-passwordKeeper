@@ -20,7 +20,6 @@
 #include "aes256.h"
 #include "MD5.h"
 #include <string.h>
-#include <pthread.h>
 
 #define F(x)   (((x)<<1) ^ ((((x)>>7) & 1) * 0x1b))
 #define FD(x)  (((x) >> 1) ^ (((x) & 1) ? 0x8d : 0))

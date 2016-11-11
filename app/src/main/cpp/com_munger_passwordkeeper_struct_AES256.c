@@ -131,7 +131,7 @@ void setupDecodeCallback(JNIEnv * env, jobject* jthis)
         return;
 
     jclass clazz = (*env)->GetObjectClass(env, decodeCallbackObject);
-    decodeCallbackMethodID = (*env)->GetMethodID(env, clazz, "doDecodeCallback", "(F)V");
+    decodeCallbackMethodID = (*env)->GetMethodID(env, clazz, "doCallback", "(F)V");
 }
 
 void cleanupDecodeCallback(JNIEnv* env)

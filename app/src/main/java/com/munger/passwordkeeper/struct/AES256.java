@@ -8,6 +8,7 @@ public class AES256
 
 	private String password;
 	private int context;
+	private ThreadedCallbackWaiter decodeCallbackWaiter;
 
 	public AES256(String password)
 	{
@@ -24,83 +25,25 @@ public class AES256
 
 	public String encode(String target)
 	{
-		return encode(context, target);
+		String ret = encode(context, target);
+		return ret;
 	}
 
 	public String decode(String target)
 	{
+		return decode(target, null);
+	}
+
+	public String decode(String target, ThreadedCallbackWaiter callbackWaiter)
+	{
+		decodeCallbackWaiter = callbackWaiter;
 		return decode(context, target);
 	}
 
-	public interface DecodeCallback
+	public void doCallback(float progress)
 	{
-		void callback(float progress);
-	}
-
-	private DecodeCallback _decodeCallback = null;
-	private float decodeProgress = 0;
-	private Thread decodeCallbackThread;
-	private boolean decodeCallbackKill;
-	private Object decodeCallbackLock = new Object();
-	private Runnable decodeRoutine = new Runnable() {public void run()
-	{
-		while (decodeCallbackKill == false)
-		{
-			synchronized(decodeCallbackLock)
-			{
-				try
-				{
-					decodeCallbackLock.wait();
-				}
-				catch(InterruptedException e){
-					return;
-				}
-
-				if (_decodeCallback != null)
-					_decodeCallback.callback(decodeProgress);
-			}
-		}
-	}};
-
-	public void setDecodeCallback(DecodeCallback callback)
-	{
-		synchronized(decodeCallbackLock)
-		{
-			_decodeCallback = callback;
-
-			if (_decodeCallback != null && decodeCallbackThread == null)
-			{
-				decodeCallbackKill = false;
-				decodeCallbackThread = new Thread(decodeRoutine);
-				decodeCallbackThread.start();
-			}
-			else if (_decodeCallback == null && decodeCallbackThread != null)
-			{
-				try
-				{
-					decodeCallbackKill = true;
-					decodeCallbackLock.notify();
-					decodeCallbackThread.join(100);
-				}
-				catch(InterruptedException e){
-				}
-				finally{
-					decodeCallbackThread = null;
-				}
-			}
-		}
-	}
-
-	public void doDecodeCallback(float progress)
-	{
-		decodeProgress = progress;
-		synchronized (decodeCallbackLock)
-		{
-			if (decodeCallbackThread == null)
-				return;
-
-			decodeCallbackLock.notify();
-		}
+		if (decodeCallbackWaiter != null)
+			decodeCallbackWaiter.doDecodeCallback(progress);
 	}
 
 	private native int init(String password);
