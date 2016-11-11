@@ -31,6 +31,7 @@ JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_destroy
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode
   (JNIEnv *, jobject, jint, jstring);
 
+
 /*
  * Class:     com_munger_passwordkeeper_struct_AES256
  * Method:    decode
@@ -38,6 +39,11 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode
  */
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode
   (JNIEnv *, jobject, jint, jstring);
+
+void setupDecodeCallback(JNIEnv * env, jobject* jthis);
+void cleanupDecodeCallback(JNIEnv* env);
+void doDecodeCallback(float percent);
+
 
 #ifdef __cplusplus
 }

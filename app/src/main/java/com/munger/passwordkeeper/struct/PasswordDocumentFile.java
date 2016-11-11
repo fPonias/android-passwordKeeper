@@ -1,5 +1,7 @@
 package com.munger.passwordkeeper.struct;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,6 +65,18 @@ public class PasswordDocumentFile extends PasswordDocument
 		fos.close();
 		
 		lastLoad = System.currentTimeMillis();
+	}
+
+	public void load(final LoadUpdate update) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	{
+		encoder.setDecodeCallback(new AES256.DecodeCallback() {public void callback(float progress)
+		{
+			update.callback(progress);
+		}});
+
+		load(false);
+
+		encoder.setDecodeCallback(null);
 	}
 
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException

@@ -79,10 +79,11 @@ public class InputFragment extends DialogFragment
 
 		builder.setPositiveButton("Okay", null);
 
+		final InputFragment that = this;
 		if (cancelEnabled)
 			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
 		{
-			listener.cancel();
+			listener.cancel(that);
 		}});
 		
 		Dialog ret = builder.create();
@@ -106,7 +107,7 @@ public class InputFragment extends DialogFragment
 
 	protected void okay()
 	{
-		boolean passed = listener.okay(inputView.getText().toString());
+		boolean passed = listener.okay(this, inputView.getText().toString());
         
     	if(passed)
     		dismiss();
@@ -114,7 +115,7 @@ public class InputFragment extends DialogFragment
 
 	public static interface Listener
 	{
-		public boolean okay(String inputText);
-		public void cancel();
+		public boolean okay(InputFragment that, String inputText);
+		public void cancel(InputFragment that);
 	}
 }

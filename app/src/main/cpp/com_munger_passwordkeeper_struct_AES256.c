@@ -27,6 +27,8 @@ JNIEXPORT jint JNICALL Java_com_munger_passwordkeeper_struct_AES256_init(JNIEnv 
 	aes256_context* ret = malloc(sizeof(aes256_context));
 	aes256_initFromPassword(ret, password);
 
+    setupDecodeCallback(env, &jthis);
+
 	return (long) ret;
 }
 
@@ -34,6 +36,7 @@ JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_destroy(JNIE
 {
 	aes256_context* ctx = (aes256_context*) jcontext;
 	free(ctx);
+    cleanupDecodeCallback(env);
 }
 
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode(JNIEnv * env, jobject jthis, jint jcontext, jstring jtarget)
@@ -66,6 +69,10 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode(JN
 	return ret;
 }
 
+JNIEnv* decodeCallbackEnv = 0;
+jobject* decodeCallbackObject = 0;
+jmethodID decodeCallbackMethodID = 0;
+
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JNIEnv * env, jobject jthis, jint jcontext, jstring jtarget)
 {
 	aes256_context* ctx = (aes256_context*) jcontext;
@@ -88,7 +95,8 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JN
     char retPtr[decSz];
     retPtr[decSz - 1] = '\0';
 
-    aes256_decryptString(ctx, decPtr, retPtr, decSz - 1);
+    decodeCallbackEnv = env;
+    aes256_decryptString(ctx, decPtr, retPtr, decSz - 1, &doDecodeCallback);
 
     jstring ret;
     int found = 1;
@@ -109,4 +117,39 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JN
     	ret = (*env)->NewStringUTF(env, retPtr);
 
     return ret;
+}
+
+void setupDecodeCallback(JNIEnv * env, jobject* jthis)
+{
+    decodeCallbackEnv = env;
+
+    if (decodeCallbackObject != 0)
+        return;
+
+    decodeCallbackObject = (*env)->NewGlobalRef(env, *jthis);
+    if (decodeCallbackObject == 0)
+        return;
+
+    jclass clazz = (*env)->GetObjectClass(env, decodeCallbackObject);
+    decodeCallbackMethodID = (*env)->GetMethodID(env, clazz, "doDecodeCallback", "(F)V");
+}
+
+void cleanupDecodeCallback(JNIEnv* env)
+{
+    (*env)->DeleteGlobalRef(env, decodeCallbackObject);
+}
+
+void doDecodeCallback(float percent)
+{
+    if (decodeCallbackMethodID == 0)
+        return;
+
+    (*decodeCallbackEnv)->CallVoidMethod(decodeCallbackEnv, decodeCallbackObject, decodeCallbackMethodID, percent);
+}
+
+JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_clearDecodeCallback (JNIEnv *env)
+{
+    decodeCallbackEnv = 0;
+    decodeCallbackObject = 0;
+    decodeCallbackMethodID = 0;
 }

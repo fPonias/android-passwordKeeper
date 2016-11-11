@@ -66,7 +66,6 @@ public abstract class PasswordDocument
 
 		if (encrypt)
 		{
-
 			histOut = encoder.encode(histOut);
 		}
 
@@ -101,8 +100,15 @@ public abstract class PasswordDocument
 			dets.setHistory(new PasswordDocumentHistory());
 		}
 	}
-	
+
+	public interface LoadUpdate
+	{
+		public void callback(float progress);
+	}
+
 	abstract public void save() throws Exception;
+
+	abstract public void load(LoadUpdate callback) throws Exception;
 	abstract public void load(boolean force) throws Exception;
 	abstract public void delete() throws Exception;
 	abstract public boolean testPassword();

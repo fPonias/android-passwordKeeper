@@ -20,6 +20,7 @@
 #include "aes256.h"
 #include "MD5.h"
 #include <string.h>
+#include <pthread.h>
 
 #define F(x)   (((x)<<1) ^ ((((x)>>7) & 1) * 0x1b))
 #define FD(x)  (((x) >> 1) ^ (((x) & 1) ? 0x8d : 0))
@@ -422,7 +423,7 @@ void aes256_encryptString(aes256_context* ctx, const char* input, char* output)
     }
 }
 
-void aes256_decryptString(aes256_context* ctx, const char* input, char* output, int sz)
+void aes256_decryptString(aes256_context* ctx, const char* input, char* output, int sz, void (*callback) (float))
 {
 	int i;
     for (i = 0; i < sz; i++)
@@ -431,11 +432,23 @@ void aes256_decryptString(aes256_context* ctx, const char* input, char* output, 
     }
     
     int blocks = sz / 16;
-    
+    float decodeProgress = 0;
+    float lastProgress = -1;
+
     for (i = 0; i < blocks; i++)
     {
+        decodeProgress = (float) i / (float) blocks;
+        float diff = (decodeProgress - lastProgress);
+        if (diff > 0.02)
+        {
+            lastProgress = decodeProgress;
+            callback(decodeProgress);
+        }
+
         aes256_decrypt_ecb(ctx, (unsigned char*) &(output[i * 16]));
     }
+
+    callback(1.0f);
 }
 
 void aes256_cleanUp(aes256_context* ctx)

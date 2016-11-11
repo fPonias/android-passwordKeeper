@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -17,6 +18,7 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 
 import com.munger.passwordkeeper.alert.AlertFragment;
+import com.munger.passwordkeeper.alert.InputFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.struct.Config;
@@ -205,63 +207,89 @@ public class MainActivity extends AppCompatActivity
 
 	protected void getPassword()
 	{
-		final MainActivity that = this;
-
-		PasswordFragment inDialog = new PasswordFragment("Input the document password", "password", new PasswordFragment.Listener()
+		final PasswordFragment inDialog = new PasswordFragment("Input the document password", "password", new PasswordFragment.Listener()
 		{
-			public boolean okay(String password)
+			public boolean okay(InputFragment that, String password)
 			{
 				document.setPassword(password);
 				boolean passed = document.testPassword();
 
+				that.dismiss();
+
 				if (!passed)
 				{
 					AlertFragment frag = new AlertFragment("Incorrect password.");
-					frag.show(that.getSupportFragmentManager(), "invalid_fragment");
+					frag.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
 					return false;
 				}
 				else
 				{
-					that.password = password;
+					MainActivity.getInstance().password = password;
 					openFile();
 					return true;
 				}
 			}
 
-			public void cancel()
+			public void cancel(InputFragment that)
 			{
 				System.exit(0);
 			}
 		});
-		inDialog.show(that.getSupportFragmentManager(), "invalid_fragment");
+		inDialog.show(getSupportFragmentManager(), "invalid_fragment");
 	}
 
 	public void openFile()
 	{
-		try
+		final ProgressDialog loadingDialog = new ProgressDialog(this);
+		loadingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		loadingDialog.setMax(100);
+		loadingDialog.setProgress(0);
+		loadingDialog.setMessage("Decrypting password data");
+		loadingDialog.show();
+
+
+		Thread t = new Thread(new Runnable() {public void run()
 		{
-			document.load(true);
-
-			FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
-			viewFileFragment = new ViewFileFragment();
-
-			if (document.count() == 0)
+			try
 			{
-				document.addEmptyEntry();
+				document.load(new PasswordDocument.LoadUpdate() {public void callback(float progress)
+				{
+					int progInt = (int)(Math.round(progress * 100.0f));
+					loadingDialog.setProgress(progInt);
+				}});
+			}
+			catch(Exception e){
+				AlertFragment frag = new AlertFragment("Failed to open the document: " + document.name);
+				frag.show(getSupportFragmentManager(), "invalid_fragment");
+
+				loadingDialog.dismiss();
+				return;
 			}
 
-			setEditable(false);
+			loadingDialog.dismiss();
 
-			viewFileFragment.setDocument(document);
+			openFile2();
+		}});
+		t.start();
+	}
 
-			trans.replace(R.id.container, viewFileFragment);
-			trans.addToBackStack(ViewFileFragment.getName());
-			trans.commit();
+	private void openFile2()
+	{
+		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
+		viewFileFragment = new ViewFileFragment();
+
+		if (document.count() == 0)
+		{
+			document.addEmptyEntry();
 		}
-		catch(Exception e){
-			AlertFragment frag = new AlertFragment("Failed to open the document: " + document.name);
-			frag.show(getSupportFragmentManager(), "invalid_fragment");
-		}
+
+		setEditable(false);
+
+		viewFileFragment.setDocument(document);
+
+		trans.replace(R.id.container, viewFileFragment);
+		trans.addToBackStack(ViewFileFragment.getName());
+		trans.commit();
 	}
 
 	public boolean importFile(String path)
