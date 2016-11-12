@@ -241,9 +241,9 @@ public class MainActivity extends AppCompatActivity
 	public void openFile()
 	{
 		final ProgressDialog loadingDialog = new ProgressDialog(this);
-		loadingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		loadingDialog.setMax(100);
-		loadingDialog.setProgress(0);
+		//loadingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		//loadingDialog.setMax(100);
+		//loadingDialog.setProgress(0);
 		loadingDialog.setMessage("Decrypting password data");
 		loadingDialog.show();
 
@@ -252,11 +252,27 @@ public class MainActivity extends AppCompatActivity
 		{
 			try
 			{
-				document.load(new PasswordDocument.LoadUpdate() {public void callback(float progress)
-				{
-					int progInt = (int)(Math.round(progress * 100.0f));
-					loadingDialog.setProgress(progInt);
-				}});
+				((PasswordDocumentFile) document).setLoadEvents(new PasswordDocumentFile.ILoadEvents() {
+					@Override
+					public void detailsLoaded()
+					{
+						loadingDialog.dismiss();
+						openFile2();
+					}
+
+					@Override
+					public void historyLoaded()
+					{
+						((PasswordDocumentFile) document).setLoadEvents(null);
+					}
+
+					@Override
+					public void historyProgress(float progress) {
+
+					}
+				});
+
+				document.load(true);
 			}
 			catch(Exception e){
 				AlertFragment frag = new AlertFragment("Failed to open the document: " + document.name);
@@ -265,10 +281,6 @@ public class MainActivity extends AppCompatActivity
 				loadingDialog.dismiss();
 				return;
 			}
-
-			loadingDialog.dismiss();
-
-			openFile2();
 		}});
 		t.start();
 	}

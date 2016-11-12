@@ -23,7 +23,7 @@ public class PasswordDocumentHistory
         public void occurred(HistoryEventFactory.HistoryEvent event);
     }
 
-    private int sequenceCount = 1;
+    private long sequenceCount = 1;
     private ArrayList<HistoryEventFactory.HistoryEvent> history;
 
     public void addEvent(HistoryEventFactory.HistoryEvent evt)
@@ -32,6 +32,24 @@ public class PasswordDocumentHistory
         sequenceCount++;
 
         history.add(evt);
+    }
+
+    public long getSequenceCount()
+    {
+        return sequenceCount;
+    }
+
+    public void setSequenceCount(long value)
+    {
+        int sz = history.size();
+
+        if (sz > 0)
+        {
+            long max = history.get(history.size() - 1).sequenceId;
+            sequenceCount = (max < value) ? value : max;
+        }
+        else
+            sequenceCount = value;
     }
 
     public int count()
@@ -190,6 +208,31 @@ public class PasswordDocumentHistory
         }
     }
 
+    public String partToString(int idx, int sz)
+    {
+        ArrayList<HistoryEventFactory.HistoryEvent> arr = new ArrayList<>();
+        for (HistoryEventFactory.HistoryEvent evt : history)
+        {
+            if (evt.sequenceId >= idx && evt.sequenceId < idx + sz)
+                arr.add(evt);
+        }
+
+        if (arr.size() == 0)
+            return null;
+
+
+        HistoryEventFactory factory = new HistoryEventFactory();
+        StringBuilder b = new StringBuilder();
+
+        for(HistoryEventFactory.HistoryEvent evt : arr)
+        {
+            String str = factory.toString(evt);
+            b.append(str).append('\n');
+        }
+
+        return b.toString();
+    }
+
     public String toString()
     {
         HistoryEventFactory factory = new HistoryEventFactory();
@@ -205,6 +248,19 @@ public class PasswordDocumentHistory
         }
 
         return b.toString();
+    }
+
+    public void partFromString(String text) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+    {
+        HistoryEventFactory factory = new HistoryEventFactory();
+
+        String[] parts = text.split("\n");
+        int sz = parts.length;
+        for (int i = 0; i < sz; i++)
+        {
+            HistoryEventFactory.HistoryEvent evt = factory.fromString(parts[i]);
+            history.add(evt);
+        }
     }
 
     public void fromString(String text) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException

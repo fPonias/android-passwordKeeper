@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Dictionary;
@@ -26,6 +27,7 @@ public abstract class PasswordDocument
 	public String name;
 
 	protected PasswordDocumentHistory history;
+	protected String mostRecentHistoryEvent = null;
 	
 	public PasswordDocument(String name)
 	{
@@ -48,47 +50,145 @@ public abstract class PasswordDocument
 		encoder = new AES256(password);
 	}
 
-	public String toString()
+	public String deltasToString()
 	{
-		return toString(false);
+		return history.toString();
 	}
 
-	public String toString(boolean encrypt)
+	public void deltasFromString(BufferedReader reader) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
-		String output = "";
+		history = new PasswordDocumentHistory();
+		history.fromString(reader.readLine());
+	}
+
+	public String deltasToEncryptedString()
+	{
+		StringBuilder b = new StringBuilder();
+
+		long maxIdx = history.getSequenceCount();
+		b.append(encoder.encode(String.valueOf(maxIdx))).append('\n');
+
+		ArrayList<Integer> sizes = new ArrayList<>();
+
+		int batchSize = 10;
+		for (int i = 0; i < maxIdx; i += batchSize)
+		{
+			String line = history.partToString(i, batchSize);
+
+			if (line != null)
+			{
+				line = encoder.encode(line) + '\n';
+				sizes.add(line.length());
+				b.append(line);
+			}
+			else
+				sizes.add(0);
+		}
+
+
+		StringBuilder headersb = new StringBuilder();
+
+		String enc = encoder.encode("test string");
+		headersb.append(enc).append('\n');
+		String sizeHeader = "";
+		for(int sz : sizes)
+		{
+			if (!sizeHeader.isEmpty())
+				sizeHeader += ',';
+			sizeHeader += sz;
+		}
+		headersb.append(encoder.encode(sizeHeader)).append('\n');
+		b.insert(0, headersb.toString());
+
+		return b.toString();
+	}
+
+	public void deltasFromEncryptedString(BufferedReader reader) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	{
+		history = new PasswordDocumentHistory();
+		String text = null;
+
+		text = encoder.decode(reader.readLine());
+
+		if (!text.equals("test string"))
+			return;
+
+		text = encoder.decode(reader.readLine());
+
+		text = encoder.decode(reader.readLine());
+		long seq = Long.parseLong(text);
+		history.setSequenceCount(seq);
+
+		while((text = reader.readLine()) != null)
+		{
+			text = encoder.decode(text);
+			history.partFromString(text);
+		}
+	}
+
+	public String detailsToString() {return detailsToString(false);}
+
+	public String detailsToString(boolean encrypt)
+	{
+		StringBuilder output = new StringBuilder();
+
 		if (encrypt)
 		{
 			String enc = encoder.encode("test string");
-			output += enc + '\n';
+			output.append(enc).append('\n');
 		}
 
-		String histOut = history.toString();
+		String line = "mostRecentHistoryEvent: " + mostRecentHistoryEvent;
 
 		if (encrypt)
+			line = encoder.encode(line);
+
+		output.append(line).append('\n');
+
+		for(PasswordDetails dets : details)
 		{
-			histOut = encoder.encode(histOut);
+			line = dets.toString();
+
+			if (encrypt)
+				line = encoder.encode(line);
+
+			output.append(line).append('\n');
 		}
 
-		output += histOut;
-		return output;
+		return output.toString();
 	}
 
-	public void fromString(String text, boolean decrypt) throws PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public void fromDetailsString(BufferedReader reader, boolean decrypt) throws IOException
 	{
-		details = new ArrayList<PasswordDetails>();
-	    if (decrypt)
-	    {
-			text = encoder.decode(text);
+		details = new ArrayList<>();
+		mostRecentHistoryEvent = null;
 
-			if (!text.startsWith("test string"))
-				return;
+		int count = -1;
+		String line;
+		while((line = reader.readLine()) != null)
+		{
+			count++;
+			if (decrypt)
+				line = encoder.decode(line);
 
-			text = text.substring(12);
-			text = encoder.decode(text);
-	    }
+			if (decrypt && count == 0)
+			{
+				if (!(line.equals("test string")))
+					return;
+			}
+			else if ((!decrypt && count == 0) || (decrypt && count == 1))
+			{
+				mostRecentHistoryEvent = line;
+			}
+			else
+			{
+				PasswordDetails dets =new PasswordDetails();
+				dets.fromString(line);
+				dets.setHistory(new PasswordDocumentHistory());
 
-		history.fromString(text);
-		playHistory();
+				details.add(dets);
+			}
+		}
 	}
 
 	public void playHistory() throws PasswordDocumentHistory.HistoryPlaybackException
@@ -99,6 +199,12 @@ public abstract class PasswordDocument
 		{
 			dets.setHistory(new PasswordDocumentHistory());
 		}
+
+		int sz = history.count();
+		if (sz > 0)
+			mostRecentHistoryEvent = history.getEvent(sz - 1).getIDSignature();
+		else
+			mostRecentHistoryEvent = null;
 	}
 
 	public interface LoadUpdate
@@ -108,7 +214,6 @@ public abstract class PasswordDocument
 
 	abstract public void save() throws Exception;
 
-	abstract public void load(LoadUpdate callback) throws Exception;
 	abstract public void load(boolean force) throws Exception;
 	abstract public void delete() throws Exception;
 	abstract public boolean testPassword();
@@ -152,6 +257,9 @@ public abstract class PasswordDocument
 			HistoryEventFactory.HistoryEvent evt = subHistory.getEvent(i);
 			history.addEvent(evt);
 		}
+
+		if (sz > 0)
+			mostRecentHistoryEvent = subHistory.getEvent(sz - 1).getIDSignature();
 	}
 
 	public void replaceDetails(PasswordDetails dets) throws PasswordDocumentHistory.HistoryPlaybackException

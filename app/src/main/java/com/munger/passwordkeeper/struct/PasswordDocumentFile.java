@@ -53,9 +53,16 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public void save() throws IOException
 	{
+		saveDetails();
+		saveHistory();
+		lastLoad = System.currentTimeMillis();
+	}
+
+	private void saveDetails() throws IOException
+	{
 		String path = rootPath + name;
 		File target = new File(path);
-		String content = toString(true);
+		String content = detailsToString(true);
 
 		if (!target.exists())
 			target.createNewFile();
@@ -63,24 +70,40 @@ public class PasswordDocumentFile extends PasswordDocument
 		FileOutputStream fos = new FileOutputStream(target);
 		fos.write(content.getBytes());
 		fos.close();
-		
-		lastLoad = System.currentTimeMillis();
 	}
 
-	private LoadUpdate loadUpdate = null;
-
-	public void load(final LoadUpdate update) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	private void saveHistory() throws IOException
 	{
-		loadUpdate = update;
-		load(false);
-		loadUpdate = null;
+		String path = rootPath + name + "-history";
+		File target = new File(path);
+		String content = deltasToEncryptedString();
+
+		if (!target.exists())
+			target.createNewFile();
+
+		FileOutputStream fos = new FileOutputStream(target);
+		fos.write(content.getBytes());
+		fos.close();
+	}
+
+	public interface ILoadEvents
+	{
+		void detailsLoaded();
+		void historyLoaded();
+		void historyProgress(float progress);
+	}
+
+	private ILoadEvents loadEvents = null;
+
+	public void setLoadEvents(ILoadEvents events)
+	{
+		loadEvents = events;
 	}
 
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		String path = rootPath + name;
 		File target = new File(path);
-		
 
 		long lastMod = target.lastModified();
 
@@ -89,38 +112,35 @@ public class PasswordDocumentFile extends PasswordDocument
 		
 		lastLoad = System.currentTimeMillis();
 		
-		
+		loadDetails();
+
+		if (loadEvents != null)
+			loadEvents.detailsLoaded();
+
+		loadHistory();
+
+		if (loadEvents != null)
+			loadEvents.historyLoaded();
+	}
+
+	private void loadDetails() throws IOException
+	{
+		String path = rootPath + name;
+		File target = new File(path);
+
 		details = new ArrayList<PasswordDetails>();
-		BufferedReader reader = null;
+		BufferedReader reader = new BufferedReader(new FileReader(target));
+		fromDetailsString(reader, true);
+	}
 
-		reader = new BufferedReader(new FileReader(target));
+	private void loadHistory() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	{
+		String path = rootPath + name + "-history";
+		File target = new File(path);
 
-		String line = reader.readLine();
-		if (line != null && line.length() > 0)
-		{
-			String dec = encoder.decode(line);
-
-			if (!dec.equals("test string"))
-				return;
-		}
-
-		line = reader.readLine();
-		if (line != null && line.length() > 0)
-		{
-			ThreadedCallbackWaiter decodeCallback = new ThreadedCallbackWaiter(new ThreadedCallbackWaiter.Callback() {public void callback(float progress)
-			{
-				if (loadUpdate != null)
-					loadUpdate.callback(progress);
-			}});
-
-			String dec = encoder.decode(line, decodeCallback);
-
-			decodeCallback.CleanUp();
-
-			history = new PasswordDocumentHistory();
-			history.fromString(dec);
-			playHistory();
-		}
+		history = new PasswordDocumentHistory();
+		BufferedReader reader = new BufferedReader(new FileReader(target));
+		deltasFromEncryptedString(reader);
 	}
 	
 	public boolean testPassword()
