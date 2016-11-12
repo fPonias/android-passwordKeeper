@@ -86,20 +86,6 @@ public class PasswordDocumentFile extends PasswordDocument
 		fos.close();
 	}
 
-	public interface ILoadEvents
-	{
-		void detailsLoaded();
-		void historyLoaded();
-		void historyProgress(float progress);
-	}
-
-	private ILoadEvents loadEvents = null;
-
-	public void setLoadEvents(ILoadEvents events)
-	{
-		loadEvents = events;
-	}
-
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		String path = rootPath + name;
@@ -114,13 +100,11 @@ public class PasswordDocumentFile extends PasswordDocument
 		
 		loadDetails();
 
-		if (loadEvents != null)
-			loadEvents.detailsLoaded();
+		for(ILoadEvents evt : loadEvents)
+			evt.detailsLoaded();
 
 		loadHistory();
-
-		if (loadEvents != null)
-			loadEvents.historyLoaded();
+		setHistoryLoaded();
 	}
 
 	private void loadDetails() throws IOException

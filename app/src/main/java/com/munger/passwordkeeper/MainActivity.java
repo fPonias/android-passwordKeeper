@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity
 		{
 			try
 			{
-				((PasswordDocumentFile) document).setLoadEvents(new PasswordDocumentFile.ILoadEvents() {
+				final PasswordDocument.ILoadEvents listener = new PasswordDocumentFile.ILoadEvents() {
 					@Override
 					public void detailsLoaded()
 					{
@@ -263,15 +263,15 @@ public class MainActivity extends AppCompatActivity
 					@Override
 					public void historyLoaded()
 					{
-						((PasswordDocumentFile) document).setLoadEvents(null);
+						document.removeLoadEvents(this);
 					}
 
 					@Override
 					public void historyProgress(float progress) {
 
 					}
-				});
-
+				};
+				document.addLoadEvents(listener);
 				document.load(true);
 			}
 			catch(Exception e){
@@ -281,7 +281,7 @@ public class MainActivity extends AppCompatActivity
 				loadingDialog.dismiss();
 				return;
 			}
-		}});
+		}}, "Initial Load Thread");
 		t.start();
 	}
 
