@@ -418,16 +418,18 @@ public class ViewDetailFragment extends Fragment
 		{
 			public void okay() 
 			{
-				MainActivity.getInstance().saveDetail(details);
-				setDetails(details);
-				
-				if (!goingBack)
-					onResume();
-				else
-					MainActivity.getInstance().onBackPressed();
+				MainActivity.getInstance().saveDetail(details, new MainActivity.Callback() {public void callback()
+				{
+					setDetails(details);
 
-				if (callback != null)
-					callback.apply(true);
+					if (!goingBack)
+						onResume();
+					else
+						MainActivity.getInstance().onBackPressed();
+
+					if (callback != null)
+						callback.apply(true);
+				}});
 			}
 			
 			public void discard()

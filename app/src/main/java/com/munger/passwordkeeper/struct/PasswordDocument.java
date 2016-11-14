@@ -116,7 +116,20 @@ public abstract class PasswordDocument
 
 	protected void awaitHistoryLoaded()
 	{
-		ILoadEvents eventListener = null;
+		final ILoadEvents eventListener = new ILoadEvents()
+		{
+			public void historyProgress(float progress) {}
+			public void detailsLoaded() {}
+
+			public void historyLoaded()
+			{
+				synchronized (historyLoadedLock)
+				{
+					Log.d("password", "history loaded, sending notify signal");
+					historyLoadedLock.notify();
+				}
+			}
+		};
 		final Thread t;
 
 		synchronized (historyLoadedLock)
@@ -124,19 +137,6 @@ public abstract class PasswordDocument
 			if (historyLoaded)
 				return;
 
-			eventListener = new ILoadEvents()
-			{
-				public void historyProgress(float progress) {}
-				public void detailsLoaded() {}
-
-				public void historyLoaded()
-				{
-					synchronized (historyLoadedLock)
-					{
-						historyLoadedLock.notify();
-					}
-				}
-			};
 			addLoadEvents(eventListener);
 
 			t = new Thread(new Runnable() {public void run()
@@ -148,11 +148,14 @@ public abstract class PasswordDocument
 						if (historyLoaded)
 							return;
 
+						Log.d("password", "awaiting history loaded signal");
 						historyLoadedLock.wait();
+						Log.d("password", "history loaded signal received");
 					}
 					catch(InterruptedException e){
-						return;
 					}
+
+					removeLoadEvents(eventListener);
 				}
 			}}, "Await History Load");
 			t.start();
@@ -303,7 +306,7 @@ public abstract class PasswordDocument
 				dets.fromString(line);
 				dets.setHistory(new PasswordDocumentHistory());
 
-				details.add(dets);
+				putDetails(dets);
 			}
 		}
 	}
@@ -331,7 +334,6 @@ public abstract class PasswordDocument
 	}
 
 	abstract public void save() throws Exception;
-
 	abstract public void load(boolean force) throws Exception;
 	abstract public void delete() throws Exception;
 	abstract public boolean testPassword();

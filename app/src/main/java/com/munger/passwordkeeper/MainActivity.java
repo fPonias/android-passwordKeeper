@@ -4,14 +4,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.concurrent.FutureTask;
 
 import android.app.ProgressDialog;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.os.AsyncTaskCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -76,6 +81,7 @@ public class MainActivity extends AppCompatActivity
 
 		if (savedInstanceState == null)
 		{
+			handler = new Handler(Looper.getMainLooper());
 			keyboardListener = new KeyboardListener(this);
 
 			try
@@ -102,6 +108,12 @@ public class MainActivity extends AppCompatActivity
 			{
 			}
 		}
+	}
+
+	private Handler handler;
+	public Handler getHandler()
+	{
+		return handler;
 	}
 
 	protected void setPasswordFile()
@@ -241,48 +253,60 @@ public class MainActivity extends AppCompatActivity
 	public void openFile()
 	{
 		final ProgressDialog loadingDialog = new ProgressDialog(this);
-		//loadingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		//loadingDialog.setMax(100);
-		//loadingDialog.setProgress(0);
 		loadingDialog.setMessage("Decrypting password data");
 		loadingDialog.show();
 
-
-		Thread t = new Thread(new Runnable() {public void run()
-		{
-			try
+		final PasswordDocument.ILoadEvents listener = new PasswordDocumentFile.ILoadEvents() {
+			@Override
+			public void detailsLoaded()
 			{
-				final PasswordDocument.ILoadEvents listener = new PasswordDocumentFile.ILoadEvents() {
-					@Override
-					public void detailsLoaded()
-					{
+				handler.post(new Runnable() {public void run()
+				{
+					if (loadingDialog.isShowing())
 						loadingDialog.dismiss();
-						openFile2();
-					}
 
-					@Override
-					public void historyLoaded()
-					{
-						document.removeLoadEvents(this);
-					}
-
-					@Override
-					public void historyProgress(float progress) {
-
-					}
-				};
-				document.addLoadEvents(listener);
-				document.load(true);
+					openFile2();
+				}});
 			}
-			catch(Exception e){
-				AlertFragment frag = new AlertFragment("Failed to open the document: " + document.name);
-				frag.show(getSupportFragmentManager(), "invalid_fragment");
 
-				loadingDialog.dismiss();
-				return;
+			@Override
+			public void historyLoaded()
+			{
 			}
-		}}, "Initial Load Thread");
-		t.start();
+
+			@Override
+			public void historyProgress(float progress) {
+
+			}
+		};
+		document.addLoadEvents(listener);
+
+		AsyncTask t = new AsyncTask()
+		{
+			protected Object doInBackground(Object[] params)
+			{
+				try
+				{
+					document.load(true);
+				}
+				catch(Exception e){
+					AlertFragment frag = new AlertFragment("Failed to open the document: " + document.name);
+					frag.show(getSupportFragmentManager(), "invalid_fragment");
+				}
+
+				return null;
+			}
+
+			protected void onPostExecute(Object o)
+			{
+				if (loadingDialog.isShowing())
+					loadingDialog.dismiss();
+
+				document.removeLoadEvents(listener);
+			}
+		};
+
+		t.execute(new Object[]{});
 	}
 
 	private void openFile2()
@@ -389,16 +413,40 @@ public class MainActivity extends AppCompatActivity
 
 	}
 
-	public void saveDetail(PasswordDetails detail)
+	public interface Callback
 	{
-		try
-		{
-			document.replaceDetails(detail);
-			document.save();
-		}
-		catch(Exception e){
-			Log.e("password", "failed to update password file");
-		}
+		void callback();
+	}
+
+	public void saveDetail(final PasswordDetails detail, final Callback callback)
+	{
+		final ProgressDialog loadingDialog = new ProgressDialog(this);
+		loadingDialog.setMessage("Saving password data");
+		loadingDialog.show();
+
+		AsyncTask t = new AsyncTask() {
+			protected Object doInBackground(Object[] params)
+			{
+				try
+				{
+					document.replaceDetails(detail);
+					document.save();
+				}
+				catch(Exception e){
+					Log.e("password", "failed to update password file");
+				}
+
+				return null;
+			}
+
+			@Override
+			protected void onPostExecute(Object o)
+			{
+				loadingDialog.dismiss();
+				callback.callback();
+			}
+		};
+		t.execute(new Object(){});
 	}
 
 	public void about()
