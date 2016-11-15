@@ -3,12 +3,18 @@ package com.munger.passwordkeeper.struct;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import com.munger.passwordkeeper.MainActivity;
@@ -62,27 +68,32 @@ public class PasswordDocumentFile extends PasswordDocument
 	{
 		String path = rootPath + name;
 		File target = new File(path);
-		String content = detailsToString(true);
-
 		if (!target.exists())
 			target.createNewFile();
 
-		FileOutputStream fos = new FileOutputStream(target);
-		fos.write(content.getBytes());
-		fos.close();
+		FileOutputStream fis = new FileOutputStream(target);
+		DataOutputStream dis = new DataOutputStream(fis);
+		detailsToEncryptedString(dis);
+
+		dis.flush();
+		dis.close();
+		fis.close();
 	}
 
 	private void saveHistory() throws IOException
 	{
 		String path = rootPath + name + "-history";
 		File target = new File(path);
-		String content = deltasToEncryptedString();
 
 		if (!target.exists())
 			target.createNewFile();
 
 		FileOutputStream fos = new FileOutputStream(target);
-		fos.write(content.getBytes());
+		DataOutputStream dos = new DataOutputStream(fos);
+		deltasToEncryptedString(dos);
+
+		dos.flush();
+		dos.close();
 		fos.close();
 	}
 
@@ -95,7 +106,7 @@ public class PasswordDocumentFile extends PasswordDocument
 
 		if (!force && lastLoad > lastMod)
 			return;
-		
+
 		lastLoad = System.currentTimeMillis();
 		
 		loadDetails();
@@ -111,50 +122,65 @@ public class PasswordDocumentFile extends PasswordDocument
 	{
 		String path = rootPath + name;
 		File target = new File(path);
+		FileInputStream fis = new FileInputStream(target);
+		DataInputStream dis = new DataInputStream(fis);
 
 		details = new ArrayList<PasswordDetails>();
-		BufferedReader reader = new BufferedReader(new FileReader(target));
-		fromDetailsString(reader, true);
+		detailsFromEncryptedString(dis);
+
+		dis.close();
+		fis.close();
 	}
 
 	private void loadHistory() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
+		historyLoaded = false;
 		String path = rootPath + name + "-history";
-		File target = new File(path);
+		FileInputStream fis = new FileInputStream(path);
+		DataInputStream dis = new DataInputStream(fis);
 
 		history = new PasswordDocumentHistory();
-		BufferedReader reader = new BufferedReader(new FileReader(target));
-		deltasFromEncryptedString(reader);
+		deltasFromEncryptedString(dis);
+
+		dis.close();
+		fis.close();
 	}
 	
 	public boolean testPassword()
 	{
 		String path = rootPath + name;
 		File target = new File(path);
-		BufferedReader reader = null;
+		FileInputStream fis = null;
+		DataInputStream dis = null;
 		boolean ret = false;
 		
 		try
 		{
-			reader = new BufferedReader(new FileReader(target));
-			
-			//load up the details one line at a time
-			String line = reader.readLine();
-			if (line != null && line.length() > 0)
-    		{
-    			String dec = encoder.decode(line);
-                if (dec.equals("test string"))
-                {
-                	ret = true;
-                }
-    		}
+			fis = new FileInputStream(target);
+			dis = new DataInputStream(fis);
+
+			int sz = dis.readInt();
+			byte[] lineEnc = new byte[sz];
+			dis.read(lineEnc);
+			String line = encoder.decodeFromBytes(lineEnc);
+
+			if (line.equals("test string"))
+			{
+				ret = true;
+			}
 		}
 		catch(IOException e){
 			
 		}
 		finally{
-			if (reader != null)
-				try{reader.close();} catch(IOException e){}
+			try
+			{
+				if (dis != null)
+					dis.close();
+				if (fis != null)
+					fis.close();
+			}
+			catch(Exception e){}
 		}
 		
 		return ret;

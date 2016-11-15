@@ -69,6 +69,27 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode(JN
 	return ret;
 }
 
+JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_encodeToBytes (JNIEnv * env, jobject jthis, jint jcontext, jstring jtarget)
+{
+    aes256_context* ctx = (aes256_context*) jcontext;
+    const char* targetPtr = (*env)->GetStringUTFChars(env, jtarget, 0);
+
+    unsigned int sz = strlen(targetPtr);
+
+    unsigned int retSz = sz / 16;
+    if (sz % 16 != 0)
+        retSz += 1;
+    retSz *= 16;
+
+    char retPtr[retSz];
+    char* retPtr2 = &(retPtr[0]);
+    aes256_encryptString(ctx, targetPtr, retPtr2);
+
+    jbyteArray ret = (*env)->NewByteArray(env, retSz);
+    (*env)->SetByteArrayRegion(env, ret, 0, retSz, retPtr2);
+    return ret;
+}
+
 JNIEnv* decodeCallbackEnv = 0;
 jobject* decodeCallbackObject = 0;
 jmethodID decodeCallbackMethodID = 0;
@@ -115,6 +136,41 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JN
 
     if (found > 0)
     	ret = (*env)->NewStringUTF(env, retPtr);
+
+    return ret;
+}
+
+JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFromBytes (JNIEnv *env, jobject jthis, jint jcontext, jbyteArray jtarget)
+{
+    aes256_context* ctx = (aes256_context*) jcontext;
+    int sz = (*env)->GetArrayLength(env, jtarget);
+    char targetArr[sz];
+    char* targetPtr = &(targetArr[0]);
+    (*env)->GetByteArrayRegion(env, jtarget, 0, sz, targetPtr);
+
+    char retArr[sz + 1];
+    retArr[sz] = '\0';
+    char* retPtr = &(retArr[0]);
+    decodeCallbackEnv = env;
+    aes256_decryptString(ctx, targetPtr, retPtr, sz, &doDecodeCallback);
+
+    jstring ret;
+    int found = 1;
+
+    //check the validity of the string
+    for (int i = 0; i < sz; i++)
+    {
+        //null tab return alphanumeric and symbols
+        if (!(retPtr[i] == 0 || retPtr[i] == 9 || retPtr[i] == 10 || (retPtr[i] > 31 && retPtr[i] < 127)))
+        {
+            ret = (*env)->NewStringUTF(env, "");
+            found = 0;
+            break;
+        }
+    }
+
+    if (found > 0)
+        ret = (*env)->NewStringUTF(env, retPtr);
 
     return ret;
 }

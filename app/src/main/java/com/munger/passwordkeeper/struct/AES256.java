@@ -29,6 +29,12 @@ public class AES256
 		return ret;
 	}
 
+	public byte[] encodeToBytes(String target)
+	{
+		byte[] ret = encodeToBytes(context, target);
+		return ret;
+	}
+
 	public String decode(String target)
 	{
 		return decode(target, null);
@@ -38,6 +44,14 @@ public class AES256
 	{
 		decodeCallbackWaiter = callbackWaiter;
 		return decode(context, target);
+	}
+
+	public String decodeFromBytes(byte[] target) { return decodeFromBytes(target, null); }
+
+	public String decodeFromBytes(byte[] target, ThreadedCallbackWaiter callbackWaiter)
+	{
+		decodeCallbackWaiter = callbackWaiter;
+		return decodeFromBytes(context, target);
 	}
 
 	public void doCallback(float progress)
@@ -50,4 +64,6 @@ public class AES256
 	private native void destroy(int context);
 	private native String encode(int context, String target);
 	private native String decode(int context, String target);
+	private native byte[] encodeToBytes(int context, String target);
+	private native String decodeFromBytes(int content, byte[] target);
 }

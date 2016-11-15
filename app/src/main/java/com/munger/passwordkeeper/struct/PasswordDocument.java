@@ -2,6 +2,11 @@ package com.munger.passwordkeeper.struct;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,6 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -29,7 +35,7 @@ public abstract class PasswordDocument
 
 	protected PasswordDocumentHistory history;
 	protected String mostRecentHistoryEvent = null;
-	protected boolean historyLoaded = false;
+	protected boolean historyLoaded = true;
 	protected Object historyLoadedLock = new Object();
 	
 	public PasswordDocument(String name)
@@ -116,6 +122,12 @@ public abstract class PasswordDocument
 
 	protected void awaitHistoryLoaded()
 	{
+		synchronized (historyLoadedLock)
+		{
+			if (historyLoaded)
+				return;
+		}
+
 		final ILoadEvents eventListener = new ILoadEvents()
 		{
 			public void historyProgress(float progress) {}
@@ -134,9 +146,6 @@ public abstract class PasswordDocument
 
 		synchronized (historyLoadedLock)
 		{
-			if (historyLoaded)
-				return;
-
 			addLoadEvents(eventListener);
 
 			t = new Thread(new Runnable() {public void run()
@@ -177,16 +186,19 @@ public abstract class PasswordDocument
 		setHistoryLoaded();
 	}
 
-	public String deltasToEncryptedString()
+	public void deltasToEncryptedString(DataOutput dos) throws IOException
 	{
 		awaitHistoryLoaded();
-		StringBuilder b = new StringBuilder();
+
+		writeLine(dos, "test string");
 
 		long maxIdx = history.getSequenceCount();
-		b.append(encoder.encode(String.valueOf(maxIdx))).append('\n');
+		writeLine(dos, String.valueOf(maxIdx));
 
 		ArrayList<Integer> sizes = new ArrayList<>();
+		ArrayList<byte[]> entries = new ArrayList<>();
 
+		byte[] lineEnc;
 		int batchSize = 10;
 		for (int i = 0; i < maxIdx; i += batchSize)
 		{
@@ -194,19 +206,14 @@ public abstract class PasswordDocument
 
 			if (line != null)
 			{
-				line = encoder.encode(line) + '\n';
-				sizes.add(line.length());
-				b.append(line);
+				lineEnc = encoder.encodeToBytes(line);
+				sizes.add(lineEnc.length);
+				entries.add(lineEnc);
 			}
 			else
 				sizes.add(0);
 		}
 
-
-		StringBuilder headersb = new StringBuilder();
-
-		String enc = encoder.encode("test string");
-		headersb.append(enc).append('\n');
 		String sizeHeader = "";
 		for(int sz : sizes)
 		{
@@ -214,100 +221,149 @@ public abstract class PasswordDocument
 				sizeHeader += ',';
 			sizeHeader += sz;
 		}
-		headersb.append(encoder.encode(sizeHeader)).append('\n');
-		b.insert(0, headersb.toString());
 
-		return b.toString();
+		writeLine(dos, sizeHeader);
+
+		for(byte[] entry : entries)
+		{
+			dos.write(entry);
+		}
 	}
 
-	public void deltasFromEncryptedString(BufferedReader reader) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public void deltasFromEncryptedString(DataInput inArr) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		historyLoaded = false;
 		history = new PasswordDocumentHistory();
-		String text = null;
-
-		text = encoder.decode(reader.readLine());
+		String text = readLine(inArr);
 
 		if (!text.equals("test string"))
 			return;
 
-		text = encoder.decode(reader.readLine());
-
-		text = encoder.decode(reader.readLine());
+		text = readLine(inArr);
 		long seq = Long.parseLong(text);
 		history.setSequenceCount(seq);
 
-		while((text = reader.readLine()) != null)
+		text = readLine(inArr);
+		String[] sizeArr = text.split(",");
+
+		for(String sizeStr : sizeArr)
 		{
-			text = encoder.decode(text);
-			history.partFromString(text);
+			int sz = Integer.parseInt(sizeStr);
+
+			if (sz > 0)
+			{
+				text = readLine(inArr, sz);
+				history.partFromString(text);
+			}
 		}
 
 		setHistoryLoaded();
 	}
 
-	public String detailsToString() {return detailsToString(false);}
+	private String readLine(DataInput inArr, int sz) throws IOException
+	{
+		byte[] lineEnc = new byte[sz];
+		inArr.readFully(lineEnc);
+		String ret = encoder.decodeFromBytes(lineEnc);
+		return ret;
+	}
 
-	public String detailsToString(boolean encrypt)
+	private String readLine(DataInput inArr) throws IOException
+	{
+		int sz = inArr.readInt();
+		return readLine(inArr, sz);
+	}
+
+	private void writeLine(DataOutput dos, String line) throws IOException
+	{
+		byte[] enc = encoder.encodeToBytes(line);
+		dos.writeInt(enc.length);
+		dos.write(enc);
+	}
+
+	public String detailsToString()
 	{
 		StringBuilder output = new StringBuilder();
 
-		if (encrypt)
-		{
-			String enc = encoder.encode("test string");
-			output.append(enc).append('\n');
-		}
-
 		String line = "mostRecentHistoryEvent: " + mostRecentHistoryEvent;
-
-		if (encrypt)
-			line = encoder.encode(line);
-
 		output.append(line).append('\n');
 
 		for(PasswordDetails dets : details)
 		{
 			line = dets.toString();
-
-			if (encrypt)
-				line = encoder.encode(line);
-
 			output.append(line).append('\n');
 		}
 
 		return output.toString();
 	}
 
-	public void fromDetailsString(BufferedReader reader, boolean decrypt) throws IOException
+	public void detailsToEncryptedString(DataOutput dos) throws IOException
+	{
+		writeLine(dos, "test string");
+
+		String line = (mostRecentHistoryEvent != null) ? mostRecentHistoryEvent : "null";
+		writeLine(dos, line);
+
+		int sz = details.size();
+		writeLine(dos, String.valueOf(sz));
+
+		for(PasswordDetails dets : details)
+		{
+			line = dets.toString();
+			writeLine(dos, line);
+		}
+	}
+
+	public void fromDetailsString(BufferedReader reader) throws IOException
 	{
 		details = new ArrayList<>();
 		mostRecentHistoryEvent = null;
-
 		int count = -1;
+
 		String line;
 		while((line = reader.readLine()) != null)
 		{
 			count++;
-			if (decrypt)
-				line = encoder.decode(line);
 
-			if (decrypt && count == 0)
+			if (count == 0)
 			{
-				if (!(line.equals("test string")))
-					return;
-			}
-			else if ((!decrypt && count == 0) || (decrypt && count == 1))
-			{
-				mostRecentHistoryEvent = line;
+				mostRecentHistoryEvent = (line.equals("null")) ? null : line;
 			}
 			else
 			{
-				PasswordDetails dets =new PasswordDetails();
+				PasswordDetails dets = new PasswordDetails();
 				dets.fromString(line);
 				dets.setHistory(new PasswordDocumentHistory());
 
 				putDetails(dets);
 			}
+		}
+	}
+
+	public void detailsFromEncryptedString(DataInput dis) throws IOException
+	{
+		details = new ArrayList<>();
+		mostRecentHistoryEvent = null;
+
+		String test = readLine(dis);
+		if (!test.equals("test string"))
+			return;
+
+		String line = readLine(dis);
+		mostRecentHistoryEvent = line;
+
+		line = readLine(dis);
+		int sz = Integer.parseInt(line);
+
+		for (int i = 0; i < sz; i++)
+		{
+			line = readLine(dis);
+
+			PasswordDetails dets = new PasswordDetails();
+			dets.fromString(line);
+			dets.setHistory(new PasswordDocumentHistory());
+
+			putDetails(dets);
 		}
 	}
 

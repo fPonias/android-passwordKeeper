@@ -32,6 +32,9 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode
   (JNIEnv *, jobject, jint, jstring);
 
 
+JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_encodeToBytes
+        (JNIEnv *, jobject, jint, jstring);
+
 /*
  * Class:     com_munger_passwordkeeper_struct_AES256
  * Method:    decode
@@ -39,6 +42,10 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode
  */
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode
   (JNIEnv *, jobject, jint, jstring);
+
+
+JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFromBytes
+        (JNIEnv *, jobject, jint, jbyteArray);
 
 void setupDecodeCallback(JNIEnv * env, jobject* jthis);
 void cleanupDecodeCallback(JNIEnv* env);
