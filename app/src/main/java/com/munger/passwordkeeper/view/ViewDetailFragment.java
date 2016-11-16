@@ -418,7 +418,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			public void okay() 
 			{
-				MainActivity.getInstance().saveDetail(details, new MainActivity.Callback() {public void callback()
+				MainActivity.getInstance().saveDetail(details, new MainActivity.Callback() {public void callback(Object o)
 				{
 					setDetails(details);
 

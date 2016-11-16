@@ -118,18 +118,21 @@ public class SettingsFragment extends PreferenceFragmentCompat
         fileDialog.addFileListener(new FileDialog.FileSelectedListener() {public void fileSelected(File file)
         {
             Log.d(getClass().getName(), "selected file " + file.toString());
-            boolean success = MainActivity.getInstance().importFile(file.getPath());
-
-            try
+            MainActivity.getInstance().importFile(file.getPath(), new MainActivity.Callback() {public void callback(Object result)
             {
-                MainActivity.getInstance().document.save();
-            }
-            catch(Exception e){
-                success = false;
-            }
+                boolean success = (boolean) result;
 
-            if (success)
-                MainActivity.getInstance().onBackPressed();
+                try
+                {
+                    MainActivity.getInstance().document.save();
+                }
+                catch(Exception e){
+                    success = false;
+                }
+
+                if (success)
+                    MainActivity.getInstance().onBackPressed();
+            }});
         }});
 
         fileDialog.showDialog();

@@ -48,7 +48,21 @@ public class AlertFragment extends DialogFragment
 		builder.setMessage(message);
 		builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) 
 		{
+			if (callback != null)
+				callback.closed();
 		}});
 		return builder.create();
+	}
+
+	public interface CloseCallback
+	{
+		void closed();
+	}
+
+	private CloseCallback callback = null;
+
+	public void setCloseCallback(CloseCallback callback)
+	{
+		this.callback = callback;
 	}
 }

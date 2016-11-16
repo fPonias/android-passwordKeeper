@@ -7,6 +7,7 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,11 +33,18 @@ public abstract class PasswordDocument
 
 	protected ArrayList<PasswordDetails> details;
 	public String name;
+	protected ConcurrentSkipListSet<ILoadEvents> loadEvents = new ConcurrentSkipListSet<>();
+
 
 	protected PasswordDocumentHistory history;
 	protected String mostRecentHistoryEvent = null;
 	protected boolean historyLoaded = true;
 	protected Object historyLoadedLock = new Object();
+
+
+	protected final int HISTORY_BATCH_SIZE = 10;
+	protected final String testString = "test string";
+	public static final String emptyEntryTitle = "new entry";
 	
 	public PasswordDocument(String name)
 	{
@@ -79,8 +87,6 @@ public abstract class PasswordDocument
 		public abstract void historyLoaded();
 		public abstract void historyProgress(float progress);
 	}
-
-	protected ConcurrentSkipListSet<ILoadEvents> loadEvents = new ConcurrentSkipListSet<>();
 
 	public void addLoadEvents(ILoadEvents events)
 	{
@@ -186,47 +192,110 @@ public abstract class PasswordDocument
 		setHistoryLoaded();
 	}
 
+	public void updateEncryptedDeltas(DataInput dis, DataOutput dos) throws IOException
+	{
+		awaitHistoryLoaded();
+
+		String line = readLine(dis);
+		if (!line.equals(testString))
+			return;
+
+		long idx = dis.readLong();
+		long inBatch = idx / HISTORY_BATCH_SIZE;
+		long outBatch = history.getSequenceCount() / HISTORY_BATCH_SIZE;
+
+
+		writeLine(dos, testString);
+
+		long maxIdx = history.getSequenceCount();
+		dos.writeLong(maxIdx);
+
+
+		if (inBatch > outBatch)
+			return;
+
+		for (int i = 0; i < inBatch; i++)
+		{
+			int index = dis.readInt();
+			int sz = dis.readInt();
+
+			transferBatch(index, sz, dis, dos);
+		}
+
+		for (int j = (int) inBatch * HISTORY_BATCH_SIZE; j < maxIdx; j += HISTORY_BATCH_SIZE)
+		{
+			writeBatch(j, dos);
+		}
+	}
+
+	private void transferBatch(int index, int sz, DataInput dis, DataOutput dos) throws IOException
+	{
+		dos.writeInt(index);
+
+		if (sz == 0)
+		{
+			dos.writeInt(0);
+			return;
+		}
+
+		byte[] hash = new byte[32];
+		dis.readFully(hash);
+		String hashStr = new String(hash);
+		byte[] lineEnc = new byte[sz];
+		dis.readFully(lineEnc);
+
+		String batchLine = history.partToString(index, HISTORY_BATCH_SIZE);
+		String batchHash = encoder.md5Hash(batchLine);
+
+		if (batchHash.equals(hashStr))
+		{
+			dos.writeInt(sz);
+			dos.write(hash);
+			dos.write(lineEnc);
+		}
+		else
+		{
+			lineEnc = encoder.encodeToBytes(batchLine);
+
+			dos.writeInt(lineEnc.length);
+			dos.writeBytes(batchHash);
+			dos.write(lineEnc);
+		}
+	}
+
 	public void deltasToEncryptedString(DataOutput dos) throws IOException
 	{
 		awaitHistoryLoaded();
 
-		writeLine(dos, "test string");
+		writeLine(dos, testString);
 
 		long maxIdx = history.getSequenceCount();
-		writeLine(dos, String.valueOf(maxIdx));
+		dos.writeLong(maxIdx);
 
-		ArrayList<Integer> sizes = new ArrayList<>();
-		ArrayList<byte[]> entries = new ArrayList<>();
-
-		byte[] lineEnc;
-		int batchSize = 10;
-		for (int i = 0; i < maxIdx; i += batchSize)
+		for (int i = 0; i < maxIdx; i += HISTORY_BATCH_SIZE)
 		{
-			String line = history.partToString(i, batchSize);
-
-			if (line != null)
-			{
-				lineEnc = encoder.encodeToBytes(line);
-				sizes.add(lineEnc.length);
-				entries.add(lineEnc);
-			}
-			else
-				sizes.add(0);
+			writeBatch(i, dos);
 		}
+	}
 
-		String sizeHeader = "";
-		for(int sz : sizes)
+	protected void writeBatch(int idx, DataOutput dos) throws IOException
+	{
+		String line = history.partToString(idx, HISTORY_BATCH_SIZE);
+
+		if (line != null)
 		{
-			if (!sizeHeader.isEmpty())
-				sizeHeader += ',';
-			sizeHeader += sz;
+			byte[] lineEnc = encoder.encodeToBytes(line);
+			String hash = encoder.md5Hash(line);
+
+			dos.writeInt(idx);
+			dos.writeInt(lineEnc.length);
+			dos.writeBytes(hash);
+			dos.write(lineEnc);
 		}
-
-		writeLine(dos, sizeHeader);
-
-		for(byte[] entry : entries)
+		else
 		{
-			dos.write(entry);
+			dos.writeInt(idx);
+			dos.writeInt(0);
 		}
 	}
 
@@ -234,26 +303,34 @@ public abstract class PasswordDocument
 	{
 		historyLoaded = false;
 		history = new PasswordDocumentHistory();
-		String text = readLine(inArr);
 
-		if (!text.equals("test string"))
+		String line = readLine(inArr);
+		if (!line.equals(testString))
 			return;
 
-		text = readLine(inArr);
-		long seq = Long.parseLong(text);
-		history.setSequenceCount(seq);
+		long idx = inArr.readLong();
+		history.setSequenceCount(idx);
 
-		text = readLine(inArr);
-		String[] sizeArr = text.split(",");
-
-		for(String sizeStr : sizeArr)
+		int i = 0;
+		while (true)
 		{
-			int sz = Integer.parseInt(sizeStr);
+			try
+			{
+				i = inArr.readInt();
+			}
+			catch(EOFException e){
+				break;
+			}
+
+			int sz = inArr.readInt();
 
 			if (sz > 0)
 			{
-				text = readLine(inArr, sz);
-				history.partFromString(text);
+				byte[] hash = new byte[32];
+				inArr.readFully(hash);
+				String hashStr = new String(hash);
+				String batchLine = readLine(inArr, sz);
+				history.partFromString(batchLine);
 			}
 		}
 
@@ -265,6 +342,7 @@ public abstract class PasswordDocument
 		byte[] lineEnc = new byte[sz];
 		inArr.readFully(lineEnc);
 		String ret = encoder.decodeFromBytes(lineEnc);
+
 		return ret;
 	}
 
@@ -299,7 +377,7 @@ public abstract class PasswordDocument
 
 	public void detailsToEncryptedString(DataOutput dos) throws IOException
 	{
-		writeLine(dos, "test string");
+		writeLine(dos, testString);
 
 		String line = (mostRecentHistoryEvent != null) ? mostRecentHistoryEvent : "null";
 		writeLine(dos, line);
@@ -346,7 +424,7 @@ public abstract class PasswordDocument
 		mostRecentHistoryEvent = null;
 
 		String test = readLine(dis);
-		if (!test.equals("test string"))
+		if (!test.equals(testString))
 			return;
 
 		String line = readLine(dis);
@@ -406,8 +484,6 @@ public abstract class PasswordDocument
 		details.add(dets);
 		detailsIndex.put(dets.getId(), dets);
 	}
-
-	public static String emptyEntryTitle = "new entry";
 
 	public PasswordDetails addEmptyEntry()
 	{

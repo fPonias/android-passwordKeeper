@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 import com.munger.passwordkeeper.MainActivity;
@@ -59,8 +60,8 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public void save() throws IOException
 	{
-		saveDetails();
 		saveHistory();
+		saveDetails();
 		lastLoad = System.currentTimeMillis();
 	}
 
@@ -86,15 +87,69 @@ public class PasswordDocumentFile extends PasswordDocument
 		File target = new File(path);
 
 		if (!target.exists())
-			target.createNewFile();
+		{
+			saveNewHistory(target);
+		}
+		else
+		{
+			saveUpdatedHistory(target);
+		}
+	}
+
+	protected void saveNewHistory(File target) throws IOException
+	{
+		if (target.exists())
+			target.delete();
+
+		target.createNewFile();
 
 		FileOutputStream fos = new FileOutputStream(target);
 		DataOutputStream dos = new DataOutputStream(fos);
+
 		deltasToEncryptedString(dos);
 
 		dos.flush();
 		dos.close();
 		fos.close();
+	}
+
+	protected void saveUpdatedHistory(File target) throws IOException
+	{
+		FileInputStream fis = new FileInputStream(target);
+		DataInputStream dis = new DataInputStream(fis);
+
+		String tmpPath = rootPath + name + "-history-tmp";
+		File tmpTarget = new File(tmpPath);
+
+		if (tmpTarget.exists())
+			tmpTarget.delete();
+
+		tmpTarget.createNewFile();
+
+		FileOutputStream fos = new FileOutputStream(tmpTarget);
+		DataOutputStream dos = new DataOutputStream(fos);
+
+		updateEncryptedDeltas(dis, dos);
+
+		dis.close();
+		dos.flush();
+		dos.close();
+		fos.close();
+
+		replaceWithTemp(target, tmpTarget);
+	}
+
+	protected void replaceWithTemp(File target, File tmpTarget) throws IOException
+	{
+		target.delete();
+
+		FileChannel inChannel = new FileInputStream(tmpTarget).getChannel();
+		FileChannel outChannel = new FileOutputStream(target).getChannel();
+		outChannel.transferFrom(inChannel, 0, inChannel.size());
+		inChannel.close();
+		outChannel.close();
+
+		tmpTarget.delete();
 	}
 
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
@@ -170,7 +225,7 @@ public class PasswordDocumentFile extends PasswordDocument
 			}
 		}
 		catch(IOException e){
-			
+			Log.d("password", "Failed to open password file");
 		}
 		finally{
 			try

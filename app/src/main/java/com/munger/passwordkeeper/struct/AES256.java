@@ -66,4 +66,5 @@ public class AES256
 	private native String decode(int context, String target);
 	private native byte[] encodeToBytes(int context, String target);
 	private native String decodeFromBytes(int content, byte[] target);
+	public native String md5Hash(String target);
 }

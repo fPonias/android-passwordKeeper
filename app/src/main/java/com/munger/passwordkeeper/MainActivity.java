@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity
 		}
 		else
 		{
-			getPassword();
+			startGetPassword();
 		}
 	}
 
@@ -217,6 +217,16 @@ public class MainActivity extends AppCompatActivity
 		trans.commit();
 	}
 
+	protected void startGetPassword()
+	{
+		AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
+		{
+			getPassword();
+			return null;
+		}};
+		t.execute(new Object(){});
+	}
+
 	protected void getPassword()
 	{
 		final PasswordFragment inDialog = new PasswordFragment("Input the document password", "password", new PasswordFragment.Listener()
@@ -226,12 +236,17 @@ public class MainActivity extends AppCompatActivity
 				document.setPassword(password);
 				boolean passed = document.testPassword();
 
-				that.dismiss();
-
 				if (!passed)
 				{
+					that.dismiss();
+
 					AlertFragment frag = new AlertFragment("Incorrect password.");
 					frag.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
+					frag.setCloseCallback(new AlertFragment.CloseCallback() {public void closed()
+					{
+						startGetPassword();
+					}});
+
 					return false;
 				}
 				else
@@ -328,24 +343,43 @@ public class MainActivity extends AppCompatActivity
 		trans.commit();
 	}
 
-	public boolean importFile(String path)
+	public void importFile(final String path, final Callback callback)
 	{
-		try
-		{
-			PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
-			fileImport.load(false);
-			document.appendDocument(fileImport);
-			document.save();
-		}
-		catch(Exception e){
-			AlertFragment frag = new AlertFragment("Failed to import the document: " + path);
-			frag.show(getSupportFragmentManager(), "invalid_fragment");
-			return false;
-		}
+		final ProgressDialog loadingDialog = new ProgressDialog(this);
+		loadingDialog.setMessage("Importing password data");
+		loadingDialog.show();
 
-		AlertFragment frag = new AlertFragment("Successfully imported!");
-		frag.show(getSupportFragmentManager(), "invalid_fragment");
-		return true;
+		AsyncTask t = new AsyncTask()
+		{
+			protected Object doInBackground(Object[] params)
+			{
+				try
+				{
+					PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
+					fileImport.load(false);
+					document.appendDocument(fileImport);
+					document.save();
+				}
+				catch(Exception e){
+					AlertFragment frag = new AlertFragment("Failed to import the document: " + path);
+					frag.show(getSupportFragmentManager(), "invalid_fragment");
+					return false;
+				}
+
+				return true;
+			}
+
+			protected void onPostExecute(Object o)
+			{
+				loadingDialog.dismiss();
+
+				AlertFragment frag = new AlertFragment("Successfully imported!");
+				frag.show(getSupportFragmentManager(), "invalid_fragment");
+
+				callback.callback(o);
+			}
+		};
+		t.execute(new Object[]{});
 	}
 
 	public void deleteData()
@@ -415,7 +449,7 @@ public class MainActivity extends AppCompatActivity
 
 	public interface Callback
 	{
-		void callback();
+		void callback(Object result);
 	}
 
 	public void saveDetail(final PasswordDetails detail, final Callback callback)
@@ -431,6 +465,7 @@ public class MainActivity extends AppCompatActivity
 				{
 					document.replaceDetails(detail);
 					document.save();
+					detail.setHistory(new PasswordDocumentHistory());
 				}
 				catch(Exception e){
 					Log.e("password", "failed to update password file");
@@ -443,7 +478,7 @@ public class MainActivity extends AppCompatActivity
 			protected void onPostExecute(Object o)
 			{
 				loadingDialog.dismiss();
-				callback.callback();
+				callback.callback(null);
 			}
 		};
 		t.execute(new Object(){});
