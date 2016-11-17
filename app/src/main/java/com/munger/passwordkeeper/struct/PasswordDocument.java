@@ -469,8 +469,24 @@ public abstract class PasswordDocument
 
 	abstract public void save() throws Exception;
 	abstract public void load(boolean force) throws Exception;
+	abstract protected void onClose() throws Exception;
 	abstract public void delete() throws Exception;
 	abstract public boolean testPassword();
+
+	public void close() throws Exception
+	{
+		encoder.cleanUp();
+		encoder = null;
+
+		lastLoad = 0;
+
+		details = new ArrayList<>();
+		loadEvents = new ConcurrentSkipListSet<>();
+
+		history = new PasswordDocumentHistory();
+		mostRecentHistoryEvent = null;
+		historyLoaded = true;
+	}
 
 	protected HashMap<String, PasswordDetails> detailsIndex;
 

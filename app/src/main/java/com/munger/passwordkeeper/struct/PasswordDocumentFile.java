@@ -152,6 +152,11 @@ public class PasswordDocumentFile extends PasswordDocument
 		tmpTarget.delete();
 	}
 
+	public void close() throws IOException
+	{
+
+	}
+
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		String path = rootPath + name;

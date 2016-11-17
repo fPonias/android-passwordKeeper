@@ -16,12 +16,10 @@ public class AES256
 		context = init(password);
 	}
 
-	@Override
-	protected void finalize() throws Throwable 
+	public void cleanUp()
 	{
 		destroy(context);
-		super.finalize();
-	};
+	}
 
 	public String encode(String target)
 	{

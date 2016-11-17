@@ -37,6 +37,9 @@ public class SettingsFragment extends PreferenceFragmentCompat
     Preference deleteBtn;
     Preference aboutBtn;
 
+    public static final String PREF_NAME_SAVE_TO_CLOUD = "settings_saveToCloud";
+    public static final String PREF_NAME_TIMEOUT_LIST = "settings_timeout";
+
     public static String getName()
     {
         return "Settings";
@@ -64,8 +67,8 @@ public class SettingsFragment extends PreferenceFragmentCompat
         // Load the preferences from an XML resource
         setPreferencesFromResource(R.xml.fragment_settings, rootKey);
 
-        saveToCloudBox = (CheckBoxPreference) findPreference("settings_saveToCloud");
-        timeoutList = (ListPreference) findPreference("settings_timeout");
+        saveToCloudBox = (CheckBoxPreference) findPreference(PREF_NAME_SAVE_TO_CLOUD);
+        timeoutList = (ListPreference) findPreference(PREF_NAME_TIMEOUT_LIST);
         changePasswordBtn = findPreference("settings_changePassword");
         importFileBtn = findPreference("settings_importFile");
         deleteBtn = findPreference("settings_deleteFile");

@@ -1,12 +1,15 @@
 package com.munger.passwordkeeper;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.concurrent.FutureTask;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,20 +19,19 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.os.AsyncTaskCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.WindowManager;
+import android.view.MotionEvent;
 
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.InputFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.struct.Config;
-import com.munger.passwordkeeper.struct.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.PasswordDocument;
 import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 import com.munger.passwordkeeper.struct.PasswordDocumentFileImport;
@@ -56,16 +58,18 @@ public class MainActivity extends AppCompatActivity
 	public Config config;
 
 	public KeyboardListener keyboardListener;
+	private SharedPreferences preferences;
 
 	private CreateFileFragment createFileFragment;
 	private ViewFileFragment viewFileFragment;
 	private ViewDetailFragment viewDetailFragment;
 	private SettingsFragment settingsFragment;
 
-	private Object quitLock = new Object();
-	private Long quitTime;
-	private Long quitDelta = 90000L;
 	private Thread quitThread;
+	private final long QUIT_CHECK_PERIOD = 1000;
+	private long quitTime;
+	private Object quitLock = new Object();
+	private boolean quitCheckerRunning;
 
 	private boolean editable = false;
 
@@ -73,6 +77,18 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
+		Intent i = getIntent();
+		if (i.hasExtra("wakeup"))
+		{
+			Log.d("password", "received wake intent");
+			long intentQuitTime = i.getLongExtra("quitTime", -1);
+
+			if (intentQuitTime == -1 || (intentQuitTime > 0 && System.currentTimeMillis() > intentQuitTime))
+			{
+				reset();
+			}
+		}
+
 		instance = this;
 
 		super.onCreate(savedInstanceState);
@@ -108,6 +124,144 @@ public class MainActivity extends AppCompatActivity
 			{
 			}
 		}
+
+		preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		preferences.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+		{
+			if (key.equals(SettingsFragment.PREF_NAME_TIMEOUT_LIST))
+			{
+				resetQuitTimer();
+			}
+			else if (key.equals(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD))
+			{
+
+			}
+		}});
+
+		resetQuitTimer();
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event)
+	{
+		resetQuitTimer();
+
+		return super.onTouchEvent(event);
+	}
+
+	protected PendingIntent wakeupIntent = null;
+
+	@Override
+	protected void onPause()
+	{
+		AlarmManager mgr = (AlarmManager) getSystemService(ALARM_SERVICE);
+		Intent alarmIntent = new Intent(this, MainActivity.class);
+		alarmIntent.putExtra("wakeup", true);
+		alarmIntent.putExtra("quitTime", quitTime);
+		alarmIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+		wakeupIntent = PendingIntent.getActivity(this, 1, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
+		mgr.set(AlarmManager.RTC_WAKEUP, quitTime, wakeupIntent);
+
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+
+		if (wakeupIntent != null)
+			wakeupIntent.cancel();
+	}
+
+	public void resetQuitTimer()
+	{
+		String valueStr = preferences.getString(SettingsFragment.PREF_NAME_TIMEOUT_LIST, "5");
+		int value = Integer.valueOf(valueStr);
+		boolean doStart = false;
+		boolean doStop = false;
+		synchronized (quitLock)
+		{
+			if (value > 0)
+			{
+				if (quitThread == null)
+					doStart = true;
+
+				quitTime = System.currentTimeMillis() + value * 60000;
+			}
+			else if (value == -1)
+			{
+				if (quitThread != null)
+					doStop = true;
+
+				quitTime = Long.MAX_VALUE;
+			}
+		}
+
+		if (doStop)
+			stopQuitTimer();
+
+		if (doStart)
+			startQuitTimer();
+	}
+
+	private void startQuitTimer()
+	{
+		synchronized (quitLock)
+		{
+			if (quitCheckerRunning)
+				return;
+
+			quitCheckerRunning = true;
+			quitThread = new Thread(new Runnable() {public void run()
+			{
+				long currentTime;
+				while (true)
+				{
+					synchronized (quitLock)
+					{
+						if (!quitCheckerRunning)
+							return;
+
+						currentTime = System.currentTimeMillis();
+
+						if (currentTime > quitTime)
+						{
+							handler.post(new Runnable() {public void run()
+							{
+								Log.d("password", "Timeout reached.  Quitting");
+								reset();
+							}});
+						}
+					}
+
+					try
+					{
+						Thread.sleep(QUIT_CHECK_PERIOD);
+					}
+					catch(Exception e){
+						return;
+					}
+				}
+			}}, "Quit Thread");
+			quitThread.start();
+		}
+	}
+
+	public void stopQuitTimer()
+	{
+		Thread toQuitThread = null;
+		synchronized (quitLock)
+		{
+			if (!quitCheckerRunning)
+				return;
+
+			quitCheckerRunning = false;
+			toQuitThread = quitThread;
+			quitThread = null;
+		}
+
+		try{toQuitThread.join();}catch(InterruptedException e){}
 	}
 
 	private Handler handler;
@@ -182,8 +336,6 @@ public class MainActivity extends AppCompatActivity
 			if (cnt > 1)
 			{
 				super.onBackPressed();
-				invalidateOptionsMenu();
-				setEditable(false);
 			}
 		}
 	}
@@ -263,6 +415,50 @@ public class MainActivity extends AppCompatActivity
 			}
 		});
 		inDialog.show(getSupportFragmentManager(), "invalid_fragment");
+	}
+
+	public interface DocumentReset
+	{
+		void callback();
+	}
+
+	private ArrayList<DocumentReset> resetListeners = new ArrayList<>();
+
+	public void addResetListener(DocumentReset listener)
+	{
+		if (resetListeners.contains(listener))
+			return;
+
+		resetListeners.add(listener);
+	}
+
+	public void removeResetListener(DocumentReset listener)
+	{
+		if (!resetListeners.contains(listener))
+			return;
+	}
+
+	public void reset()
+	{
+		try
+		{
+			document.close();
+		}
+		catch(Exception e){}
+
+		document = null;
+
+		FragmentManager mgr = getSupportFragmentManager();
+		int cnt = mgr.getBackStackEntryCount();
+
+		for (int i = 0; i < cnt; i++)
+		{
+			invalidateOptionsMenu();
+			setEditable(false);
+			mgr.popBackStack();
+		}
+
+		setPasswordFile();
 	}
 
 	public void openFile()
