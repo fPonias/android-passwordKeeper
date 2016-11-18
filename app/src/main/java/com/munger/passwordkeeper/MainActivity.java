@@ -38,6 +38,7 @@ import com.munger.passwordkeeper.struct.PasswordDocumentFileImport;
 import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
+import com.munger.passwordkeeper.view.HiderFragment;
 import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
@@ -77,29 +78,17 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		Intent i = getIntent();
-		if (i.hasExtra("wakeup"))
-		{
-			Log.d("password", "received wake intent");
-			long intentQuitTime = i.getLongExtra("quitTime", -1);
-
-			if (intentQuitTime == -1 || (intentQuitTime > 0 && System.currentTimeMillis() > intentQuitTime))
-			{
-				reset();
-			}
-		}
-
 		instance = this;
 
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		Intent i = getIntent();
 
+		if (i.hasExtra("reset"))
+		{
+			savedInstanceState = null;
+		}
 
 		if (savedInstanceState == null)
 		{
-			handler = new Handler(Looper.getMainLooper());
-			keyboardListener = new KeyboardListener(this);
-
 			try
 			{
 				config = Config.load();
@@ -111,8 +100,6 @@ public class MainActivity extends AppCompatActivity
 			viewDetailFragment = null;
 			createFileFragment = null;
 			settingsFragment = null;
-
-			setPasswordFile();
 		}
 		else
 		{
@@ -139,39 +126,76 @@ public class MainActivity extends AppCompatActivity
 		}});
 
 		resetQuitTimer();
+
+
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+
+		handler = new Handler(Looper.getMainLooper());
+		keyboardListener = new KeyboardListener(this);
+		setPasswordFile();
 	}
 
 	@Override
-	public boolean onTouchEvent(MotionEvent event)
+	protected void onDestroy()
 	{
-		resetQuitTimer();
+		try
+		{
+			document.close();
+		}
+		catch(Exception e){}
 
-		return super.onTouchEvent(event);
+		super.onDestroy();
 	}
 
-	protected PendingIntent wakeupIntent = null;
-
-	@Override
-	protected void onPause()
-	{
-		AlarmManager mgr = (AlarmManager) getSystemService(ALARM_SERVICE);
-		Intent alarmIntent = new Intent(this, MainActivity.class);
-		alarmIntent.putExtra("wakeup", true);
-		alarmIntent.putExtra("quitTime", quitTime);
-		alarmIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-		wakeupIntent = PendingIntent.getActivity(this, 1, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
-		mgr.set(AlarmManager.RTC_WAKEUP, quitTime, wakeupIntent);
-
-		super.onPause();
-	}
+	protected boolean isActive = false;
 
 	@Override
 	protected void onResume()
 	{
-		super.onResume();
+		isActive = true;
 
-		if (wakeupIntent != null)
-			wakeupIntent.cancel();
+		super.onResume();
+	}
+
+	@Override
+	protected void onPause()
+	{
+		isActive = false;
+
+		super.onPause();
+	}
+
+	public void reset()
+	{
+		try
+		{
+			document.close();
+		}
+		catch(Exception e){}
+
+		if (isActive)
+		{
+			if (gettingPassword)
+				System.exit(0);
+			else
+			{
+				Intent i = new Intent(this, MainActivity.class);
+				i.putExtra("reset", true);
+				startActivity(i);
+			}
+		}
+		else
+		{
+			System.exit(0);
+		}
+	}
+
+	@Override
+	public void onUserInteraction()
+	{
+		resetQuitTimer();
+		super.onUserInteraction();
 	}
 
 	public void resetQuitTimer()
@@ -230,7 +254,11 @@ public class MainActivity extends AppCompatActivity
 							handler.post(new Runnable() {public void run()
 							{
 								Log.d("password", "Timeout reached.  Quitting");
+								quitCheckerRunning = false;
+								quitThread = null;
+
 								reset();
+								return;
 							}});
 						}
 					}
@@ -369,8 +397,11 @@ public class MainActivity extends AppCompatActivity
 		trans.commit();
 	}
 
+	protected boolean gettingPassword = false;
+
 	protected void startGetPassword()
 	{
+		gettingPassword = true;
 		AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
 		{
 			getPassword();
@@ -403,6 +434,7 @@ public class MainActivity extends AppCompatActivity
 				}
 				else
 				{
+					gettingPassword = false;
 					MainActivity.getInstance().password = password;
 					openFile();
 					return true;
@@ -436,29 +468,6 @@ public class MainActivity extends AppCompatActivity
 	{
 		if (!resetListeners.contains(listener))
 			return;
-	}
-
-	public void reset()
-	{
-		try
-		{
-			document.close();
-		}
-		catch(Exception e){}
-
-		document = null;
-
-		FragmentManager mgr = getSupportFragmentManager();
-		int cnt = mgr.getBackStackEntryCount();
-
-		for (int i = 0; i < cnt; i++)
-		{
-			invalidateOptionsMenu();
-			setEditable(false);
-			mgr.popBackStack();
-		}
-
-		setPasswordFile();
 	}
 
 	public void openFile()

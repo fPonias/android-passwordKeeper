@@ -45,6 +45,9 @@ void setupDecodeCallback(JNIEnv * env, jobject* jthis)
 void cleanupDecodeCallback(JNIEnv* env)
 {
     (*env)->DeleteGlobalRef(env, decodeCallbackObject);
+    decodeCallbackMethodID = 0;
+    decodeCallbackObject = 0;
+    decodeCallbackEnv = 0;
 }
 
 void doDecodeCallback(float percent)

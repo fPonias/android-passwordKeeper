@@ -50,6 +50,10 @@ public class PasswordDocumentFile extends PasswordDocument
 		setPassword(password);
 	}
 
+	public void onClose()
+	{
+	}
+
 	public boolean exists()
 	{
 		String path = rootPath + name;
@@ -150,11 +154,6 @@ public class PasswordDocumentFile extends PasswordDocument
 		outChannel.close();
 
 		tmpTarget.delete();
-	}
-
-	public void close() throws IOException
-	{
-
 	}
 
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException

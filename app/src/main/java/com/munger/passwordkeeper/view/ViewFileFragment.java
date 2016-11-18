@@ -128,14 +128,6 @@ public class ViewFileFragment extends Fragment
 	{
 		super.onCreate(savedInstanceState);
 		
-		if (savedInstanceState != null)
-		{
-			String password = savedInstanceState.getString("password");
-			
-			MainActivity.getInstance().setFile(password);
-			MainActivity.getInstance().fragmentExists(this);
-		}
-		
 		setDocument(MainActivity.getInstance().document);
 	};
 
