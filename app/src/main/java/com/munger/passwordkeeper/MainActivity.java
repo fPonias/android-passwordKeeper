@@ -1,12 +1,7 @@
 package com.munger.passwordkeeper;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,25 +15,24 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.InputFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
+import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.struct.Config;
 import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.PasswordDocument;
-import com.munger.passwordkeeper.struct.PasswordDocumentFile;
-import com.munger.passwordkeeper.struct.PasswordDocumentFileImport;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
 import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
-import com.munger.passwordkeeper.view.HiderFragment;
 import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
@@ -60,6 +54,7 @@ public class MainActivity extends AppCompatActivity
 
 	public KeyboardListener keyboardListener;
 	private SharedPreferences preferences;
+	public DriveHelper driveHelper;
 
 	private CreateFileFragment createFileFragment;
 	private ViewFileFragment viewFileFragment;
@@ -121,7 +116,7 @@ public class MainActivity extends AppCompatActivity
 			}
 			else if (key.equals(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD))
 			{
-
+				setupDriveHelper();
 			}
 		}});
 
@@ -188,6 +183,26 @@ public class MainActivity extends AppCompatActivity
 		else
 		{
 			System.exit(0);
+		}
+	}
+
+	private PasswordDocumentDrive driveDocument;
+
+	public void setupDriveHelper()
+	{
+		if (driveHelper == null)
+			driveHelper = new DriveHelper();
+
+		boolean enable = preferences.getBoolean(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD, false);
+		if (enable && driveDocument == null)
+		{
+			driveHelper.connect();
+			driveDocument = new PasswordDocumentDrive(document);
+		}
+		else if (!enable && driveDocument != null)
+		{
+			driveHelper.cleanUp();
+			driveDocument = null;
 		}
 	}
 
@@ -492,6 +507,7 @@ public class MainActivity extends AppCompatActivity
 			@Override
 			public void historyLoaded()
 			{
+				setupDriveHelper();
 			}
 
 			@Override

@@ -17,7 +17,6 @@
 package com.munger.passwordkeeper.view;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -37,7 +36,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -48,11 +46,9 @@ import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
-import com.munger.passwordkeeper.struct.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
-import com.munger.passwordkeeper.struct.PasswordDocument;
-import com.munger.passwordkeeper.struct.PasswordDocumentFile;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 import com.munger.passwordkeeper.view.widget.TextInputWidget;
 

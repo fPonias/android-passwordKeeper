@@ -1,8 +1,7 @@
 package com.munger.passwordkeeper.struct;
 
-import android.os.DeadObjectException;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;

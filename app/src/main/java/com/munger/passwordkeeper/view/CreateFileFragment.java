@@ -30,8 +30,6 @@ import android.widget.TextView;
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.AlertFragment;
-import com.munger.passwordkeeper.struct.PasswordDocument;
-import com.munger.passwordkeeper.struct.PasswordDocumentFile;
 
 public class CreateFileFragment extends Fragment
 {

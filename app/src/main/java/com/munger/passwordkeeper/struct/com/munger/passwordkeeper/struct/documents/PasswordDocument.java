@@ -1,30 +1,21 @@
-package com.munger.passwordkeeper.struct;
+package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import android.util.Log;
 
-import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.struct.AES256;
+import com.munger.passwordkeeper.struct.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
 
 public abstract class PasswordDocument 
 {
@@ -45,14 +36,21 @@ public abstract class PasswordDocument
 	protected final int HISTORY_BATCH_SIZE = 10;
 	protected final String testString = "test string";
 	public static final String emptyEntryTitle = "new entry";
-	
-	public PasswordDocument(String name)
+	public static final String defaultName = "passwords";
+
+	public PasswordDocument()
 	{
 		encoder = null;
 		details = new ArrayList<PasswordDetails>();
 		detailsIndex = new HashMap<String, PasswordDetails>();
 		history = new PasswordDocumentHistory();
 		lastLoad = 0;
+		this.name = defaultName;
+	}
+
+	public PasswordDocument(String name)
+	{
+		this();
 		this.name = name;
 	}
 	
@@ -65,6 +63,11 @@ public abstract class PasswordDocument
 	public void setPassword(String password)
 	{
 		encoder = new AES256(password);
+	}
+
+	AES256 getEncoder()
+	{
+		return encoder;
 	}
 
 	public static abstract class ILoadEvents implements Comparable<ILoadEvents>

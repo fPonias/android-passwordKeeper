@@ -100,14 +100,9 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
         saveToCloudBox.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {public boolean onPreferenceChange(Preference preference, Object newValue)
         {
-            boolean selected = (Boolean) newValue;
+            MainActivity.getInstance().setupDriveHelper();
 
-            if (selected)
-                doDriveSync();
-            else
-                doDriveCleanup();
-
-            return false;
+            return true;
         }});
 
         loadSettings();
@@ -161,16 +156,6 @@ public class SettingsFragment extends PreferenceFragmentCompat
     }
 
     private void doPasswordChange()
-    {
-
-    }
-
-    private void doDriveSync()
-    {
-
-    }
-
-    private void doDriveCleanup()
     {
 
     }

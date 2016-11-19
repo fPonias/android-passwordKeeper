@@ -1,13 +1,13 @@
-package com.munger.passwordkeeper.struct;
+package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents;
 
-import com.munger.passwordkeeper.MainActivity;
-import com.munger.passwordkeeper.alert.AlertFragment;
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDetailsPair;
+import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.ParseException;
 
 /**
  * Created by codymunger on 11/7/16.

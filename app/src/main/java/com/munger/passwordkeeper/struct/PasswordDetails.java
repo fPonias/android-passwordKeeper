@@ -21,14 +21,14 @@ public class PasswordDetails implements Parcelable
 		return details;
 	}
 
-	PasswordDetails(String id)
+	public PasswordDetails(String id)
 	{
 		this();
 
 		this.id = id;
 	}
 
-	PasswordDetails()
+	public PasswordDetails()
 	{
 		id = generateId();
 		name = "";

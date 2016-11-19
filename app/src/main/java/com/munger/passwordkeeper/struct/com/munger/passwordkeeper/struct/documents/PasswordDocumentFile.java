@@ -1,25 +1,20 @@
-package com.munger.passwordkeeper.struct;
+package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents;
 
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 import com.munger.passwordkeeper.MainActivity;
-import com.munger.passwordkeeper.alert.AlertFragment;
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
 
 public class PasswordDocumentFile extends PasswordDocument 
 {
@@ -64,14 +59,22 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public void save() throws IOException
 	{
-		saveHistory();
-		saveDetails();
+		String historyPath = rootPath + name + "-history";
+		String historyTmpPath = saveHistory(historyPath);
+
+		String detailsPath = rootPath + name;
+		String detailsTmpPath = saveDetails(detailsPath);
+
+		//save copying for last to minimize data corruption
+		replaceWithTemp(new File(historyPath), new File(historyTmpPath));
+		replaceWithTemp(new File(detailsPath), new File(detailsTmpPath));
+
 		lastLoad = System.currentTimeMillis();
 	}
 
-	private void saveDetails() throws IOException
+	private String saveDetails(String path) throws IOException
 	{
-		String path = rootPath + name;
+		path = rootPath + name + "-tmp";
 		File target = new File(path);
 		if (!target.exists())
 			target.createNewFile();
@@ -83,11 +86,13 @@ public class PasswordDocumentFile extends PasswordDocument
 		dis.flush();
 		dis.close();
 		fis.close();
+
+		return path;
 	}
 
-	private void saveHistory() throws IOException
+	private String saveHistory(String path) throws IOException
 	{
-		String path = rootPath + name + "-history";
+		path = path + "-tmp";
 		File target = new File(path);
 
 		if (!target.exists())
@@ -98,6 +103,8 @@ public class PasswordDocumentFile extends PasswordDocument
 		{
 			saveUpdatedHistory(target);
 		}
+
+		return path;
 	}
 
 	protected void saveNewHistory(File target) throws IOException
@@ -122,15 +129,12 @@ public class PasswordDocumentFile extends PasswordDocument
 		FileInputStream fis = new FileInputStream(target);
 		DataInputStream dis = new DataInputStream(fis);
 
-		String tmpPath = rootPath + name + "-history-tmp";
-		File tmpTarget = new File(tmpPath);
+		if (target.exists())
+			target.delete();
 
-		if (tmpTarget.exists())
-			tmpTarget.delete();
+		target.createNewFile();
 
-		tmpTarget.createNewFile();
-
-		FileOutputStream fos = new FileOutputStream(tmpTarget);
+		FileOutputStream fos = new FileOutputStream(target);
 		DataOutputStream dos = new DataOutputStream(fos);
 
 		updateEncryptedDeltas(dis, dos);
@@ -139,8 +143,6 @@ public class PasswordDocumentFile extends PasswordDocument
 		dos.flush();
 		dos.close();
 		fos.close();
-
-		replaceWithTemp(target, tmpTarget);
 	}
 
 	protected void replaceWithTemp(File target, File tmpTarget) throws IOException

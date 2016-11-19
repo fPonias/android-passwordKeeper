@@ -1,4 +1,4 @@
-package com.munger.passwordkeeper.struct;
+package com.munger.passwordkeeper.helpers;
 
 /**
  * Created by codymunger on 11/11/16.

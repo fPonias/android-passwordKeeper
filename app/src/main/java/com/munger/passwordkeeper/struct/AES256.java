@@ -1,6 +1,8 @@
 package com.munger.passwordkeeper.struct;
 
-public class AES256 
+import com.munger.passwordkeeper.helpers.ThreadedCallbackWaiter;
+
+public class AES256
 {
 	static{
 		System.loadLibrary("aes256");

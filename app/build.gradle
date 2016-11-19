@@ -4,7 +4,7 @@ android {
     compileSdkVersion 24
     buildToolsVersion "24.0.3"
     defaultConfig {
-        applicationId "com.munger.passwordcrypt"
+        applicationId "com.munger.passwordkeeper"
         minSdkVersion 15
         targetSdkVersion 24
         versionCode 1
@@ -37,6 +37,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:24.2.1',
             'com.google.code.gson:gson:2.7',
             'com.android.support:preference-v7:24.2.1'
+    compile 'com.google.android.gms:play-services-drive:9.8.0'
 
     testCompile 'junit:junit:4.12'
 }

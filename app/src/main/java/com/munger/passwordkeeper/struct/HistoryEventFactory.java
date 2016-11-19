@@ -1,10 +1,9 @@
 package com.munger.passwordkeeper.struct;
 
-import java.lang.reflect.Array;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.util.ArrayList;
 
 public class HistoryEventFactory
 {
