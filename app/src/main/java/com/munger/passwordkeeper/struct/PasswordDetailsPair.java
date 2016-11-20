@@ -1,5 +1,10 @@
 package com.munger.passwordkeeper.struct;
 
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEvent;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryPairEvent;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+
 import java.util.ArrayList;
 
 public class PasswordDetailsPair
@@ -8,26 +13,26 @@ public class PasswordDetailsPair
     private String value;
     private String id;
 
-    PasswordDetailsPair()
+    public PasswordDetailsPair()
     {
         id = generateId();
         key = "";
         value = "";
     }
 
-    PasswordDetailsPair(String id)
+    public PasswordDetailsPair(String id)
     {
         this.id = id;
     }
 
-    PasswordDetailsPair(String key, String value)
+    public PasswordDetailsPair(String key, String value)
     {
         this.id = generateId();
         this.key = key;
         this.value = value;
     }
 
-    PasswordDetailsPair(String id, String key, String value)
+    public PasswordDetailsPair(String id, String key, String value)
     {
         this.id = id;
         this.key = key;
@@ -70,7 +75,7 @@ public class PasswordDetailsPair
 
         key = value;
 
-        HistoryEventFactory.DetailsPairUpdate evt = new HistoryEventFactory.DetailsPairUpdate();
+        HistoryPairEvent evt = (HistoryPairEvent) new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.PAIR_UPDATE);
         evt.pairid = id;
         evt.property = "key";
         evt.value = value;
@@ -85,7 +90,7 @@ public class PasswordDetailsPair
 
         this.value = value;
 
-        HistoryEventFactory.DetailsPairUpdate evt = new HistoryEventFactory.DetailsPairUpdate();
+        HistoryPairEvent evt = (HistoryPairEvent) new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.PAIR_UPDATE);
         evt.pairid = id;
         evt.property = "value";
         evt.value = value;
@@ -108,7 +113,7 @@ public class PasswordDetailsPair
         listeners.remove(listener);
     }
 
-    private void notifyListeners(HistoryEventFactory.HistoryEvent evt)
+    private void notifyListeners(HistoryEvent evt)
     {
         for(PasswordDocumentHistory.HistoryEventListener listener : listeners)
             listener.occurred(evt);

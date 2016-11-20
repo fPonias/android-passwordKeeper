@@ -13,9 +13,10 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import android.util.Log;
 
 import com.munger.passwordkeeper.struct.AES256;
-import com.munger.passwordkeeper.struct.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEvent;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public abstract class PasswordDocument 
 {
@@ -511,7 +512,7 @@ public abstract class PasswordDocument
 		putDetails(det);
 
 		awaitHistoryLoaded();
-		HistoryEventFactory.PasswordDetailsCreate evt = new HistoryEventFactory.PasswordDetailsCreate();
+		HistoryEvent evt = new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.DETAILS_CREATE);
 		evt.id = det.getId();
 		history.addEvent(evt);
 
@@ -527,7 +528,7 @@ public abstract class PasswordDocument
 		int sz = subHistory.count();
 		for (int i = 0; i < sz; i++)
 		{
-			HistoryEventFactory.HistoryEvent evt = subHistory.getEvent(i);
+			HistoryEvent evt = subHistory.getEvent(i);
 			history.addEvent(evt);
 		}
 

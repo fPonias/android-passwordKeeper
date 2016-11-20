@@ -1,29 +1,86 @@
-package com.munger.passwordkeeper.struct;
+package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history;
 
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 
 public class HistoryEventFactory
 {
-    public HistoryEvent fromString(String input) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+    private static HashMap<Types, Class> types;
+
+    public enum Types
+    {
+        NULL,
+        DETAILS_CREATE,
+        DETAILS_UPDATE,
+        DETAILS_DELETE,
+        PAIR_CREATE,
+        PAIR_UPDATE,
+        PAIR_DELETE
+    }
+
+    static
+    {
+        types = new HashMap<>();
+        types.put(Types.DETAILS_CREATE, PasswordDetailsCreate.class);
+        types.put(Types.DETAILS_UPDATE, PasswordDetailsUpdate.class);
+        types.put(Types.DETAILS_DELETE, PasswordDetailsDelete.class);
+        types.put(Types.PAIR_CREATE, DetailsPairCreate.class);
+        types.put(Types.PAIR_UPDATE, DetailsPairUpdate.class);
+        types.put(Types.PAIR_DELETE, DetailsPairDelete.class);
+    }
+
+    public HistoryEvent buildEvent(Types type)
+    {
+            HistoryEvent ret = null;
+            switch(type)
+            {
+                case DETAILS_CREATE:
+                    ret = new PasswordDetailsCreate();
+                    break;
+                case DETAILS_UPDATE:
+                    ret = new PasswordDetailsUpdate();
+                    break;
+                case DETAILS_DELETE:
+                    ret = new PasswordDetailsDelete();
+                    break;
+                case PAIR_CREATE:
+                    ret = new DetailsPairCreate();
+                    break;
+                case PAIR_UPDATE:
+                    ret = new DetailsPairUpdate();
+                    break;
+                case PAIR_DELETE:
+                    ret = new DetailsPairDelete();
+                    break;
+                default:
+                    return null;
+            }
+
+            ret.type = type;
+            return ret;
+    }
+
+    public HistoryEvent fromString(String input) throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, NullPointerException
     {
         int idx = input.indexOf(" ");
+
         String type = input.substring(0, idx);
+        int index = Integer.parseInt(type);
+        Types t = Types.values()[index];
 
-        Class<?> clazz = Class.forName(type);
-        Constructor<?> ctor = clazz.getConstructor();
-        Object obj = ctor.newInstance();
-
-        HistoryEvent ret = (HistoryEvent) obj;
+        HistoryEvent ret = buildEvent(t);
         ret.fromString(input.substring(idx + 1));
         return ret;
     }
 
     public String toString(HistoryEvent evt)
     {
-        String ret = evt.getClass().getName() + " " + evt.toString();
+        String ret = evt.type.ordinal() + " " + evt.toString();
         return ret;
     }
 
@@ -52,72 +109,7 @@ public class HistoryEventFactory
         return obj;
     }
 
-    public static abstract class HistoryEvent
-    {
-        public long sequenceId;
-        public String id;
-        public String property;
-        public String value;
-
-        public void fromString(String input)
-        {
-            int spcIdx = 0;
-            int nextSpcIdx = -1;
-            int idx = 0;
-            while(idx < 4)
-            {
-                spcIdx = nextSpcIdx + 1;
-                nextSpcIdx = input.indexOf(' ', spcIdx);
-                String part = (nextSpcIdx > -1) ? input.substring(spcIdx, nextSpcIdx) : input.substring(spcIdx);
-
-                if (idx == 0)
-                    id = part;
-                else if (idx == 1)
-                    sequenceId = Long.parseLong(part);
-                else if (idx == 2)
-                    property = part;
-                else if (idx == 3)
-                    value = input.substring(spcIdx);
-
-                idx++;
-            }
-        }
-        public String toString()
-        {
-            StringBuilder b = new StringBuilder();
-            b.append(id).append(" ");
-            b.append(sequenceId).append(" ");
-
-            if (property != null)
-                b.append(property);
-
-            b.append(" ");
-
-            if (value != null)
-                b.append(value);
-
-            return b.toString();
-        }
-
-        public String getPropertySignature()
-        {
-            return getClass().getName() + " " + id + " " + property;
-        }
-
-        public String getIDSignature()
-        {
-            return "detail:" + id;
-        }
-
-        public String getPairIDSignature()
-        {
-            return null;
-        }
-
-        public abstract void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException;
-    }
-
-    public static class PasswordDetailsCreate extends HistoryEvent
+    private static class PasswordDetailsCreate extends HistoryEvent
     {
         public void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
         {
@@ -129,7 +121,7 @@ public class HistoryEventFactory
         }
     }
 
-    public static class PasswordDetailsUpdate extends HistoryEvent
+    private static class PasswordDetailsUpdate extends HistoryEvent
     {
         public void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
         {
@@ -146,7 +138,7 @@ public class HistoryEventFactory
         }
     }
 
-    public static class PasswordDetailsDelete extends HistoryEvent
+    private static class PasswordDetailsDelete extends HistoryEvent
     {
         public void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
         {
@@ -158,44 +150,7 @@ public class HistoryEventFactory
         }
     }
 
-    public static abstract class HistoryPairEvent extends HistoryEvent
-    {
-        public String pairid;
-
-        @Override
-        public void fromString(String input)
-        {
-            int spcIdx = input.indexOf(' ');
-            String part = (spcIdx > -1) ? input.substring(0, spcIdx) : input.substring(0);
-
-            pairid = part;
-
-            input = input.substring(spcIdx + 1);
-            super.fromString(input);
-        }
-        @Override
-        public String toString()
-        {
-            String ret = pairid + " ";
-            ret += super.toString();
-
-            return ret;
-        }
-
-        @Override
-        public String getPairIDSignature()
-        {
-            return "pair:" + id + "-" + pairid;
-        }
-
-        @Override
-        public String getPropertySignature()
-        {
-            return getClass().getName() + " " + id + " " + pairid + " " + property;
-        }
-    }
-
-    public static class DetailsPairCreate extends HistoryPairEvent
+    private static class DetailsPairCreate extends HistoryPairEvent
     {
         public void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
         {
@@ -212,7 +167,7 @@ public class HistoryEventFactory
         }
     }
 
-    public static class DetailsPairUpdate extends HistoryPairEvent
+    private static class DetailsPairUpdate extends HistoryPairEvent
     {
         public void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
         {
@@ -234,7 +189,7 @@ public class HistoryEventFactory
         }
     }
 
-    public static class DetailsPairDelete extends HistoryPairEvent
+    private static class DetailsPairDelete extends HistoryPairEvent
     {
         public void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
         {

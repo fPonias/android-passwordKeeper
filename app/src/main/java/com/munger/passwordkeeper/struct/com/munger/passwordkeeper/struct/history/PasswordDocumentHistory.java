@@ -1,4 +1,4 @@
-package com.munger.passwordkeeper.struct;
+package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history;
 
 import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
@@ -19,13 +19,13 @@ public class PasswordDocumentHistory
 
     public interface HistoryEventListener
     {
-        public void occurred(HistoryEventFactory.HistoryEvent event);
+        public void occurred(HistoryEvent event);
     }
 
     private long sequenceCount = 1;
-    private ArrayList<HistoryEventFactory.HistoryEvent> history;
+    private ArrayList<HistoryEvent> history;
 
-    public void addEvent(HistoryEventFactory.HistoryEvent evt)
+    public void addEvent(HistoryEvent evt)
     {
         evt.sequenceId = sequenceCount;
         sequenceCount++;
@@ -56,7 +56,7 @@ public class PasswordDocumentHistory
         return history.size();
     }
 
-    public HistoryEventFactory.HistoryEvent getEvent(int index)
+    public HistoryEvent getEvent(int index)
     {
         return history.get(index);
     }
@@ -77,14 +77,14 @@ public class PasswordDocumentHistory
 
         for (int i = startIdx; i < sz; i++)
         {
-            HistoryEventFactory.HistoryEvent evt = history.get(i);
+            HistoryEvent evt = history.get(i);
             evt.apply(document);
         }
     }
 
-    public ArrayList<HistoryEventFactory.HistoryEvent> mergeHistory(PasswordDocumentHistory mergeHistory, int sequenceStart)
+    public ArrayList<HistoryEvent> mergeHistory(PasswordDocumentHistory mergeHistory, int sequenceStart)
     {
-        ArrayList<HistoryEventFactory.HistoryEvent> merged = new ArrayList<>();
+        ArrayList<HistoryEvent> merged = new ArrayList<>();
 
         int myidx = findClosestIndex(sequenceStart);
         int mysz = history.size();
@@ -100,28 +100,28 @@ public class PasswordDocumentHistory
 
         for (int mi = mergeidx; mi < mergesz; mi++)
         {
-            HistoryEventFactory.HistoryEvent evt = mergeHistory.history.get(mi);
+            HistoryEvent evt = mergeHistory.history.get(mi);
 
-            if (evt instanceof HistoryEventFactory.PasswordDetailsDelete)
+            if (evt.type == HistoryEventFactory.Types.DETAILS_DELETE);
                 deletedDetails.add(evt.id);
-            if (evt instanceof HistoryEventFactory.DetailsPairDelete)
-                deletedPairs.add(((HistoryEventFactory.DetailsPairDelete) evt).pairid);
+            if (evt.type == HistoryEventFactory.Types.PAIR_DELETE)
+                deletedPairs.add(((HistoryPairEvent) evt).pairid);
 
             merged.add(evt);
         }
 
         for (int myi = myidx; myi < mysz; myi++)
         {
-            HistoryEventFactory.HistoryEvent evt = history.get(myi);
+            HistoryEvent evt = history.get(myi);
             if (!deletedDetails.contains(evt.id))
             {
-                if (!(evt instanceof HistoryEventFactory.HistoryPairEvent))
+                if (!(evt instanceof HistoryPairEvent))
                 {
                     merged.add(evt);
                 }
                 else
                 {
-                    if (!deletedPairs.contains(((HistoryEventFactory.DetailsPairUpdate) evt).pairid))
+                    if (!deletedPairs.contains(((HistoryPairEvent) evt).pairid))
                     {
                         merged.add(evt);
                     }
@@ -138,7 +138,7 @@ public class PasswordDocumentHistory
         int sz = history.size();
         for (int i = 0; i < sz; i++)
         {
-            HistoryEventFactory.HistoryEvent nextEvent = history.get(i);
+            HistoryEvent nextEvent = history.get(i);
 
             if (nextEvent.sequenceId >= sequenceNum) {
                 startIdx = i;
@@ -162,7 +162,7 @@ public class PasswordDocumentHistory
         int sz = history.size();
         for (int i = sz - 1; i >= 0; i--)
         {
-            HistoryEventFactory.HistoryEvent evt = history.get(i);
+            HistoryEvent evt = history.get(i);
             String index = evt.getPropertySignature();
 
             if (indices.contains(index))
@@ -179,13 +179,13 @@ public class PasswordDocumentHistory
         int sz = history.size();
         for (int i = sz - 1; i >= 0; i--)
         {
-            HistoryEventFactory.HistoryEvent evt = history.get(i);
+            HistoryEvent evt = history.get(i);
             String deletedPairIdx = evt.getPairIDSignature();
             String deletedDetsIdx = evt.getIDSignature();
 
-            if (evt instanceof HistoryEventFactory.HistoryPairEvent)
+            if (evt instanceof HistoryPairEvent)
             {
-                if (evt instanceof  HistoryEventFactory.DetailsPairDelete)
+                if (evt.type == HistoryEventFactory.Types.PAIR_DELETE)
                 {
                     deleted.add(deletedPairIdx);
                     deletedPairIdx = null;
@@ -193,7 +193,7 @@ public class PasswordDocumentHistory
             }
             else
             {
-                if (evt instanceof HistoryEventFactory.PasswordDetailsDelete)
+                if (evt.type == HistoryEventFactory.Types.DETAILS_DELETE)
                 {
                     deleted.add(deletedDetsIdx);
                     deletedDetsIdx = null;
@@ -209,8 +209,8 @@ public class PasswordDocumentHistory
 
     public String partToString(int idx, int sz)
     {
-        ArrayList<HistoryEventFactory.HistoryEvent> arr = new ArrayList<>();
-        for (HistoryEventFactory.HistoryEvent evt : history)
+        ArrayList<HistoryEvent> arr = new ArrayList<>();
+        for (HistoryEvent evt : history)
         {
             if (evt.sequenceId >= idx && evt.sequenceId < idx + sz)
                 arr.add(evt);
@@ -223,7 +223,7 @@ public class PasswordDocumentHistory
         HistoryEventFactory factory = new HistoryEventFactory();
         StringBuilder b = new StringBuilder();
 
-        for(HistoryEventFactory.HistoryEvent evt : arr)
+        for(HistoryEvent evt : arr)
         {
             String str = factory.toString(evt);
             b.append(str).append('\n');
@@ -257,7 +257,7 @@ public class PasswordDocumentHistory
         int sz = parts.length;
         for (int i = 0; i < sz; i++)
         {
-            HistoryEventFactory.HistoryEvent evt = factory.fromString(parts[i]);
+            HistoryEvent evt = factory.fromString(parts[i]);
             history.add(evt);
         }
     }
@@ -278,7 +278,7 @@ public class PasswordDocumentHistory
             }
             else
             {
-                HistoryEventFactory.HistoryEvent evt = factory.fromString(parts[i]);
+                HistoryEvent evt = factory.fromString(parts[i]);
                 history.add(evt);
             }
         }
@@ -291,7 +291,7 @@ public class PasswordDocumentHistory
         int sz = history.size();
         for (int i = 0; i < sz; i++)
         {
-            HistoryEventFactory.HistoryEvent evt = history.get(i);
+            HistoryEvent evt = history.get(i);
             ret.history.add(fac.clone(evt));
         }
 

@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -47,6 +48,8 @@ public class PasswordDocumentDrive extends PasswordDocument
     private DriveFolder rootFolder;
     private DriveFile targetFile;
     private PasswordDocument sourceDoc;
+
+    private long lastRemoteUpdate;
 
     public PasswordDocumentDrive(PasswordDocument source)
     {
@@ -72,6 +75,8 @@ public class PasswordDocumentDrive extends PasswordDocument
     {
         AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
         {
+            lastRemoteUpdate = MainActivity.getInstance().preferences.getLong("lastRemoteUpdate", 0);
+
             updateFromSource();
             setupGoogleApi();
             return null;
@@ -304,6 +309,17 @@ public class PasswordDocumentDrive extends PasswordDocument
     {
         AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
         {
+            DriveResource.MetadataResult metadata = targetFile.getMetadata(apiClient).await();
+            if (metadata.getMetadata().isTrashed())
+            {
+                targetFile.untrash(apiClient);
+                saveFresh();
+            }
+            else if (metadata.getMetadata().getFileSize() == 0)
+            {
+                saveFresh();
+            }
+
             PendingResult<DriveApi.DriveContentsResult> res = targetFile.open(apiClient, DriveFile.MODE_READ_ONLY, null);
             DriveApi.DriveContentsResult result = res.await();
             InputStream str = result.getDriveContents().getInputStream();
@@ -315,9 +331,6 @@ public class PasswordDocumentDrive extends PasswordDocument
                 remoteDoc = new PasswordDocumentStream(dis);
                 remoteDoc.encoder = encoder;
                 remoteDoc.load(false);
-            }
-            catch(EOFException e1){
-                saveFresh();
             }
             catch(Exception e){
                 Log.v("password", "file load failed");

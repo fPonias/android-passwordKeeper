@@ -2,7 +2,7 @@ package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.docume
 
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
-import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 import java.io.BufferedReader;
 import java.io.File;

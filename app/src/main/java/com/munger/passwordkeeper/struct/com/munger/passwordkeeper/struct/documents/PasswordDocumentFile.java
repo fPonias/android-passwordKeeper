@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public class PasswordDocumentFile extends PasswordDocument 
 {

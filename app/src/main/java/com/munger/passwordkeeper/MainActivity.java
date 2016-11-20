@@ -30,7 +30,7 @@ import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documen
 import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
-import com.munger.passwordkeeper.struct.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
 import com.munger.passwordkeeper.view.SettingsFragment;
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity
 	public Config config;
 
 	public KeyboardListener keyboardListener;
-	private SharedPreferences preferences;
+	public SharedPreferences preferences;
 	public DriveHelper driveHelper;
 
 	private CreateFileFragment createFileFragment;

@@ -5,6 +5,11 @@ import java.util.ArrayList;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEvent;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryPairEvent;
+import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+
 public class PasswordDetails implements Parcelable
 {
 	private String id;
@@ -35,7 +40,7 @@ public class PasswordDetails implements Parcelable
 		location = "";
 		details = new ArrayList<PasswordDetailsPair>();
 
-		historyListener = new PasswordDocumentHistory.HistoryEventListener() {public void occurred(HistoryEventFactory.HistoryEvent event)
+		historyListener = new PasswordDocumentHistory.HistoryEventListener() {public void occurred(HistoryEvent event)
 		{
 			event.id = id;
 			notifyListeners(event);
@@ -73,7 +78,7 @@ public class PasswordDetails implements Parcelable
 
 		name = value;
 
-		HistoryEventFactory.PasswordDetailsUpdate evt = new HistoryEventFactory.PasswordDetailsUpdate();
+		HistoryEvent evt = new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.DETAILS_UPDATE);
 		evt.id = id;
 		evt.property = "name";
 		evt.value = value;
@@ -88,7 +93,7 @@ public class PasswordDetails implements Parcelable
 
 		location = value;
 
-		HistoryEventFactory.PasswordDetailsUpdate evt = new HistoryEventFactory.PasswordDetailsUpdate();
+		HistoryEvent evt = new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.DETAILS_UPDATE);
 		evt.id = id;
 		evt.property = "location";
 		evt.value = value;
@@ -111,7 +116,7 @@ public class PasswordDetails implements Parcelable
 		listeners.remove(listener);
 	}
 
-	private void notifyListeners(HistoryEventFactory.HistoryEvent evt)
+	private void notifyListeners(HistoryEvent evt)
 	{
 		for(PasswordDocumentHistory.HistoryEventListener listener : listeners)
 			listener.occurred(evt);
@@ -119,8 +124,8 @@ public class PasswordDetails implements Parcelable
 		int sz = history.count();
 		if (sz > 0)
 		{
-			HistoryEventFactory.HistoryEvent lastEvent = history.getEvent(sz - 1);
-			if (lastEvent instanceof HistoryEventFactory.PasswordDetailsUpdate && evt instanceof HistoryEventFactory.PasswordDetailsUpdate)
+			HistoryEvent lastEvent = history.getEvent(sz - 1);
+			if (lastEvent.type == HistoryEventFactory.Types.DETAILS_UPDATE && evt.type == HistoryEventFactory.Types.DETAILS_UPDATE)
 			{
 				if (lastEvent.id.equals(evt.id) && lastEvent.property.equals(evt.property))
 				{
@@ -128,7 +133,7 @@ public class PasswordDetails implements Parcelable
 					return;
 				}
 			}
-			else if (lastEvent instanceof HistoryEventFactory.DetailsPairUpdate && evt instanceof HistoryEventFactory.DetailsPairUpdate)
+			else if (lastEvent.type == HistoryEventFactory.Types.PAIR_UPDATE && evt.type == HistoryEventFactory.Types.PAIR_UPDATE)
 			{
 				if (lastEvent.id.equals(evt.id) && lastEvent.property.equals(evt.property))
 				{
@@ -181,7 +186,7 @@ public class PasswordDetails implements Parcelable
 		pair.addListener(historyListener);
 		details.add(pair);
 
-		HistoryEventFactory.DetailsPairCreate evt = new HistoryEventFactory.DetailsPairCreate();
+		HistoryPairEvent evt = (HistoryPairEvent) new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.PAIR_CREATE);
 		evt.id = id;
 		evt.pairid = pair.getId();
 
@@ -196,7 +201,7 @@ public class PasswordDetails implements Parcelable
 
 		p.addListener(historyListener);
 
-		HistoryEventFactory.DetailsPairCreate evt = new HistoryEventFactory.DetailsPairCreate();
+		HistoryPairEvent evt = (HistoryPairEvent) new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.PAIR_CREATE);
 		evt.id = id;
 		evt.pairid = p.getId();
 
@@ -216,7 +221,7 @@ public class PasswordDetails implements Parcelable
 
 				oldPair.removeListener(historyListener);
 
-				HistoryEventFactory.DetailsPairDelete evt = new HistoryEventFactory.DetailsPairDelete();
+				HistoryPairEvent evt = (HistoryPairEvent) new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.PAIR_DELETE);
 				evt.id = id;
 				evt.pairid = p.getId();
 
