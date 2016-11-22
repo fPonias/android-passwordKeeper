@@ -1,10 +1,9 @@
-package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history;
+package com.munger.passwordkeeper.struct.history;
 
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 
@@ -86,20 +85,12 @@ public class HistoryEventFactory
 
     public HistoryEvent clone(HistoryEvent evt)
     {
-        HistoryEvent obj = null;
-        try
-        {
-            Class<?> clazz = evt.getClass();
-            Constructor<?> ctor = clazz.getConstructor();
-            obj = (HistoryEvent) ctor.newInstance();
-        }
-        catch(Exception e){
-            return null;
-        }
+        HistoryEvent obj = buildEvent(evt.type);
 
         obj.id = evt.id;
         obj.sequenceId = evt.sequenceId;
         obj.property = evt.property;
+        obj.value = evt.value;
 
         if (evt instanceof HistoryPairEvent)
         {
@@ -107,6 +98,32 @@ public class HistoryEventFactory
         }
 
         return obj;
+    }
+
+    public static boolean equals(HistoryEvent evt1, HistoryEvent evt2)
+    {
+        if (!evt1.id.equals(evt2.id))
+            return false;
+
+        if (evt1.type != evt2.type)
+            return false;
+
+        if (evt1.sequenceId != evt2.sequenceId)
+            return false;
+
+        if (!evt1.property.equals(evt2.property))
+            return false;
+
+        if (!evt1.value.equals(evt2.value))
+            return false;
+
+        if (evt1 instanceof HistoryPairEvent)
+        {
+            if (!((HistoryPairEvent) evt1).pairid.equals(((HistoryPairEvent) evt2).pairid))
+                return false;
+        }
+
+        return true;
     }
 
     private static class PasswordDetailsCreate extends HistoryEvent

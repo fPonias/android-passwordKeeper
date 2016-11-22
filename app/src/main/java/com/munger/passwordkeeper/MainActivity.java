@@ -25,12 +25,13 @@ import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.struct.Config;
+import com.munger.passwordkeeper.struct.ConfigFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
 import com.munger.passwordkeeper.view.SettingsFragment;
@@ -44,6 +45,10 @@ public class MainActivity extends AppCompatActivity
 	public static MainActivity getInstance()
 	{
 		return instance;
+	}
+	public static void setInstance(MainActivity inst)
+	{
+		instance = inst;
 	}
 
 	public PasswordDocument document;
@@ -86,7 +91,7 @@ public class MainActivity extends AppCompatActivity
 		{
 			try
 			{
-				config = Config.load();
+				config = new ConfigFactory().load();
 			}
 			catch(Exception e){
 				throw new RuntimeException("system config not present");

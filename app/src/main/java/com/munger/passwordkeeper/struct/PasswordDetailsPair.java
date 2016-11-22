@@ -1,23 +1,21 @@
 package com.munger.passwordkeeper.struct;
 
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEvent;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEventFactory;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryPairEvent;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.history.HistoryEvent;
+import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.history.HistoryPairEvent;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 import java.util.ArrayList;
 
 public class PasswordDetailsPair
 {
-    private String key;
-    private String value;
+    private String key = "";
+    private String value = "";
     private String id;
 
     public PasswordDetailsPair()
     {
         id = generateId();
-        key = "";
-        value = "";
     }
 
     public PasswordDetailsPair(String id)
@@ -27,16 +25,15 @@ public class PasswordDetailsPair
 
     public PasswordDetailsPair(String key, String value)
     {
-        this.id = generateId();
+        this();
         this.key = key;
         this.value = value;
     }
 
     public PasswordDetailsPair(String id, String key, String value)
     {
+        this(key, value);
         this.id = id;
-        this.key = key;
-        this.value = value;
     }
 
     public PasswordDetailsPair copy()

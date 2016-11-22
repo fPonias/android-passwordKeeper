@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEvent;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEventFactory;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryPairEvent;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.history.HistoryEvent;
+import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.history.HistoryPairEvent;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public class PasswordDetails implements Parcelable
 {
@@ -309,7 +309,7 @@ public class PasswordDetails implements Parcelable
 	    {
 			if (line.startsWith("id: "))
 			{
-				id = line.substring(5);
+				id = line.substring(4);
 			}
 	        else if (line.startsWith("name: "))
 	        {

@@ -1,4 +1,4 @@
-package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents;
+package com.munger.passwordkeeper.struct.documents;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -9,7 +9,6 @@ import android.util.Log;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResolvingResultCallbacks;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
@@ -18,7 +17,6 @@ import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.query.Filter;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
@@ -27,8 +25,6 @@ import com.munger.passwordkeeper.MainActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 

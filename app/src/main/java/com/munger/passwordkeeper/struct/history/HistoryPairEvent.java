@@ -1,10 +1,10 @@
-package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history;
+package com.munger.passwordkeeper.struct.history;
 
 /**
  * Created by codymunger on 11/19/16.
  */
 public abstract class HistoryPairEvent extends HistoryEvent {
-    public String pairid;
+    public String pairid = "";
 
     @Override
     public void fromString(String input) {

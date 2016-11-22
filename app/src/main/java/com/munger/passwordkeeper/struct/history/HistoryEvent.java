@@ -1,15 +1,15 @@
-package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history;
+package com.munger.passwordkeeper.struct.history;
 
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
 /**
  * Created by codymunger on 11/19/16.
  */
 public abstract class HistoryEvent {
-    public long sequenceId;
-    public String id;
-    public String property;
-    public String value;
+    public long sequenceId = -1;
+    public String id = "";
+    public String property = "";
+    public String value = "";
     public HistoryEventFactory.Types type;
 
     public void fromString(String input) {

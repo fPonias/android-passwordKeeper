@@ -1,4 +1,4 @@
-package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents;
+package com.munger.passwordkeeper.struct.documents;
 
 import java.io.BufferedReader;
 import java.io.DataInput;
@@ -13,10 +13,10 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import android.util.Log;
 
 import com.munger.passwordkeeper.struct.AES256;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEvent;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.history.HistoryEvent;
+import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public abstract class PasswordDocument 
 {
@@ -363,7 +363,7 @@ public abstract class PasswordDocument
 		dos.write(enc);
 	}
 
-	public String detailsToString()
+	protected String detailsToString()
 	{
 		StringBuilder output = new StringBuilder();
 
@@ -379,7 +379,7 @@ public abstract class PasswordDocument
 		return output.toString();
 	}
 
-	public void detailsToEncryptedString(DataOutput dos) throws IOException
+	protected void detailsToEncryptedString(DataOutput dos) throws IOException
 	{
 		writeLine(dos, testString);
 
@@ -396,7 +396,7 @@ public abstract class PasswordDocument
 		}
 	}
 
-	public void fromDetailsString(BufferedReader reader) throws IOException
+	protected void detailsFromString(BufferedReader reader) throws IOException
 	{
 		details = new ArrayList<>();
 		mostRecentHistoryEvent = null;
@@ -422,7 +422,7 @@ public abstract class PasswordDocument
 		}
 	}
 
-	public void detailsFromEncryptedString(DataInput dis) throws IOException
+	protected void detailsFromEncryptedString(DataInput dis) throws IOException
 	{
 		details = new ArrayList<>();
 		mostRecentHistoryEvent = null;

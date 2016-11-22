@@ -1,6 +1,6 @@
-package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.history;
+package com.munger.passwordkeeper.struct.history;
 
-import com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;

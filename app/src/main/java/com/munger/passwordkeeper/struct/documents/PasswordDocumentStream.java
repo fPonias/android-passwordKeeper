@@ -1,9 +1,6 @@
-package com.munger.passwordkeeper.struct.com.munger.passwordkeeper.struct.documents;
-
-import android.provider.ContactsContract;
+package com.munger.passwordkeeper.struct.documents;
 
 import java.io.DataInput;
-import java.io.DataInputStream;
 
 /**
  * Created by codymunger on 11/18/16.
