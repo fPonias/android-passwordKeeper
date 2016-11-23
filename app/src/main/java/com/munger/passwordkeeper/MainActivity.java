@@ -557,7 +557,8 @@ public class MainActivity extends AppCompatActivity
 
 		if (document.count() == 0)
 		{
-			document.addEmptyEntry();
+			PasswordDetails dets = new PasswordDetails();
+			try{document.addDetails(dets);}catch(Exception e){}
 		}
 
 		setEditable(false);
@@ -583,7 +584,7 @@ public class MainActivity extends AppCompatActivity
 				{
 					PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
 					fileImport.load(false);
-					document.appendDocument(fileImport);
+					document.playSubHistory(fileImport.getHistory());
 					document.save();
 				}
 				catch(Exception e){

@@ -63,12 +63,10 @@ public class PasswordDocumentHistory
 
     public void playHistory(PasswordDocument document) throws HistoryPlaybackException
     {
-        playHistory(document, 0);
-    }
+        if (history.size() == 0)
+            return;
 
-    public void playHistory(PasswordDocument document, int sequenceStart) throws HistoryPlaybackException
-    {
-        int startIdx = findClosestIndex(sequenceStart);
+        int startIdx = findClosestIndex(document.getHistory());
 
         if (startIdx < 0)
             return;
@@ -79,6 +77,7 @@ public class PasswordDocumentHistory
         {
             HistoryEvent evt = history.get(i);
             evt.apply(document);
+            document.getHistory().addEvent(evt);
         }
     }
 
@@ -86,10 +85,10 @@ public class PasswordDocumentHistory
     {
         ArrayList<HistoryEvent> merged = new ArrayList<>();
 
-        int myidx = findClosestIndex(sequenceStart);
+        int myidx = findClosestIndex(mergeHistory);
         int mysz = history.size();
 
-        int mergeidx = mergeHistory.findClosestIndex(sequenceStart);
+        int mergeidx = mergeHistory.findClosestIndex(mergeHistory);
         int mergesz = mergeHistory.history.size();
 
         for (int myi = 0; myi < myidx; myi++)
@@ -132,21 +131,46 @@ public class PasswordDocumentHistory
         return merged;
     }
 
-    private int findClosestIndex(int sequenceNum)
+    private int findClosestIndex(PasswordDocumentHistory mergeHistory)
     {
-        int startIdx = -1;
-        int sz = history.size();
-        for (int i = 0; i < sz; i++)
-        {
-            HistoryEvent nextEvent = history.get(i);
+        if (history.size() == 0)
+            return -1;
 
-            if (nextEvent.sequenceId >= sequenceNum) {
-                startIdx = i;
+        int mergeStart = 0;
+
+        int lsz = history.size();
+        int msz = mergeHistory.history.size();
+        HistoryEvent firstEvent = history.get(0);
+
+        for (int i = 0; i < msz; i++)
+        {
+            HistoryEvent mergeEvent = mergeHistory.history.get(i);
+            if (HistoryEventFactory.equals(mergeEvent, firstEvent))
+            {
+                mergeStart = i;
                 break;
             }
         }
 
-        return startIdx;
+        int m = mergeStart;
+        int l = 0;
+        while (m < msz && l < lsz)
+        {
+            if (m == msz)
+                return l;
+            else if (l == lsz)
+                return -1;
+
+            HistoryEvent localEvent = history.get(l);
+            HistoryEvent mergeEvent = mergeHistory.history.get(m);
+
+            if (!HistoryEventFactory.equals(localEvent, mergeEvent))
+                return l;
+
+            l++; m++;
+        }
+
+        return -1;
     }
 
     public void clean()
@@ -296,5 +320,26 @@ public class PasswordDocumentHistory
         }
 
         return ret;
+    }
+
+    public boolean equals(PasswordDocumentHistory hist)
+    {
+        int sz = history.size();
+        if (hist.history.size() != sz)
+            return false;
+
+        if (hist.getSequenceCount() != getSequenceCount())
+            return false;
+
+        for (int i = 0; i < sz; i++)
+        {
+            HistoryEvent hevent = hist.history.get(i);
+            HistoryEvent event = history.get(i);
+
+            if (!HistoryEventFactory.equals(hevent, event))
+                return false;
+        }
+
+        return true;
     }
 }

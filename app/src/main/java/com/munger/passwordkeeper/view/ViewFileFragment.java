@@ -152,8 +152,8 @@ public class ViewFileFragment extends Fragment
 		{
 			if (document != null)
 			{
-				PasswordDetails details = document.addEmptyEntry();
-				//that.detailListAdapter.add(details);
+				PasswordDetails details = new PasswordDetails();
+				try{document.addDetails(details);}catch(Exception e){}
 				
 				try
 				{

@@ -24,6 +24,7 @@ public abstract class PasswordDocument
 	protected long lastLoad;
 
 	protected ArrayList<PasswordDetails> details;
+	protected HashMap<String, PasswordDocumentHistory.HistoryEventListener> detailsListeners;
 	public String name;
 	protected ConcurrentSkipListSet<ILoadEvents> loadEvents = new ConcurrentSkipListSet<>();
 
@@ -43,6 +44,7 @@ public abstract class PasswordDocument
 	{
 		encoder = null;
 		details = new ArrayList<PasswordDetails>();
+		detailsListeners = new HashMap<>();
 		detailsIndex = new HashMap<String, PasswordDetails>();
 		history = new PasswordDocumentHistory();
 		lastLoad = 0;
@@ -126,6 +128,17 @@ public abstract class PasswordDocument
 			for(ILoadEvents evt : loadEvents)
 			{
 				evt.historyLoaded();
+			}
+		}
+	}
+
+	protected void setHistoryUpdate(float progress)
+	{
+		synchronized (historyLoadedLock)
+		{
+			for(ILoadEvents evt : loadEvents)
+			{
+				evt.historyProgress(progress);
 			}
 		}
 	}
@@ -310,7 +323,7 @@ public abstract class PasswordDocument
 
 		String line = readLine(inArr);
 		if (!line.equals(testString))
-			return;
+			throw new IOException("incorrect password");
 
 		long idx = inArr.readLong();
 		history.setSequenceCount(idx);
@@ -318,6 +331,9 @@ public abstract class PasswordDocument
 		int i = 0;
 		while (true)
 		{
+			float progress = (float) i / (float) (idx - 1);
+			setHistoryUpdate(progress);
+
 			try
 			{
 				i = inArr.readInt();
@@ -338,6 +354,7 @@ public abstract class PasswordDocument
 			}
 		}
 
+		setHistoryUpdate(1.0f);
 		setHistoryLoaded();
 	}
 
@@ -363,7 +380,7 @@ public abstract class PasswordDocument
 		dos.write(enc);
 	}
 
-	protected String detailsToString()
+	public String detailsToString()
 	{
 		StringBuilder output = new StringBuilder();
 
@@ -379,7 +396,7 @@ public abstract class PasswordDocument
 		return output.toString();
 	}
 
-	protected void detailsToEncryptedString(DataOutput dos) throws IOException
+	public void detailsToEncryptedString(DataOutput dos) throws IOException
 	{
 		writeLine(dos, testString);
 
@@ -396,7 +413,7 @@ public abstract class PasswordDocument
 		}
 	}
 
-	protected void detailsFromString(BufferedReader reader) throws IOException
+	public void detailsFromString(BufferedReader reader) throws IOException
 	{
 		details = new ArrayList<>();
 		mostRecentHistoryEvent = null;
@@ -422,14 +439,14 @@ public abstract class PasswordDocument
 		}
 	}
 
-	protected void detailsFromEncryptedString(DataInput dis) throws IOException
+	public void detailsFromEncryptedString(DataInput dis) throws IOException
 	{
 		details = new ArrayList<>();
 		mostRecentHistoryEvent = null;
 
 		String test = readLine(dis);
 		if (!test.equals(testString))
-			return;
+			throw new IOException("incorrect password");
 
 		String line = readLine(dis);
 		mostRecentHistoryEvent = line;
@@ -452,7 +469,7 @@ public abstract class PasswordDocument
 	public void playHistory() throws PasswordDocumentHistory.HistoryPlaybackException
 	{
 		awaitHistoryLoaded();
-		history.playHistory(this, 0);
+		history.playHistory(this);
 
 		for(PasswordDetails dets : details)
 		{
@@ -505,35 +522,55 @@ public abstract class PasswordDocument
 		detailsIndex.put(dets.getId(), dets);
 	}
 
-	public PasswordDetails addEmptyEntry()
+	public PasswordDocumentHistory getHistory()
 	{
-		PasswordDetails det = new PasswordDetails();
-		det.setName(emptyEntryTitle);
-		putDetails(det);
-
 		awaitHistoryLoaded();
-		HistoryEvent evt = new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.DETAILS_CREATE);
-		evt.id = det.getId();
-		history.addEvent(evt);
-
-		return det;
+		return history;
 	}
 
 	public void playSubHistory(PasswordDocumentHistory subHistory) throws PasswordDocumentHistory.HistoryPlaybackException
 	{
 		awaitHistoryLoaded();
 		subHistory.clean();
-		subHistory.playHistory(this, 0);
 
-		int sz = subHistory.count();
-		for (int i = 0; i < sz; i++)
+		subHistory.playHistory(this);
+
+	}
+
+	public void addDetails(PasswordDetails orig) throws PasswordDocumentHistory.HistoryPlaybackException
+	{
+		String detid = orig.getId();
+		if (detailsIndex.containsKey(detid))
+			throw new PasswordDocumentHistory.HistoryPlaybackException();
+
+		PasswordDetails empty = new PasswordDetails(detid);
+		details.add(empty);
+
+		awaitHistoryLoaded();
+		HistoryEvent evt = new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.DETAILS_CREATE);
+		evt.id = detid;
+		history.addEvent(evt);
+		detailsIndex.put(detid, empty);
+		playSubHistory(orig.getHistory());
+
+		PasswordDocumentHistory.HistoryEventListener listener = new PasswordDocumentHistory.HistoryEventListener() {public void occurred(HistoryEvent event)
 		{
-			HistoryEvent evt = subHistory.getEvent(i);
-			history.addEvent(evt);
-		}
+			try
+			{
+				detailsEventHandler(event);
+			}
+			catch(Exception e){}
+		}};
+		detailsListeners.put(detid, listener);
+		orig.addListener(listener);
+	}
 
-		if (sz > 0)
-			mostRecentHistoryEvent = subHistory.getEvent(sz - 1).getIDSignature();
+	protected void detailsEventHandler(HistoryEvent event) throws PasswordDocumentHistory.HistoryPlaybackException
+	{
+		if (!detailsIndex.containsKey(event.id))
+			throw new PasswordDocumentHistory.HistoryPlaybackException();
+
+		history.addEvent(event);
 	}
 
 	public void replaceDetails(PasswordDetails dets) throws PasswordDocumentHistory.HistoryPlaybackException
@@ -541,9 +578,19 @@ public abstract class PasswordDocument
 		awaitHistoryLoaded();
 		String detid = dets.getId();
 		if (!detailsIndex.containsKey(detid))
-			return;
+			throw new PasswordDocumentHistory.HistoryPlaybackException();
 
+		detailsListeners.remove(detid);
 		playSubHistory(dets.getHistory());
+		PasswordDocumentHistory.HistoryEventListener listener = new PasswordDocumentHistory.HistoryEventListener() {public void occurred(HistoryEvent event)
+		{
+			try
+			{
+				detailsEventHandler(event);
+			}
+			catch(Exception e){}
+		}};
+		detailsListeners.put(detid, listener);
 	}
 
 	public PasswordDetails getDetails(int index)
@@ -567,6 +614,12 @@ public abstract class PasswordDocument
 		details.remove(idx);
 
 		detailsIndex.remove(detid);
+		detailsListeners.remove(detid);
+
+		awaitHistoryLoaded();
+		HistoryEvent evt = new HistoryEventFactory().buildEvent(HistoryEventFactory.Types.DETAILS_DELETE);
+		evt.id = detid;
+		history.addEvent(evt);
 	}
 
 	public ArrayList<PasswordDetails> getDetailsList()
@@ -574,9 +627,19 @@ public abstract class PasswordDocument
 		return details;
 	}
 
-	public void appendDocument(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
+	public boolean equals(PasswordDocument doc)
 	{
-		awaitHistoryLoaded();
-		playSubHistory(doc.history);
+		int sz = doc.details.size();
+		if (details.size() != sz)
+			return false;
+
+		for (int i = 0; i < sz; i++)
+		{
+			PasswordDetails dets = details.get(i);
+			if (dets.diff(doc.details.get(i)))
+				return false;
+		}
+
+		return true;
 	}
 }

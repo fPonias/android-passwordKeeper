@@ -108,9 +108,6 @@ public class HistoryEventFactory
         if (evt1.type != evt2.type)
             return false;
 
-        if (evt1.sequenceId != evt2.sequenceId)
-            return false;
-
         if (!evt1.property.equals(evt2.property))
             return false;
 

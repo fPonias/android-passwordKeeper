@@ -82,8 +82,7 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
 
     private PasswordDetails parseDetails(String line) throws IOException
     {
-        PasswordDetails dets = addEmptyEntry();
-        dets = dets.copy();
+        PasswordDetails dets = new PasswordDetails();
         String[] parts = line.split("\t");
         dets.setName(parts[0]);
         dets.setLocation(parts[0]);
