@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.Buffer;
 
 /**
  * Created by codymunger on 11/7/16.
@@ -32,13 +33,7 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
     @Override
     public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException
     {
-        File f = new File(path);
-
-        if (!f.exists() || !f.canRead())
-            throw new IOException();
-
-        FileReader fr = new FileReader(f);
-        BufferedReader br = new BufferedReader(fr);
+        BufferedReader br = getReader();
         String line =  null;
 
         currentDets = null;
@@ -48,13 +43,22 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
         }
 
         if (currentDets != null)
-            playSubHistory(currentDets.getHistory());
+            addDetails(currentDets);
 
         if (br != null)
             br.close();
+    }
 
-        if (fr != null)
-            fr.close();
+    protected BufferedReader getReader() throws IOException
+    {
+        File f = new File(path);
+
+        if (!f.exists() || !f.canRead())
+            throw new IOException();
+
+        FileReader fr = new FileReader(f);
+        BufferedReader br = new BufferedReader(fr);
+        return br;
     }
 
     private PasswordDetails currentDets = null;
@@ -67,7 +71,7 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
         if (line.charAt(0) != '\t')
         {
             if (currentDets != null)
-                playSubHistory(currentDets.getHistory());
+                addDetails(currentDets);
 
             currentDets = parseDetails(line);
         }

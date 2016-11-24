@@ -1,8 +1,10 @@
 package com.munger.passwordkeeper.struct.documents;
 
+import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+
 
 import org.junit.Test;
 
@@ -22,51 +24,10 @@ import static org.junit.Assert.*;
 
 public class PasswordDocumentTest
 {
-    private class PasswordDocumentImpl extends PasswordDocument
-    {
-        public PasswordDocumentImpl(String pass)
-        {
-            super(pass);
-        }
-
-        public PasswordDocumentImpl(String name, String pass)
-        {
-            super(name, pass);
-        }
-
-        public void save() throws Exception
-        {
-
-        }
-
-        public void load(boolean force) throws Exception
-        {
-
-        }
-
-        protected void onClose() throws Exception
-        {
-
-        }
-
-        public void delete() throws Exception
-        {
-
-        }
-
-        public boolean testPassword()
-        {
-            return true;
-        }
-    }
-
-    private final String DEFAULT_NAME = "name";
-    private final String DEFAULT_PASSWORD = "pass";
-
     @Test
     public void constructors()
     {
-        PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc = new Helper.PasswordDocumentImpl();
     }
 
     private int fillDetails(PasswordDetails dets)
@@ -86,7 +47,7 @@ public class PasswordDocumentTest
     @Test
     public void historyUpdatesFromEmptyCorrectly() throws PasswordDocumentHistory.HistoryPlaybackException
     {
-        PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc = new Helper.PasswordDocumentImpl();
         PasswordDetails dets = new PasswordDetails();
         doc.addDetails(dets);
         int eventCount = 1;
@@ -119,7 +80,7 @@ public class PasswordDocumentTest
     public void historyUpdatesFromSubHistoryCorrectly() throws PasswordDocumentHistory.HistoryPlaybackException
     {
         //try once with empty history
-        PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc = new Helper.PasswordDocumentImpl();
         PasswordDetails dets = new PasswordDetails();
         int eventCount = 0;
 
@@ -151,7 +112,7 @@ public class PasswordDocumentTest
     @Test
     public void historyUpdatesFromReplacementCorrectly() throws PasswordDocumentHistory.HistoryPlaybackException
     {
-        PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc = new Helper.PasswordDocumentImpl();
         PasswordDetails dets = new PasswordDetails();
         dets.setName("foo");
         dets.setLocation("bar");
@@ -173,37 +134,13 @@ public class PasswordDocumentTest
         assertEquals(eventCount, doc.history.count());
     }
 
-    private PasswordDocumentImpl generateDocument(int detSz, int pairSz)
-    {
-        PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
-        for (int i = 0; i < detSz; i++)
-        {
-            PasswordDetails dets = new PasswordDetails();
-            dets.setName("name" + i);
-            dets.setLocation("loc" + i);
-
-            for (int j = 0; j < pairSz; j++)
-            {
-                PasswordDetailsPair pair = dets.addEmptyPair();
-                pair.setKey("key" + i + j);
-                pair.setValue("val" + i + j);
-            }
-
-            try {
-                doc.addDetails(dets);
-            } catch(Exception e){}
-        }
-
-        return doc;
-    }
-
     @Test
     public void detailsToFromString() throws Exception
     {
-        PasswordDocument doc = generateDocument(5, 5);
+        PasswordDocument doc = Helper.generateDocument(5, 5);
         String detout = doc.detailsToString();
 
-        PasswordDocumentImpl doc2 = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
         StringReader strread = new StringReader(detout);
         BufferedReader bufread = new BufferedReader(strread);
         doc2.detailsFromString(bufread);
@@ -214,14 +151,14 @@ public class PasswordDocumentTest
     @Test
     public void detailsToFromCipher() throws Exception
     {
-        PasswordDocument doc = generateDocument(5, 5);
+        PasswordDocument doc = Helper.generateDocument(5, 5);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         doc.detailsToEncryptedString(dos);
         byte[] output = baos.toByteArray();
         dos.close();  baos.close();
 
-        PasswordDocumentImpl doc2 = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
         ByteArrayInputStream bais = new ByteArrayInputStream(output);
         DataInputStream dis = new DataInputStream(bais);
         doc2.detailsFromEncryptedString(dis);
@@ -229,7 +166,7 @@ public class PasswordDocumentTest
 
         assertTrue(doc.equals(doc2));
 
-        PasswordDocumentImpl doc3 = new PasswordDocumentImpl(DEFAULT_NAME, "wrong password");
+        Helper.PasswordDocumentImpl doc3 = new Helper.PasswordDocumentImpl(Helper.DEFAULT_NAME, "wrong password");
         bais = new ByteArrayInputStream(output);
         dis = new DataInputStream(bais);
 
@@ -250,10 +187,10 @@ public class PasswordDocumentTest
     @Test
     public void historyToFromString() throws Exception
     {
-        PasswordDocument doc = generateDocument(5, 5);
+        PasswordDocument doc = Helper.generateDocument(5, 5);
         String histout = doc.deltasToString();
 
-        PasswordDocumentImpl doc2 = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
         StringReader strread = new StringReader(histout);
         BufferedReader bufread = new BufferedReader(strread);
         doc2.deltasFromString(bufread);
@@ -266,13 +203,13 @@ public class PasswordDocumentTest
     @Test
     public void historyToFromCipher() throws Exception
     {
-        PasswordDocument doc = generateDocument(5, 5);
+        PasswordDocument doc = Helper.generateDocument(5, 5);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         doc.deltasToEncryptedString(dos);
         byte[] output = baos.toByteArray();
 
-        PasswordDocumentImpl doc2 = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
         ByteArrayInputStream bais = new ByteArrayInputStream(output);
         DataInputStream dis = new DataInputStream(bais);
         doc2.deltasFromEncryptedString(dis);
@@ -283,7 +220,7 @@ public class PasswordDocumentTest
 
         boolean exception = false;
 
-        doc2 = new PasswordDocumentImpl(DEFAULT_NAME, "wrong password");
+        doc2 = new Helper.PasswordDocumentImpl(Helper.DEFAULT_NAME, "wrong password");
         bais = new ByteArrayInputStream(output);
         dis = new DataInputStream(bais);
 
@@ -303,7 +240,7 @@ public class PasswordDocumentTest
     @Test
     public void historyEvents() throws Exception
     {
-        PasswordDocument doc = generateDocument(10, 10);
+        PasswordDocument doc = Helper.generateDocument(10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         doc.deltasToEncryptedString(dos);
@@ -318,7 +255,7 @@ public class PasswordDocumentTest
         final Results results = new Results();
         final Object lock = new Object();
 
-        final PasswordDocumentImpl doc2 = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        final Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
         doc2.addLoadEvents(new PasswordDocument.ILoadEvents() {
             @Override
             public void detailsLoaded() {}
@@ -375,12 +312,12 @@ public class PasswordDocumentTest
     @Test
     public void historyLoadedAwaiter() throws Exception
     {
-        PasswordDocument doc = generateDocument(3, 3);
+        PasswordDocument doc = Helper.generateDocument(3, 3);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         doc.deltasToEncryptedString(dos);
         final byte[] output = baos.toByteArray();
-        final PasswordDocumentImpl doc2 = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        final Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
         final Object lock = new Object();
 
         class Results
@@ -426,7 +363,7 @@ public class PasswordDocumentTest
     @Test
     public void addRemoveDetails() throws Exception
     {
-        PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        Helper.PasswordDocumentImpl doc = new Helper.PasswordDocumentImpl();
         PasswordDetails dets1 = new PasswordDetails();
         dets1.setName("name");
         doc.addDetails(dets1);
@@ -456,7 +393,7 @@ public class PasswordDocumentTest
     {
         String password1 = "password";
         String password2 = "another password";
-        PasswordDocument doc1 = generateDocument(2, 2);
+        PasswordDocument doc1 = Helper.generateDocument(2, 2);
 
         doc1.setPassword(password1);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

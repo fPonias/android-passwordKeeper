@@ -1,5 +1,10 @@
 package com.munger.passwordkeeper;
 
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDetailsPair;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentTest;
+
 import java.util.Random;
 
 /**
@@ -44,5 +49,76 @@ public class Helper
         }
 
         return b.toString();
+    }
+
+
+    public static class PasswordDocumentImpl extends PasswordDocument
+    {
+        public PasswordDocumentImpl()
+        {
+            super(DEFAULT_NAME, DEFAULT_PASSWORD);
+        }
+
+        public PasswordDocumentImpl(String pass)
+        {
+            super(pass);
+        }
+
+        public PasswordDocumentImpl(String name, String pass)
+        {
+            super(name, pass);
+        }
+
+        public void save() throws Exception
+        {
+
+        }
+
+        public void load(boolean force) throws Exception
+        {
+
+        }
+
+        protected void onClose() throws Exception
+        {
+
+        }
+
+        public void delete() throws Exception
+        {
+
+        }
+
+        public boolean testPassword()
+        {
+            return true;
+        }
+    }
+
+    public static final String DEFAULT_NAME = "name";
+    public static final String DEFAULT_PASSWORD = "pass";
+
+    public static PasswordDocumentImpl generateDocument(int detSz, int pairSz)
+    {
+        PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        for (int i = 0; i < detSz; i++)
+        {
+            PasswordDetails dets = new PasswordDetails();
+            dets.setName("name" + i);
+            dets.setLocation("loc" + i);
+
+            for (int j = 0; j < pairSz; j++)
+            {
+                PasswordDetailsPair pair = dets.addEmptyPair();
+                pair.setKey("key" + i + j);
+                pair.setValue("val" + i + j);
+            }
+
+            try {
+                doc.addDetails(dets);
+            } catch(Exception e){}
+        }
+
+        return doc;
     }
 }

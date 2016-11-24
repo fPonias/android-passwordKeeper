@@ -153,6 +153,9 @@ public class PasswordDocumentHistory
         }
 
         int m = mergeStart;
+        if (m == 0)
+            return 0;
+
         int l = 0;
         while (m < msz && l < lsz)
         {

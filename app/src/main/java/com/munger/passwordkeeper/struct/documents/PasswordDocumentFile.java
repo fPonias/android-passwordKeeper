@@ -23,9 +23,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	public PasswordDocumentFile(String name)
 	{
 		super(name);
-
-		if (rootPath == null)
-			rootPath = MainActivity.getInstance().getFilesDir().getAbsolutePath() + "/";
+		updateRootPath();
 
 		if (name.indexOf("/") != -1)
 		{
@@ -43,6 +41,12 @@ public class PasswordDocumentFile extends PasswordDocument
 	{
 		this(name);
 		setPassword(password);
+	}
+
+	protected void updateRootPath()
+	{
+		if (rootPath == null)
+			rootPath = MainActivity.getInstance().getFilesDir().getAbsolutePath() + "/";
 	}
 
 	public void onClose()
