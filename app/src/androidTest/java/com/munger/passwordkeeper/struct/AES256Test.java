@@ -1,20 +1,13 @@
 package com.munger.passwordkeeper.struct;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.helpers.ThreadedCallbackWaiter;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import static org.junit.Assert.*;
 
@@ -46,7 +39,6 @@ public class AES256Test
     @Test
     public void testloadsAndCleansUpWithNativeLibraries()
     {
-        Context appContext = InstrumentationRegistry.getTargetContext();
         assertNotNull(encoder);
     }
 
@@ -209,7 +201,7 @@ public class AES256Test
 
         synchronized (locker)
         {
-            try{locker.wait(250);} catch(Exception e){}
+            try{locker.wait(2000);} catch(Exception e){}
         }
 
         assertTrue(status.wasCalled > 1);

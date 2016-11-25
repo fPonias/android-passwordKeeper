@@ -37,7 +37,7 @@ public class PasswordDocumentImportTest
             return ret;
         }
 
-        protected void setRootPath()
+        protected void updateRootPath()
         {
             rootPath = "";
         }

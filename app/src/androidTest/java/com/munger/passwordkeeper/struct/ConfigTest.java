@@ -4,11 +4,6 @@ package com.munger.passwordkeeper.struct;
  * Created by codymunger on 11/20/16.
  */
 
-import android.support.test.runner.AndroidJUnit4;
-import android.test.mock.MockContext;
-
-import com.munger.passwordkeeper.MainActivity;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

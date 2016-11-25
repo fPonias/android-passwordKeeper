@@ -18,7 +18,7 @@ import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public class PasswordDocumentFile extends PasswordDocument 
 {
-	private static String rootPath;
+	protected String rootPath;
 	
 	public PasswordDocumentFile(String name)
 	{
@@ -55,30 +55,47 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public boolean exists()
 	{
-		String path = rootPath + name;
+		String path = getDetailsFilePath();
 		File target = new File(path);
 
 		return target.exists();
 	}
 
+	public String getDetailsFilePath()
+	{
+		return rootPath + name;
+	}
+
+	public String getHistoryFilePath()
+	{
+		return rootPath + name + "-history";
+	}
+
+	public String getDetailsTmpFilePath()
+	{
+		return rootPath + name + "-tmp";
+	}
+
+	public String getHistoryTmpFilePath()
+	{
+		return rootPath + name + "-history-tmp";
+	}
+
 	public void save() throws IOException
 	{
-		String historyPath = rootPath + name + "-history";
-		String historyTmpPath = saveHistory(historyPath);
-
-		String detailsPath = rootPath + name;
-		String detailsTmpPath = saveDetails(detailsPath);
+		saveTempHistory();
+		saveTempDetails();
 
 		//save copying for last to minimize data corruption
-		replaceWithTemp(new File(historyPath), new File(historyTmpPath));
-		replaceWithTemp(new File(detailsPath), new File(detailsTmpPath));
+		replaceWithTemp(new File(getHistoryFilePath()), new File(getHistoryTmpFilePath()));
+		replaceWithTemp(new File(getDetailsFilePath()), new File(getDetailsTmpFilePath()));
 
 		lastLoad = System.currentTimeMillis();
 	}
 
-	private String saveDetails(String path) throws IOException
+	private void saveTempDetails() throws IOException
 	{
-		path = rootPath + name + "-tmp";
+		String path = getDetailsTmpFilePath();
 		File target = new File(path);
 		if (!target.exists())
 			target.createNewFile();
@@ -90,29 +107,29 @@ public class PasswordDocumentFile extends PasswordDocument
 		dis.flush();
 		dis.close();
 		fis.close();
-
-		return path;
 	}
 
-	private String saveHistory(String path) throws IOException
+	private void saveTempHistory() throws IOException
 	{
-		path = path + "-tmp";
+		String tmpPath = getHistoryTmpFilePath();
+		String path = getHistoryFilePath();
 		File target = new File(path);
 
 		if (!target.exists())
 		{
-			saveNewHistory(target);
+			saveNewHistory();
 		}
 		else
 		{
-			saveUpdatedHistory(target);
+			saveUpdatedHistory();
 		}
-
-		return path;
 	}
 
-	protected void saveNewHistory(File target) throws IOException
+	protected void saveNewHistory() throws IOException
 	{
+		String path = getHistoryTmpFilePath();
+		File target = new File(path);
+
 		if (target.exists())
 			target.delete();
 
@@ -128,17 +145,23 @@ public class PasswordDocumentFile extends PasswordDocument
 		fos.close();
 	}
 
-	protected void saveUpdatedHistory(File target) throws IOException
+	protected void saveUpdatedHistory() throws IOException
 	{
+		String path = getHistoryFilePath();
+		File target = new File(path);
+
 		FileInputStream fis = new FileInputStream(target);
 		DataInputStream dis = new DataInputStream(fis);
 
-		if (target.exists())
-			target.delete();
+		String tmpPath = getHistoryTmpFilePath();
+		File tmpTarget = new File(tmpPath);
+		if (tmpTarget.exists())
+			tmpTarget.delete();
 
-		target.createNewFile();
+		tmpTarget.createNewFile();
 
-		FileOutputStream fos = new FileOutputStream(target);
+
+		FileOutputStream fos = new FileOutputStream(tmpTarget);
 		DataOutputStream dos = new DataOutputStream(fos);
 
 		updateEncryptedDeltas(dis, dos);
@@ -164,7 +187,7 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
-		String path = rootPath + name;
+		String path = getDetailsFilePath();
 		File target = new File(path);
 
 		long lastMod = target.lastModified();
@@ -185,7 +208,7 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	private void loadDetails() throws IOException
 	{
-		String path = rootPath + name;
+		String path = getDetailsFilePath();
 		File target = new File(path);
 		FileInputStream fis = new FileInputStream(target);
 		DataInputStream dis = new DataInputStream(fis);
@@ -200,7 +223,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	private void loadHistory() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		historyLoaded = false;
-		String path = rootPath + name + "-history";
+		String path = getHistoryFilePath();
 		FileInputStream fis = new FileInputStream(path);
 		DataInputStream dis = new DataInputStream(fis);
 
@@ -213,7 +236,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	
 	public boolean testPassword()
 	{
-		String path = rootPath + name;
+		String path = getDetailsFilePath();
 		File target = new File(path);
 		FileInputStream fis = null;
 		DataInputStream dis = null;
@@ -253,24 +276,12 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public void delete()
 	{
-		String path = rootPath + name;
+		String path = getDetailsFilePath();
 		File target = new File(path);
 		target.delete();
-	}
-	
-	public static ArrayList<PasswordDocument> getList()
-	{
-		ArrayList<PasswordDocument> ret = new ArrayList<PasswordDocument>();
 
-		File f = new File(rootPath);
-		String[] list = f.list();
-		
-		for (String item : list)
-		{
-			PasswordDocument i = new PasswordDocumentFile(item);
-			ret.add(i);
-		}
-		
-		return ret;
+		path = getHistoryFilePath();
+		target = new File(path);
+		target.delete();
 	}
 }

@@ -19,11 +19,12 @@ public class PasswordDocumentHistory
 
     public interface HistoryEventListener
     {
-        public void occurred(HistoryEvent event);
+        void occurred(HistoryEvent event);
     }
 
     private long sequenceCount = 1;
-    private ArrayList<HistoryEvent> history;
+    //friend variable
+    ArrayList<HistoryEvent> history;
 
     public void addEvent(HistoryEvent evt)
     {
@@ -77,61 +78,30 @@ public class PasswordDocumentHistory
         {
             HistoryEvent evt = history.get(i);
             evt.apply(document);
-            document.getHistory().addEvent(evt);
-        }
-    }
 
-    public ArrayList<HistoryEvent> mergeHistory(PasswordDocumentHistory mergeHistory, int sequenceStart)
-    {
-        ArrayList<HistoryEvent> merged = new ArrayList<>();
+            PasswordDocumentHistory docHist = document.getHistory();
+            int dsz = docHist.count();
 
-        int myidx = findClosestIndex(mergeHistory);
-        int mysz = history.size();
-
-        int mergeidx = mergeHistory.findClosestIndex(mergeHistory);
-        int mergesz = mergeHistory.history.size();
-
-        for (int myi = 0; myi < myidx; myi++)
-            merged.add(history.get(myi));
-
-        HashSet<String> deletedDetails = new HashSet<>();
-        HashSet<String> deletedPairs = new HashSet<>();
-
-        for (int mi = mergeidx; mi < mergesz; mi++)
-        {
-            HistoryEvent evt = mergeHistory.history.get(mi);
-
-            if (evt.type == HistoryEventFactory.Types.DETAILS_DELETE);
-                deletedDetails.add(evt.id);
-            if (evt.type == HistoryEventFactory.Types.PAIR_DELETE)
-                deletedPairs.add(((HistoryPairEvent) evt).pairid);
-
-            merged.add(evt);
-        }
-
-        for (int myi = myidx; myi < mysz; myi++)
-        {
-            HistoryEvent evt = history.get(myi);
-            if (!deletedDetails.contains(evt.id))
+            //check if executing the event didn't already add the event to the document's history
+            if (dsz > 0)
             {
-                if (!(evt instanceof HistoryPairEvent))
-                {
-                    merged.add(evt);
-                }
-                else
-                {
-                    if (!deletedPairs.contains(((HistoryPairEvent) evt).pairid))
-                    {
-                        merged.add(evt);
-                    }
-                }
+                HistoryEvent event = docHist.getEvent(dsz - 1);
+                if (!HistoryEventFactory.equals(event, evt))
+                    document.getHistory().addEvent(evt);
             }
+            else
+                document.getHistory().addEvent(evt);
         }
-
-        return merged;
     }
 
-    private int findClosestIndex(PasswordDocumentHistory mergeHistory)
+    public PasswordDocumentHistory mergeHistory(PasswordDocumentHistory mergeHistory)
+    {
+        PasswordDocumentHistory ret = new HistoryMerger(this, mergeHistory).doMerge();
+        return ret;
+    }
+
+    //friend function
+    int findClosestIndex(PasswordDocumentHistory mergeHistory)
     {
         if (history.size() == 0)
             return -1;
@@ -140,6 +110,10 @@ public class PasswordDocumentHistory
 
         int lsz = history.size();
         int msz = mergeHistory.history.size();
+
+        if (msz == 0)
+            return 0;
+
         HistoryEvent firstEvent = history.get(0);
 
         for (int i = 0; i < msz; i++)
@@ -153,17 +127,9 @@ public class PasswordDocumentHistory
         }
 
         int m = mergeStart;
-        if (m == 0)
-            return 0;
-
         int l = 0;
         while (m < msz && l < lsz)
         {
-            if (m == msz)
-                return l;
-            else if (l == lsz)
-                return -1;
-
             HistoryEvent localEvent = history.get(l);
             HistoryEvent mergeEvent = mergeHistory.history.get(m);
 
@@ -173,7 +139,10 @@ public class PasswordDocumentHistory
             l++; m++;
         }
 
-        return -1;
+        if (m == msz)
+            return l;
+        else
+            return -1;
     }
 
     public void clean()
@@ -244,7 +213,7 @@ public class PasswordDocumentHistory
         }
 
         if (arr.size() == 0)
-            return null;
+            return "";
 
 
         HistoryEventFactory factory = new HistoryEventFactory();
@@ -278,6 +247,9 @@ public class PasswordDocumentHistory
 
     public void partFromString(String text) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
     {
+        if (text == "")
+            return;
+
         HistoryEventFactory factory = new HistoryEventFactory();
 
         String[] parts = text.split("\n");
@@ -322,6 +294,7 @@ public class PasswordDocumentHistory
             ret.history.add(fac.clone(evt));
         }
 
+        ret.setSequenceCount(sequenceCount);
         return ret;
     }
 

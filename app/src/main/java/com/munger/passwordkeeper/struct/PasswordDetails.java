@@ -121,28 +121,6 @@ public class PasswordDetails implements Parcelable
 		for(PasswordDocumentHistory.HistoryEventListener listener : listeners)
 			listener.occurred(evt);
 
-		int sz = history.count();
-		if (sz > 0)
-		{
-			HistoryEvent lastEvent = history.getEvent(sz - 1);
-			if (lastEvent.type == HistoryEventFactory.Types.DETAILS_UPDATE && evt.type == HistoryEventFactory.Types.DETAILS_UPDATE)
-			{
-				if (lastEvent.id.equals(evt.id) && lastEvent.property.equals(evt.property))
-				{
-					lastEvent.value = evt.value;
-					return;
-				}
-			}
-			else if (lastEvent.type == HistoryEventFactory.Types.PAIR_UPDATE && evt.type == HistoryEventFactory.Types.PAIR_UPDATE)
-			{
-				if (lastEvent.id.equals(evt.id) && lastEvent.property.equals(evt.property))
-				{
-					lastEvent.value = evt.value;
-					return;
-				}
-			}
-		}
-
 		history.addEvent(evt);
 	}
 

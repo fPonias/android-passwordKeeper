@@ -101,6 +101,12 @@ public class Helper
     public static PasswordDocumentImpl generateDocument(int detSz, int pairSz)
     {
         PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
+        fillDocument(doc, detSz, pairSz);
+        return doc;
+    }
+
+    public static void fillDocument(PasswordDocument doc, int detSz, int pairSz)
+    {
         for (int i = 0; i < detSz; i++)
         {
             PasswordDetails dets = new PasswordDetails();
@@ -118,7 +124,5 @@ public class Helper
                 doc.addDetails(dets);
             } catch(Exception e){}
         }
-
-        return doc;
     }
 }

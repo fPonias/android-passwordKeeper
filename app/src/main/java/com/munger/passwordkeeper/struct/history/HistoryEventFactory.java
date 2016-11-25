@@ -131,7 +131,7 @@ public class HistoryEventFactory
                 throw new PasswordDocumentHistory.HistoryPlaybackException();
 
             PasswordDetails dets = new PasswordDetails(id);
-            doc.putDetails(dets);
+            doc.addDetails(dets);
         }
     }
 
