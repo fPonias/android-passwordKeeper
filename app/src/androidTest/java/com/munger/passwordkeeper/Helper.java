@@ -1,5 +1,11 @@
 package com.munger.passwordkeeper;
 
+import android.app.Activity;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.LinearLayout;
+
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
@@ -51,6 +57,25 @@ public class Helper
         return b.toString();
     }
 
+    public static class BlankActivity extends AppCompatActivity
+    {
+        public static final int ROOT_VIEW_ID = 1;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState)
+        {
+            super.onCreate(savedInstanceState);
+            LinearLayout view = new LinearLayout(this);
+            view.setId(ROOT_VIEW_ID);
+
+            setContentView(view);
+        }
+
+        public void setFragment(Fragment fragment)
+        {
+            getSupportFragmentManager().beginTransaction().add(ROOT_VIEW_ID, fragment).commit();
+        }
+    }
 
     public static class PasswordDocumentImpl extends PasswordDocument
     {

@@ -1,5 +1,6 @@
 package com.munger.passwordkeeper.helpers;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -18,10 +19,10 @@ import java.util.ArrayList;
 
 public class KeyboardListener
 {
-    private MainActivity parent;
+    private Activity parent;
     private boolean isOpen = false;
 
-    public KeyboardListener(final MainActivity parent)
+    public KeyboardListener(final Activity parent)
     {
         this.parent = parent;
 

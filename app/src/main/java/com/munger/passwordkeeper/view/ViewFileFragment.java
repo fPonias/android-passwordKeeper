@@ -20,6 +20,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.struct.PasswordDetails;
@@ -120,7 +121,7 @@ public class ViewFileFragment extends Fragment
 	@Override
 	public void onSaveInstanceState(Bundle outState) 
 	{
-		outState.putString("password", MainActivity.getInstance().password);
+		outState.putString("password", MainState.getInstance().password);
 	};
 	
 	@Override
@@ -128,7 +129,7 @@ public class ViewFileFragment extends Fragment
 	{
 		super.onCreate(savedInstanceState);
 		
-		setDocument(MainActivity.getInstance().document);
+		setDocument(MainState.getInstance().document);
 	};
 
 	@Override
@@ -315,7 +316,7 @@ public class ViewFileFragment extends Fragment
 
 	private void openDetail(final PasswordDetails dets)
 	{
-		MainActivity.getInstance().openDetail(dets);
+		MainState.getInstance().navigationHelper.openDetail(dets);
 	}
 
 	private void deleteClicked(final PasswordDetails dets)

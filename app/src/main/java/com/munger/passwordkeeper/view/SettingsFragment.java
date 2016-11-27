@@ -20,6 +20,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.FileDialog;
@@ -88,7 +89,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
         aboutBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {public boolean onPreferenceClick(Preference preference)
         {
-            MainActivity.getInstance().about();
+            MainState.getInstance().navigationHelper.about();
             return false;
         }});
 
@@ -100,7 +101,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
         saveToCloudBox.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {public boolean onPreferenceChange(Preference preference, Object newValue)
         {
-            MainActivity.getInstance().setupDriveHelper();
+            MainState.getInstance().setupDriveHelper();
 
             return true;
         }});
@@ -116,13 +117,13 @@ public class SettingsFragment extends PreferenceFragmentCompat
         fileDialog.addFileListener(new FileDialog.FileSelectedListener() {public void fileSelected(File file)
         {
             Log.d(getClass().getName(), "selected file " + file.toString());
-            MainActivity.getInstance().importFile(file.getPath(), new MainActivity.Callback() {public void callback(Object result)
+            MainState.getInstance().importFile(file.getPath(), new MainState.Callback() {public void callback(Object result)
             {
                 boolean success = (boolean) result;
 
                 try
                 {
-                    MainActivity.getInstance().document.save();
+                    MainState.getInstance().document.save();
                 }
                 catch(Exception e){
                     success = false;
@@ -142,8 +143,8 @@ public class SettingsFragment extends PreferenceFragmentCompat
         builder.setMessage("Are you sure you want to delete all of your password data?");
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
-            MainActivity.getInstance().deleteData();
-            MainActivity.getInstance().deleteRemoteData();
+            MainState.getInstance().deleteData();
+            MainState.getInstance().deleteRemoteData();
         }});
         builder.setNeutralButton("No", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
@@ -162,7 +163,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
     private void loadSettings()
     {
-        if (MainActivity.getInstance().config.enableImportOption == true)
+        if (MainState.getInstance().config.enableImportOption == true)
             importFileBtn.setVisible(true);
         else
             importFileBtn.setVisible(false);

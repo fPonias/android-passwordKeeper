@@ -21,6 +21,7 @@ import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -71,7 +72,7 @@ public class PasswordDocumentDrive extends PasswordDocument
     {
         AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
         {
-            lastRemoteUpdate = MainActivity.getInstance().preferences.getLong("lastRemoteUpdate", 0);
+            lastRemoteUpdate = MainState.getInstance().preferences.getLong("lastRemoteUpdate", 0);
 
             updateFromSource();
             setupGoogleApi();
@@ -96,7 +97,7 @@ public class PasswordDocumentDrive extends PasswordDocument
 
     private void setupGoogleApi()
     {
-        apiClient = MainActivity.getInstance().driveHelper.getClient();
+        apiClient = MainState.getInstance().driveHelper.getClient();
         apiClient.registerConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks()
         {
             @Override

@@ -43,6 +43,7 @@ import android.widget.TextView;
 
 import com.android.internal.util.Predicate;
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
@@ -414,7 +415,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			public void okay() 
 			{
-				MainActivity.getInstance().saveDetail(details, new MainActivity.Callback() {public void callback(Object o)
+				MainState.getInstance().saveDetail(details, new MainState.Callback() {public void callback(Object o)
 				{
 					setDetails(details);
 
