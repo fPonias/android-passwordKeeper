@@ -12,6 +12,8 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -56,16 +58,16 @@ public class FileDialog
         this.activity = activity;
         setFileEndsWith(fileEndsWith);
 
-        if (ContextCompat.checkSelfPermission(MainActivity.getInstance(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+        if (ContextCompat.checkSelfPermission(MainState.getInstance().context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         {
-            ActivityCompat.requestPermissions(MainActivity.getInstance(), new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            ActivityCompat.requestPermissions(MainState.getInstance().activity, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
 
-            MainActivity.getInstance().addPermisionResultListener(new MainActivity.IPermissionResult() {public void result(int requestCode)
+            MainState.getInstance().navigationHelper.addPermisionResultListener(new NavigationHelper.IPermissionResult() {public void result(int requestCode)
             {
                 if (requestCode != 1)
                     return;
 
-                if (ContextCompat.checkSelfPermission(MainActivity.getInstance(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+                if (ContextCompat.checkSelfPermission(MainState.getInstance().context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
                     init(initialPath);
                 else
                 {

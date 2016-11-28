@@ -8,21 +8,11 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 
 import com.munger.passwordkeeper.helpers.KeyboardListener;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.helpers.QuitTimer;
 
 public class MainActivity extends AppCompatActivity
 {
-	private volatile static MainActivity instance = null;
-
-	public static MainActivity getInstance()
-	{
-		return instance;
-	}
-	public static void setInstance(MainActivity inst)
-	{
-		instance = inst;
-	}
-
 	public KeyboardListener keyboardListener;
 	private QuitTimer quitTimer;
 
@@ -30,8 +20,6 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		instance = this;
-
 		Intent i = getIntent();
 
 		if (i.hasExtra("reset"))
@@ -57,9 +45,8 @@ public class MainActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		MainState.getInstance().setMainActivity(this);
+		MainState.getInstance().setContext(this, this);
 		quitTimer = new QuitTimer();
-		keyboardListener = new KeyboardListener(this);
 
 		MainState.getInstance().navigationHelper.openInitialView();
 	}
@@ -126,21 +113,6 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
 	{
-		for(IPermissionResult listener : permissionResults)
-			listener.result(requestCode);
-
-		permissionResults = new ArrayList<>();
-	}
-
-	public interface IPermissionResult
-	{
-		void result(int requestCode);
-	}
-
-	private ArrayList<IPermissionResult> permissionResults = new ArrayList<>();
-
-	public void addPermisionResultListener(IPermissionResult listener)
-	{
-		permissionResults.add(listener);
+		MainState.getInstance().navigationHelper.notifyPermissionResults(requestCode);
 	}
 }

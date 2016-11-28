@@ -49,6 +49,9 @@ public class CreateFileFragment extends Fragment
 	private EditText pass1In;
 	private EditText pass2In;
 	private TextView nameLbl;
+
+	public static final int MIN_PASSWORD_LENGTH = 3;
+	public static final int MAX_PASSWORD_LENGTH = 40;
 	
 	private View root;
 
@@ -84,32 +87,29 @@ public class CreateFileFragment extends Fragment
 
 	protected boolean validate()
 	{
-		boolean valid = true;
-		String message = "";
-
-
 		String pass1 = pass1In.getText().toString();
 
-		if (pass1.length() < 3)
+		if (pass1.length() < MIN_PASSWORD_LENGTH)
 		{
-			valid = false;
-			message += "password length is too short\n";
+			showError("password length is too short");
+			return false;
+		}
+
+		if (pass1.length() > MAX_PASSWORD_LENGTH)
+		{
+			showError("massword length is too long");
+			return false;
 		}
 
 		String pass2 = pass2In.getText().toString();
 
 		if (!pass1.equals(pass2))
 		{
-			valid = false;
-			message += "passwords must match\n";
+			showError("passwords must match");
+			return false;
 		}
 
-		if (!valid)
-		{
-			showError(message);
-		}
-
-		return valid;
+		return true;
 	}
 
 	protected boolean saveNewFile()
@@ -131,13 +131,12 @@ public class CreateFileFragment extends Fragment
 
 	protected void showError(String message)
 	{
-		AlertFragment frag = new AlertFragment(message);
-		frag.show(MainActivity.getInstance().getSupportFragmentManager(), "invalid_fragment");
+		MainState.getInstance().navigationHelper.showAlert(message);
 	}
 
 	protected void loadMain()
 	{
 		MainState.getInstance().navigationHelper.onBackPressed();
-		MainState.getInstance().openFile();
+		MainState.getInstance().navigationHelper.openFile();
 	}
 }

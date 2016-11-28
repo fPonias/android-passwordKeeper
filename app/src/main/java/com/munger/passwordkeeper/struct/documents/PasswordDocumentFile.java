@@ -13,6 +13,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
@@ -46,7 +47,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	protected void updateRootPath()
 	{
 		if (rootPath == null)
-			rootPath = MainActivity.getInstance().getFilesDir().getAbsolutePath() + "/";
+			rootPath = MainState.getInstance().context.getFilesDir().getAbsolutePath() + "/";
 	}
 
 	public void onClose()

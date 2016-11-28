@@ -123,7 +123,7 @@ public class PasswordDocumentDrive extends PasswordDocument
         Query q = new Query.Builder()
                 .addFilter(Filters.contains(SearchableField.TITLE, name))
                 .build();
-        rootFolder.queryChildren(apiClient, q).setResultCallback(new ResolvingResultCallbacks<DriveApi.MetadataBufferResult>(MainActivity.getInstance(), FILE_EXISTS_REQUEST)
+        rootFolder.queryChildren(apiClient, q).setResultCallback(new ResolvingResultCallbacks<DriveApi.MetadataBufferResult>(MainState.getInstance().activity, FILE_EXISTS_REQUEST)
         {
             @Override
             public void onSuccess(@NonNull DriveApi.MetadataBufferResult metadataBufferResult)
@@ -207,7 +207,7 @@ public class PasswordDocumentDrive extends PasswordDocument
             try
             {
                 dos.close();
-                result.getDriveContents().commit(apiClient, null).setResultCallback(new ResolvingResultCallbacks<Status>(MainActivity.getInstance(), FILE_SAVE_REQUEST) {
+                result.getDriveContents().commit(apiClient, null).setResultCallback(new ResolvingResultCallbacks<Status>(MainState.getInstance().activity, FILE_SAVE_REQUEST) {
                     @Override
                     public void onSuccess(@NonNull Status status)
                     {
@@ -242,7 +242,7 @@ public class PasswordDocumentDrive extends PasswordDocument
             updateEncryptedDeltas(dis, dos);
 
             dos.flush();
-            result.getDriveContents().commit(apiClient, null).setResultCallback(new ResolvingResultCallbacks<Status>(MainActivity.getInstance(), FILE_SAVE_REQUEST) {
+            result.getDriveContents().commit(apiClient, null).setResultCallback(new ResolvingResultCallbacks<Status>(MainState.getInstance().activity, FILE_SAVE_REQUEST) {
                 @Override
                 public void onSuccess(@NonNull Status status)
                 {
@@ -278,7 +278,7 @@ public class PasswordDocumentDrive extends PasswordDocument
                 .setMimeType("application/octet-stream")
                 .build();
 
-        rootFolder.createFile(apiClient, set, null).setResultCallback(new ResolvingResultCallbacks<DriveFolder.DriveFileResult>(MainActivity.getInstance(), FILE_CREATE_REQUEST)
+        rootFolder.createFile(apiClient, set, null).setResultCallback(new ResolvingResultCallbacks<DriveFolder.DriveFileResult>(MainState.getInstance().activity, FILE_CREATE_REQUEST)
         {
             @Override
             public void onSuccess(@NonNull DriveFolder.DriveFileResult driveFileResult)

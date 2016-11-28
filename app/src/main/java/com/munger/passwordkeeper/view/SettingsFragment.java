@@ -24,6 +24,7 @@ import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.FileDialog;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 
 import java.io.File;
@@ -58,7 +59,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
         if (savedInstanceState != null)
         {
-            //MainActivity.getInstance().fragmentExists(this);
+            //MainState.getInstance().context.fragmentExists(this);
         }
     };
 
@@ -112,12 +113,12 @@ public class SettingsFragment extends PreferenceFragmentCompat
     private void doImport()
     {
         File mPath = new File(Environment.getExternalStorageDirectory() + "//DIR//");
-        FileDialog fileDialog = new FileDialog(MainActivity.getInstance(), mPath);
+        FileDialog fileDialog = new FileDialog(MainState.getInstance().activity, mPath);
 
         fileDialog.addFileListener(new FileDialog.FileSelectedListener() {public void fileSelected(File file)
         {
             Log.d(getClass().getName(), "selected file " + file.toString());
-            MainState.getInstance().importFile(file.getPath(), new MainState.Callback() {public void callback(Object result)
+            MainState.getInstance().navigationHelper.importFile(file.getPath(), new NavigationHelper.Callback() {public void callback(Object result)
             {
                 boolean success = (boolean) result;
 
@@ -130,7 +131,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
                 }
 
                 if (success)
-                    MainActivity.getInstance().onBackPressed();
+                    MainState.getInstance().navigationHelper.onBackPressed();
             }});
         }});
 
@@ -143,8 +144,8 @@ public class SettingsFragment extends PreferenceFragmentCompat
         builder.setMessage("Are you sure you want to delete all of your password data?");
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
-            MainState.getInstance().deleteData();
-            MainState.getInstance().deleteRemoteData();
+            MainState.getInstance().navigationHelper.deleteData();
+            MainState.getInstance().navigationHelper.deleteRemoteData();
         }});
         builder.setNeutralButton("No", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {

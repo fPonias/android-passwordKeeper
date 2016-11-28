@@ -23,6 +23,7 @@ import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.view.widget.TextWidget;
@@ -354,6 +355,6 @@ public class ViewFileFragment extends Fragment
 			public void discard()
 			{}
 		});
-		frag.show(MainActivity.getInstance().getSupportFragmentManager(), "confirm_fragment");
+		frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "confirm_fragment");
 	}
 }

@@ -12,6 +12,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 
 public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener
 {
@@ -29,8 +30,8 @@ public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener
     {
         if (mGoogleApiClient == null)
         {
-            mGoogleApiClient = new GoogleApiClient.Builder(MainActivity.getInstance())
-                    .enableAutoManage(MainActivity.getInstance(), this)
+            mGoogleApiClient = new GoogleApiClient.Builder(MainState.getInstance().context)
+                    .enableAutoManage(MainState.getInstance().activity, this)
                     .addApi(Drive.API)
                     .addScope(Drive.SCOPE_FILE)
                     .build();
@@ -69,7 +70,7 @@ public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener
         Bundle args = new Bundle();
         args.putInt(DIALOG_ERROR, errorCode);
         dialogFragment.setArguments(args);
-        dialogFragment.show(MainActivity.getInstance().getSupportFragmentManager(), "errordialog");
+        dialogFragment.show(MainState.getInstance().activity.getSupportFragmentManager(), "errordialog");
     }
 
     public void onDialogDismissed()

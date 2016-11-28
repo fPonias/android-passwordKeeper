@@ -47,6 +47,7 @@ import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
@@ -87,7 +88,7 @@ public class ViewDetailFragment extends Fragment
 		}
 		else
 		{
-			MainActivity.getInstance().keyboardListener.addKeyboardChangedListener(new KeyboardListener.OnKeyboardChangedListener()
+			MainState.getInstance().keyboardListener.addKeyboardChangedListener(new KeyboardListener.OnKeyboardChangedListener()
 			{
 				public void OnKeyboardOpened()
 				{
@@ -119,7 +120,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom)
 			{
-				View newFocus = MainActivity.getInstance().getCurrentFocus();
+				View newFocus = MainState.getInstance().activity.getCurrentFocus();
 				long newFocusStamp = System.currentTimeMillis();
 				long diff = newFocusStamp - lastFocusStamp;
 				Log.d("password", "last focus diff " + diff);
@@ -167,7 +168,7 @@ public class ViewDetailFragment extends Fragment
 			
 			actionSelected = (TextView) v;
 			selectText(actionSelected, true);
-			actionMode = MainActivity.getInstance().startActionMode(actionCallback);
+			actionMode = MainState.getInstance().activity.startActionMode(actionCallback);
 			return true;
 		}};
 
@@ -348,7 +349,7 @@ public class ViewDetailFragment extends Fragment
 	private void setupFields()
 	{
 
-		pairListAdapter = new DetailArrayAdapter(this, MainActivity.getInstance(), details.getList());
+		pairListAdapter = new DetailArrayAdapter(this, MainState.getInstance().context, details.getList());
 		itemList.setAdapter(pairListAdapter);
 
 		nameLabel.setText(details.getName());
@@ -415,14 +416,14 @@ public class ViewDetailFragment extends Fragment
 		{
 			public void okay() 
 			{
-				MainState.getInstance().saveDetail(details, new MainState.Callback() {public void callback(Object o)
+				MainState.getInstance().navigationHelper.saveDetail(details, new NavigationHelper.Callback() {public void callback(Object o)
 				{
 					setDetails(details);
 
 					if (!goingBack)
 						onResume();
 					else
-						MainActivity.getInstance().onBackPressed();
+						MainState.getInstance().navigationHelper.onBackPressed();
 
 					if (callback != null)
 						callback.apply(true);
@@ -436,7 +437,7 @@ public class ViewDetailFragment extends Fragment
 				if (!goingBack)
 					onResume();
 				else
-					MainActivity.getInstance().onBackPressed();
+					MainState.getInstance().navigationHelper.onBackPressed();
 
 				if (callback != null)
 					callback.apply(true);
@@ -450,7 +451,7 @@ public class ViewDetailFragment extends Fragment
 					callback.apply(false);
 			}
 		});
-		frag.show(MainActivity.getInstance().getSupportFragmentManager(), "confirm_fragment");
+		frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "confirm_fragment");
 	}
 
 	private static class PairDetailItemWidget extends DetailItemWidget
@@ -607,7 +608,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			int id = item.getItemId();
 			
-			ClipboardManager clipboard = (ClipboardManager) MainActivity.getInstance().getSystemService(Context.CLIPBOARD_SERVICE);
+			ClipboardManager clipboard = (ClipboardManager) MainState.getInstance().context.getSystemService(Context.CLIPBOARD_SERVICE);
 			
 			if (id == R.id.action_detail_copy)
 			{
@@ -622,7 +623,7 @@ public class ViewDetailFragment extends Fragment
 				if (sz > 0)
 				{
 					ClipData.Item it = clip.getItemAt(0);
-					String data = it.coerceToText(MainActivity.getInstance()).toString();
+					String data = it.coerceToText(MainState.getInstance().context).toString();
 					actionSelected.setText(data);
 				}
 			}
@@ -722,7 +723,7 @@ public class ViewDetailFragment extends Fragment
 				item.setEditable(editable);
 		}
 
-		MainActivity.getInstance().keyboardListener.forceOpenKeyboard(editable);
+		MainState.getInstance().keyboardListener.forceOpenKeyboard(editable);
 
 		root.invalidate();
 	}

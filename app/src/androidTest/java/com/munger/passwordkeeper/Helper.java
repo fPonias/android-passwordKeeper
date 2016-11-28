@@ -26,9 +26,14 @@ public class Helper
 
     public static String longString()
     {
+        return randomString(1024);
+    }
+
+    public static String randomString(int length)
+    {
         Random r = new Random();
         StringBuilder b = new StringBuilder();
-        for (int i = 0; i < 1024; i++)
+        for (int i = 0; i < length; i++)
         {
             int type = r.nextInt(4);
             int index = 0;
@@ -66,14 +71,14 @@ public class Helper
         {
             super.onCreate(savedInstanceState);
             LinearLayout view = new LinearLayout(this);
-            view.setId(ROOT_VIEW_ID);
+            view.setId(R.id.container);
 
             setContentView(view);
         }
 
         public void setFragment(Fragment fragment)
         {
-            getSupportFragmentManager().beginTransaction().add(ROOT_VIEW_ID, fragment).commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.container, fragment).commit();
         }
     }
 
