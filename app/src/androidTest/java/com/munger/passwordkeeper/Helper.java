@@ -99,6 +99,7 @@ public class Helper
                 trans.add(R.id.container, fragment);
             }
 
+            currentFagment = fragment;
             trans.commit();
         }
     }

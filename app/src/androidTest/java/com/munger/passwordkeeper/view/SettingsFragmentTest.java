@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -34,9 +35,12 @@ import java.util.ArrayList;
 
 import static org.hamcrest.Matchers.*;
 import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.assertion.ViewAssertions.*;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static android.support.test.espresso.action.ViewActions.*;
+import android.support.test.espresso.contrib.DrawerMatchers;
 import android.support.test.espresso.contrib.RecyclerViewActions;
+import android.support.v7.widget.RecyclerView;
 
 import static com.munger.passwordkeeper.CustomMatchers.*;
 import static org.junit.Assert.*;
@@ -109,6 +113,13 @@ public class SettingsFragmentTest
         mainState.setContext(activity, activity);
 
         parsePreferences();
+        createFragment();
+    }
+
+    private void createFragment() throws InterruptedException
+    {
+        if (fragment != null)
+            activityRule.getActivity().setFragment(null);
 
         final Object lock = new Object();
 
@@ -331,5 +342,36 @@ public class SettingsFragmentTest
         verify(documentMock).save();
         verify(navigationMock).showAlert(anyString());
         verify(navigationMock, never()).onBackPressed();
+    }
+
+    @Test
+    public void importHiddenWhenDisabled() throws Exception
+    {
+        int index = getIndex(SettingsFragment.PREF_IMPORT_FILE);
+        assertTrue(index > -1);
+        String title = prefTitles.get(index);
+
+
+        mainState.config.enableImportOption = true;
+        createFragment();
+
+        onView(withClassName(containsString("RecyclerView"))).perform(RecyclerViewActions.scrollToPosition(index));
+        onView(allOf(withParent(withClassName(containsString("RecyclerView"))), hasDescendant(withText(title)))).check(matches(isDisplayed()));
+
+
+        mainState.config.enableImportOption = false;
+        createFragment();
+
+        onView(withClassName(containsString("RecyclerView"))).perform(RecyclerViewActions.scrollToPosition(index));
+        boolean thrown = false;
+        try
+        {
+            onView(allOf(withParent(withClassName(containsString("RecyclerView"))), hasDescendant(withText(title)))).check(matches(isDisplayed()));
+        }
+        catch(NoMatchingViewException e){
+            thrown = true;
+        }
+
+        assertTrue(thrown);
     }
 }
