@@ -15,6 +15,7 @@ import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
+import com.munger.passwordkeeper.helpers.QuitTimer;
 import com.munger.passwordkeeper.struct.Config;
 import com.munger.passwordkeeper.struct.ConfigFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
@@ -37,6 +38,10 @@ public class MainState
 
     public static MainState getInstance()
     {
+        if (instance == null)
+            instance = new MainState();
+
+
         return instance;
     }
     public static void setInstance(MainState inst)
@@ -59,6 +64,7 @@ public class MainState
     public DriveHelper driveHelper;
     public NavigationHelper navigationHelper;
     public KeyboardListener keyboardListener;
+    public QuitTimer quitTimer;
 
     public Handler handler;
     public boolean isActive = false;
@@ -75,6 +81,7 @@ public class MainState
         setupPreferences();
         setupConfig();
         setupDocument();
+        setupQuitTimer();
 
         setupDriveHelper();
     }
@@ -87,14 +94,6 @@ public class MainState
     protected void setupPreferences()
     {
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
-
-        preferences.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
-        {
-            if (key.equals(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD))
-            {
-                MainState.getInstance().setupDriveHelper();
-            }
-        }});
     }
 
     protected void setupConfig()
@@ -122,8 +121,31 @@ public class MainState
         catch(Exception e){}
     }
 
+    public void setupQuitTimer()
+    {
+        quitTimer = new QuitTimer();
+
+    }
+
     public MainState()
     {
+    }
+
+    public void deleteData()
+    {
+        try
+        {
+            MainState.getInstance().document.delete();
+        }
+        catch(Exception e){
+            navigationHelper.showAlert("Failed to delete local password data");
+            return;
+        }
+    }
+
+    public void deleteRemoteData()
+    {
+
     }
 
     private PasswordDocumentDrive driveDocument;

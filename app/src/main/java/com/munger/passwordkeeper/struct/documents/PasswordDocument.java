@@ -299,7 +299,7 @@ public abstract class PasswordDocument
 	{
 		String line = history.partToString(idx, HISTORY_BATCH_SIZE);
 
-		if (line != null)
+		if (line != null && line != "")
 		{
 			byte[] lineEnc = encoder.encodeToBytes(line);
 			String hash = encoder.md5Hash(line);
@@ -316,8 +316,9 @@ public abstract class PasswordDocument
 		}
 	}
 
-	public void deltasFromEncryptedString(DataInput inArr) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public void deltasFromEncryptedString(DataInput inArr, long maxSz) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
+		long total = 0;
 		historyLoaded = false;
 		history = new PasswordDocumentHistory();
 
@@ -325,13 +326,15 @@ public abstract class PasswordDocument
 		if (!line.equals(testString))
 			throw new IOException("incorrect password");
 
+		total += line.length() + 1;
 		long idx = inArr.readLong();
 		history.setSequenceCount(idx);
+		total += 8;
 
 		int i = 0;
 		while (true)
 		{
-			float progress = (float) i / (float) (idx - 1);
+			float progress = (float) i / (float) (idx);
 			setHistoryUpdate(progress);
 
 			try
@@ -343,6 +346,10 @@ public abstract class PasswordDocument
 			}
 
 			int sz = inArr.readInt();
+			total += 4;
+
+			if (maxSz > -1 && total + sz > maxSz)
+				throw new IOException("parse error on history document");
 
 			if (sz > 0)
 			{

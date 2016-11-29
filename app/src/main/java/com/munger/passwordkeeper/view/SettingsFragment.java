@@ -41,6 +41,12 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
     public static final String PREF_NAME_SAVE_TO_CLOUD = "settings_saveToCloud";
     public static final String PREF_NAME_TIMEOUT_LIST = "settings_timeout";
+    public static final String PREF_CHANGE_PASSWORD = "settings_changePassword";
+    public static final String PREF_IMPORT_FILE = "settings_importFile";
+    public static final String PREF_DELETE_FILE = "settings_deleteFile";
+    public static final String PREF_ABOUT = "settings_about";
+
+    public static final int PREFERENCES_RESOURCE = R.xml.fragment_settings;
 
     public static String getName()
     {
@@ -67,14 +73,14 @@ public class SettingsFragment extends PreferenceFragmentCompat
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey)
     {
         // Load the preferences from an XML resource
-        setPreferencesFromResource(R.xml.fragment_settings, rootKey);
+        setPreferencesFromResource(PREFERENCES_RESOURCE, rootKey);
 
         saveToCloudBox = (CheckBoxPreference) findPreference(PREF_NAME_SAVE_TO_CLOUD);
         timeoutList = (ListPreference) findPreference(PREF_NAME_TIMEOUT_LIST);
-        changePasswordBtn = findPreference("settings_changePassword");
-        importFileBtn = findPreference("settings_importFile");
-        deleteBtn = findPreference("settings_deleteFile");
-        aboutBtn = findPreference("settings_about");
+        changePasswordBtn = findPreference(PREF_CHANGE_PASSWORD);
+        importFileBtn = findPreference(PREF_IMPORT_FILE);
+        deleteBtn = findPreference(PREF_DELETE_FILE);
+        aboutBtn = findPreference(PREF_ABOUT);
 
         importFileBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {public boolean onPreferenceClick(Preference preference)
         {
@@ -96,14 +102,19 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
         changePasswordBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {public boolean onPreferenceClick(Preference preference)
         {
-            doPasswordChange();
+            MainState.getInstance().navigationHelper.changePassword();
             return false;
         }});
 
         saveToCloudBox.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {public boolean onPreferenceChange(Preference preference, Object newValue)
         {
             MainState.getInstance().setupDriveHelper();
+            return true;
+        }});
 
+        timeoutList.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {public boolean onPreferenceChange(Preference preference, Object newValue)
+        {
+            MainState.getInstance().quitTimer.reset();
             return true;
         }});
 
@@ -122,11 +133,15 @@ public class SettingsFragment extends PreferenceFragmentCompat
             {
                 boolean success = (boolean) result;
 
+                if (!success)
+                    return;
+
                 try
                 {
                     MainState.getInstance().document.save();
                 }
                 catch(Exception e){
+                    MainState.getInstance().navigationHelper.showAlert("Failed to import external data.");
                     success = false;
                 }
 
@@ -144,8 +159,9 @@ public class SettingsFragment extends PreferenceFragmentCompat
         builder.setMessage("Are you sure you want to delete all of your password data?");
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
-            MainState.getInstance().navigationHelper.deleteData();
-            MainState.getInstance().navigationHelper.deleteRemoteData();
+            MainState.getInstance().deleteData();
+            MainState.getInstance().deleteRemoteData();
+            MainState.getInstance().navigationHelper.openInitialView();
         }});
         builder.setNeutralButton("No", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
@@ -155,11 +171,6 @@ public class SettingsFragment extends PreferenceFragmentCompat
         dialog.show();
 
         return;
-    }
-
-    private void doPasswordChange()
-    {
-
     }
 
     private void loadSettings()

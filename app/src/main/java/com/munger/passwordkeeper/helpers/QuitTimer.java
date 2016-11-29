@@ -21,15 +21,6 @@ public class QuitTimer
 
     public QuitTimer()
     {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainState.getInstance().activity);
-        preferences.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
-        {
-            if (key.equals(SettingsFragment.PREF_NAME_TIMEOUT_LIST))
-            {
-                reset();
-            }
-        }});
-
         reset();
     }
 

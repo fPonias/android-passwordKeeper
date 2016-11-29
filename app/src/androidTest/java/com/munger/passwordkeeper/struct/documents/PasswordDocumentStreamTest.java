@@ -31,7 +31,7 @@ public class PasswordDocumentStreamTest
 
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         DataInputStream dis = new DataInputStream(bais);
-        PasswordDocumentStream docin = new PasswordDocumentStream(dis);
+        PasswordDocumentStream docin = new PasswordDocumentStream(dis, bytes.length);
         docin.setPassword(Helper.DEFAULT_PASSWORD);
         docin.load(false);
         dis.close(); bais.close();

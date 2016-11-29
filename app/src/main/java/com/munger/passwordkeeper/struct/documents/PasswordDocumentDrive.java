@@ -307,12 +307,13 @@ public class PasswordDocumentDrive extends PasswordDocument
         AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
         {
             DriveResource.MetadataResult metadata = targetFile.getMetadata(apiClient).await();
+            long sz = metadata.getMetadata().getFileSize();
             if (metadata.getMetadata().isTrashed())
             {
                 targetFile.untrash(apiClient);
                 saveFresh();
             }
-            else if (metadata.getMetadata().getFileSize() == 0)
+            else if (sz == 0)
             {
                 saveFresh();
             }
@@ -325,7 +326,7 @@ public class PasswordDocumentDrive extends PasswordDocument
 
             try
             {
-                remoteDoc = new PasswordDocumentStream(dis);
+                remoteDoc = new PasswordDocumentStream(dis, sz);
                 remoteDoc.encoder = encoder;
                 remoteDoc.load(false);
             }

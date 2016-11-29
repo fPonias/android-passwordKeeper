@@ -1,48 +1,37 @@
 package com.munger.passwordkeeper.view;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.renderscript.ScriptGroup;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.rule.ActivityTestRule;
-import android.support.v4.app.ActivityCompat;
+import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.app.FragmentActivity;
-import android.test.mock.MockContext;
-import android.view.View;
 
 import com.munger.passwordkeeper.Helper;
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
-import com.munger.passwordkeeper.struct.ConfigFactory;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.internal.matchers.Null;
-
 
 import java.io.IOException;
-import java.io.InputStream;
 
-import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static android.support.test.espresso.action.ViewActions.*;
-import static junit.framework.Assert.*;
-import static org.mockito.Mockito.*;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.typeText;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 /**
  * Created by codymunger on 11/25/16.
@@ -90,6 +79,12 @@ public class CreateFileFragmentTest
         fragment = new CreateFileFragment();
         fragmentSpy = spy(fragment);
         activityRule.getActivity().setFragment(fragmentSpy);
+    }
+
+    @After
+    public void after()
+    {
+        activityRule.getActivity().setFragment(null);
     }
 
     private void testValidPassword(String input) throws Exception

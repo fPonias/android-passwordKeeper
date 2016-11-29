@@ -201,6 +201,25 @@ public class PasswordDocumentTest
     }
 
     @Test
+    public void emptyHistoryToFromCipher() throws Exception
+    {
+        PasswordDocument doc = new Helper.PasswordDocumentImpl();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        doc.deltasToEncryptedString(dos);
+        byte[] output = baos.toByteArray();
+
+        Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
+        ByteArrayInputStream bais = new ByteArrayInputStream(output);
+        DataInputStream dis = new DataInputStream(bais);
+        doc2.deltasFromEncryptedString(dis, output.length);
+        dis.close();  bais.close();
+
+        assertTrue(doc.getHistory().equals(doc2.getHistory()));
+        assertEquals(0, doc2.details.size());
+    }
+
+    @Test
     public void historyToFromCipher() throws Exception
     {
         PasswordDocument doc = Helper.generateDocument(5, 5);
@@ -212,7 +231,7 @@ public class PasswordDocumentTest
         Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
         ByteArrayInputStream bais = new ByteArrayInputStream(output);
         DataInputStream dis = new DataInputStream(bais);
-        doc2.deltasFromEncryptedString(dis);
+        doc2.deltasFromEncryptedString(dis, output.length);
         dis.close();  bais.close();
 
         assertTrue(doc.getHistory().equals(doc2.getHistory()));
@@ -226,7 +245,7 @@ public class PasswordDocumentTest
 
         try
         {
-            doc2.deltasFromEncryptedString(dis);
+            doc2.deltasFromEncryptedString(dis, output.length);
         }
         catch(Exception e){
             exception = true;
@@ -281,14 +300,15 @@ public class PasswordDocumentTest
             }
         });
 
-        final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        final byte[] bytes = baos.toByteArray();
+        final ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         final DataInputStream dis = new DataInputStream(bais);
 
         Thread t = new Thread(new Runnable() {public void run()
         {
             try
             {
-                doc2.deltasFromEncryptedString(dis);
+                doc2.deltasFromEncryptedString(dis, bytes.length);
             }
             catch(Exception e){
                 fail("failed to decrypt output");
@@ -332,7 +352,7 @@ public class PasswordDocumentTest
             {
                 ByteArrayInputStream bais = new ByteArrayInputStream(output);
                 DataInputStream dis = new DataInputStream(bais);
-                doc2.deltasFromEncryptedString(dis);
+                doc2.deltasFromEncryptedString(dis, output.length);
                 dis.close();  bais.close();
             }
             catch(Exception e){

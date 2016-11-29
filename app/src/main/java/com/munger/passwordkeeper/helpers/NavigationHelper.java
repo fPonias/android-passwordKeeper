@@ -62,6 +62,8 @@ public class NavigationHelper
 
     public void openInitialView()
     {
+        FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
+
         PasswordDocumentFile document = (PasswordDocumentFile) MainState.getInstance().document;
         if (!document.exists())
         {
@@ -72,6 +74,11 @@ public class NavigationHelper
         {
             startGetPassword();
         }
+    }
+
+    public void changePassword()
+    {
+
     }
 
     protected boolean gettingPassword = false;
@@ -330,13 +337,16 @@ public class NavigationHelper
 
     private void openFile2()
     {
-        if (MainState.getInstance().document.count() == 0)
+        MainState.getInstance().handler.post(new Runnable() {public void run()
         {
-            PasswordDetails dets = new PasswordDetails();
-            try{MainState.getInstance().document.addDetails(dets);}catch(Exception e){}
-        }
+            if (MainState.getInstance().document.count() == 0)
+            {
+                PasswordDetails dets = new PasswordDetails();
+                try{MainState.getInstance().document.addDetails(dets);}catch(Exception e){}
+            }
 
-        openFileView();
+            openFileView();
+        }});
     }
 
     public void importFile(final String path, final Callback callback)
@@ -376,29 +386,10 @@ public class NavigationHelper
         t.execute(new Object[]{});
     }
 
-    public void deleteData()
-    {
-        try
-        {
-            MainState.getInstance().document.delete();
-        }
-        catch(Exception e){
-            showAlert("Failed to delete local password data");
-            return;
-        }
-
-        setPasswordFile();
-    }
-
     protected void setPasswordFile()
     {
         MainState.getInstance().document = new PasswordDocumentFile(MainState.getInstance().config.localDataFilePath);
         openInitialView();
-    }
-
-    public void deleteRemoteData()
-    {
-
     }
 
     public void setFile(String password)

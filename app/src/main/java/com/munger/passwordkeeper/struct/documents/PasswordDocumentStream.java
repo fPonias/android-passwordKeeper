@@ -9,10 +9,12 @@ import java.io.DataInput;
 public class PasswordDocumentStream extends PasswordDocument
 {
     private DataInput stream;
+    private long size;
 
-    public PasswordDocumentStream(DataInput stream)
+    public PasswordDocumentStream(DataInput stream, long sz)
     {
         this.stream = stream;
+        this.size = sz;
     }
 
     public void save() throws Exception
@@ -22,7 +24,7 @@ public class PasswordDocumentStream extends PasswordDocument
 
     public void load(boolean force) throws Exception
     {
-        deltasFromEncryptedString(stream);
+        deltasFromEncryptedString(stream, size);
     }
 
     protected void onClose() throws Exception

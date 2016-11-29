@@ -225,11 +225,13 @@ public class PasswordDocumentFile extends PasswordDocument
 	{
 		historyLoaded = false;
 		String path = getHistoryFilePath();
+		File f = new File(path);
+		long sz = f.length();
 		FileInputStream fis = new FileInputStream(path);
 		DataInputStream dis = new DataInputStream(fis);
 
 		history = new PasswordDocumentHistory();
-		deltasFromEncryptedString(dis);
+		deltasFromEncryptedString(dis, sz);
 
 		dis.close();
 		fis.close();

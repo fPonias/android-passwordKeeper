@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
@@ -14,7 +15,6 @@ import com.munger.passwordkeeper.helpers.QuitTimer;
 public class MainActivity extends AppCompatActivity
 {
 	public KeyboardListener keyboardListener;
-	private QuitTimer quitTimer;
 
 
 	@Override
@@ -46,15 +46,20 @@ public class MainActivity extends AppCompatActivity
 		setContentView(R.layout.activity_main);
 
 		MainState.getInstance().setContext(this, this);
-		quitTimer = new QuitTimer();
 
 		MainState.getInstance().navigationHelper.openInitialView();
 	}
 
 	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		return MainState.getInstance().navigationHelper.onOptionsItemSelected(item);
+	}
+
+	@Override
 	protected void onDestroy()
 	{
-		quitTimer.stop();
+		MainState.getInstance().quitTimer.stop();
 
 		super.onDestroy();
 	}
@@ -76,7 +81,7 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	public void onUserInteraction()
 	{
-		quitTimer.reset();
+		MainState.getInstance().quitTimer.reset();
 		super.onUserInteraction();
 	}
 
