@@ -69,41 +69,6 @@ public class Helper
         return b.toString();
     }
 
-    public static class BlankActivity extends AppCompatActivity
-    {
-        public static final int ROOT_VIEW_ID = 1;
-
-        @Override
-        protected void onCreate(Bundle savedInstanceState)
-        {
-            super.onCreate(savedInstanceState);
-            LinearLayout view = new LinearLayout(this);
-            view.setId(R.id.container);
-
-            setContentView(view);
-        }
-
-        private Fragment currentFagment = null;
-
-        public void setFragment(Fragment fragment)
-        {
-            FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
-
-            if (fragment == null && currentFagment != null)
-                trans.remove(currentFagment);
-            else if (fragment != null)
-            {
-                if (currentFagment != null)
-                    trans.remove(currentFagment);
-
-                trans.add(R.id.container, fragment);
-            }
-
-            currentFagment = fragment;
-            trans.commit();
-        }
-    }
-
     public static class PasswordDocumentImpl extends PasswordDocument
     {
         public PasswordDocumentImpl()
@@ -161,13 +126,14 @@ public class Helper
     {
         for (int i = 0; i < detSz; i++)
         {
-            PasswordDetails dets = new PasswordDetails();
+            PasswordDetails dets = new PasswordDetails("id" + i);
             dets.setName("name" + i);
             dets.setLocation("loc" + i);
 
             for (int j = 0; j < pairSz; j++)
             {
-                PasswordDetailsPair pair = dets.addEmptyPair();
+                PasswordDetailsPair pair = new PasswordDetailsPair("pairid" + i + "-" + j);
+                dets.addPair(pair);
                 pair.setKey("key" + i + j);
                 pair.setValue("val" + i + j);
             }

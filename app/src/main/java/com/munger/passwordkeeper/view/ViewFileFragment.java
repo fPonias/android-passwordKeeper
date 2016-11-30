@@ -94,7 +94,7 @@ public class ViewFileFragment extends Fragment
 		}
 	}
 
-	private static class DetailView extends TextWidget
+	static class DetailView extends TextWidget
 	{
 		private PasswordDetails details;
 		
@@ -252,11 +252,17 @@ public class ViewFileFragment extends Fragment
 		if (id == R.id.action_edit)
 		{
 			setEditable(!editable);
+			return true;
 		}
 		
-		return true;
+		return false;
 	};
-	
+
+	public boolean getEditable()
+	{
+		return this.editable;
+	}
+
 	public void setEditable(boolean editable)
 	{
 		this.editable = editable;

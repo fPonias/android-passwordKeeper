@@ -8,8 +8,10 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.app.FragmentActivity;
 
 import com.munger.passwordkeeper.Helper;
+import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
+import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
@@ -56,10 +58,15 @@ public class CreateFileFragmentTest
             navigationMock = mock(NavigationHelper.class);
             navigationHelper = navigationMock;
         }
+
+        @Override
+        public void setupDriveHelper()
+        {
+        }
     }
 
     @Rule
-    public ActivityTestRule<Helper.BlankActivity> activityRule = new ActivityTestRule<>(Helper.BlankActivity.class);
+    public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
 
     private CreateFileFragment fragment;
     private CreateFileFragment fragmentSpy;

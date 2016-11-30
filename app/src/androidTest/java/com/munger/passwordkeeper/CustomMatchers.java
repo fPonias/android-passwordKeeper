@@ -33,23 +33,4 @@ public class CustomMatchers
             }
         };
     }
-
-    public static Matcher<String> doesnotEndWith(final String suffix)
-    {
-        return new TypeSafeMatcher<String>()
-        {
-            @Override
-            protected boolean matchesSafely(String item)
-            {
-                return !item.endsWith(suffix);
-            }
-
-            @Override
-            public void describeTo(Description description)
-            {
-                description.appendText("does not end with: ");
-                description.appendValue(suffix);
-            }
-        };
-    }
 }

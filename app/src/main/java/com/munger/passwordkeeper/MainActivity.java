@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
@@ -45,6 +48,11 @@ public class MainActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		init();
+	}
+
+	protected void init()
+	{
 		MainState.getInstance().setContext(this, this);
 
 		MainState.getInstance().navigationHelper.openInitialView();
@@ -94,30 +102,29 @@ public class MainActivity extends AppCompatActivity
 			super.onBackPressed();
 	}
 
-	public interface DocumentReset
-	{
-		void callback();
-	}
-
-	private ArrayList<DocumentReset> resetListeners = new ArrayList<>();
-
-	public void addResetListener(DocumentReset listener)
-	{
-		if (resetListeners.contains(listener))
-			return;
-
-		resetListeners.add(listener);
-	}
-
-	public void removeResetListener(DocumentReset listener)
-	{
-		if (!resetListeners.contains(listener))
-			return;
-	}
-
 	@Override
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
 	{
 		MainState.getInstance().navigationHelper.notifyPermissionResults(requestCode);
+	}
+
+	private Fragment currentFagment = null;
+
+	public void setFragment(Fragment fragment)
+	{
+		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
+
+		if (fragment == null && currentFagment != null)
+			trans.remove(currentFagment);
+		else if (fragment != null)
+		{
+			if (currentFagment != null)
+				trans.remove(currentFagment);
+
+			trans.add(R.id.container, fragment);
+		}
+
+		currentFagment = fragment;
+		trans.commit();
 	}
 }

@@ -14,12 +14,15 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.app.FragmentActivity;
 
 import com.munger.passwordkeeper.Helper;
+import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
+import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.helpers.QuitTimer;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -95,7 +98,7 @@ public class SettingsFragmentTest
     }
 
     @Rule
-    public ActivityTestRule<Helper.BlankActivity> activityRule = new ActivityTestRule<>(Helper.BlankActivity.class);
+    public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
 
     private SettingsFragment fragment;
     private SettingsFragmentTest.MainStateDer mainState;
@@ -305,7 +308,7 @@ public class SettingsFragmentTest
         onView(withClassName(containsString("RecyclerView")))
                 .perform(RecyclerViewActions.actionOnItemAtPosition(index, click()));
 
-        onData(hasToString(doesnotEndWith("/"))).inAdapterView(withClassName(containsString("ListView"))).perform(click());
+        onData(not(Matchers.endsWith("/"))).inAdapterView(withClassName(containsString("ListView"))).perform(click());
 
         synchronized (lock)
         {

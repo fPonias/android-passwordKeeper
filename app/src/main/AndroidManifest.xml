@@ -27,7 +27,7 @@
             android:label="@string/app_name" >
         </activity>
 
-        <activity android:name="com.munger.passwordkeeper.Helper$BlankActivity"
+        <activity android:name="com.munger.passwordkeeper.TestingMainActivity"
                   android:windowSoftInputMode="adjustResize"
                   android:label="@string/app_name" />
 
