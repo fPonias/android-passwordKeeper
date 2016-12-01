@@ -1,10 +1,16 @@
 package com.munger.passwordkeeper;
 
+import android.support.test.espresso.ViewInteraction;
 import android.view.View;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.*;
+import static android.support.test.espresso.assertion.ViewAssertions.*;
+import static android.support.test.espresso.matcher.ViewMatchers.*;
+import static android.support.test.espresso.action.ViewActions.*;
 
 /**
  * Created by codymunger on 11/28/16.
@@ -32,5 +38,20 @@ public class CustomMatchers
                 return matcher.matches(view) && currentIndex++ == index;
             }
         };
+    }
+
+    public static void assertHiddenOrDoesNotExist(ViewInteraction match)
+    {
+        boolean thrown = false;
+        try
+        {
+            match.check(matches(not(isDisplayed())));
+            return;
+        }
+        catch(Exception e){
+            thrown = true;
+        }
+
+        assertTrue(thrown);
     }
 }

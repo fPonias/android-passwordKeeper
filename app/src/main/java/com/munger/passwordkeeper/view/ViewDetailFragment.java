@@ -346,6 +346,16 @@ public class ViewDetailFragment extends Fragment
 		}
 	}
 
+	public PasswordDetails getDetails()
+	{
+		return details;
+	}
+
+	public PasswordDetails getOriginalDetails()
+	{
+		return originalDetails;
+	}
+
 	private void setupFields()
 	{
 
@@ -364,6 +374,11 @@ public class ViewDetailFragment extends Fragment
 	}
 	
 	private boolean editable = false;
+
+	public boolean getEditable()
+	{
+		return editable;
+	}
 
 	public void setEditable(final boolean editable)
 	{
