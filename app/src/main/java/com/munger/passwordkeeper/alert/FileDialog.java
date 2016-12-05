@@ -18,6 +18,7 @@ import com.munger.passwordkeeper.helpers.NavigationHelper;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class FileDialog
@@ -32,14 +33,8 @@ public class FileDialog
         void fileSelected(File file);
     }
 
-    public interface DirectorySelectedListener
-    {
-        void directorySelected(File directory);
-    }
     private ListenerList<FileSelectedListener> fileListenerList = new ListenerList<FileDialog.FileSelectedListener>();
-    private ListenerList<DirectorySelectedListener> dirListenerList = new ListenerList<FileDialog.DirectorySelectedListener>();
     private final Activity activity;
-    private boolean selectDirectoryOption;
     private String fileEndsWith;
     private boolean initted;
 
@@ -103,20 +98,12 @@ public class FileDialog
     /**
      * @return file dialog
      */
-    public Dialog createFileDialog()
+    protected Dialog createFileDialog()
     {
         Dialog dialog = null;
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
         builder.setTitle(currentPath.getPath());
-        if (selectDirectoryOption)
-        {
-            builder.setPositiveButton("Select directory", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
-            {
-                Log.d(TAG, currentPath.getPath());
-                fireDirectorySelectedEvent(currentPath);
-            }});
-        }
 
         builder.setItems(fileList, new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
@@ -148,21 +135,6 @@ public class FileDialog
         fileListenerList.remove(listener);
     }
 
-    public void setSelectDirectoryOption(boolean selectDirectoryOption)
-    {
-        this.selectDirectoryOption = selectDirectoryOption;
-    }
-
-    public void addDirectoryListener(DirectorySelectedListener listener)
-    {
-        dirListenerList.add(listener);
-    }
-
-    public void removeDirectoryListener(DirectorySelectedListener listener)
-    {
-        dirListenerList.remove(listener);
-    }
-
     public void showDialog()
     {
         if (!initted)
@@ -187,18 +159,14 @@ public class FileDialog
         }});
     }
 
-    private void fireDirectorySelectedEvent(final File directory)
-    {
-        dirListenerList.fireEvent(new FireHandler<DirectorySelectedListener>() {public void fireEvent(DirectorySelectedListener listener)
-        {
-            listener.directorySelected(directory);
-        }});
-    }
+    private List<File> fileData;
+    private HashMap<String, File> fileIndex;
 
     private void loadFileList(File path)
     {
         this.currentPath = path;
-        List<File> r = new ArrayList<>();
+        List<File> fileData = new ArrayList<>();
+        fileIndex = new HashMap<>();
 
         if (path.exists())
         {
@@ -207,27 +175,29 @@ public class FileDialog
             {
                 //filtering on PARENT_DIR doesn't work, use getParentFile instead.
                 if (doFilter(parent))
-                    r.add(new File(PARENT_DIR));
+                    fileData.add(parent);
             }
 
             File[] fileList1 = path.listFiles();
             for (File file : fileList1)
             {
                 if (doFilter(file))
-                    r.add(file);
+                    fileData.add(file);
             }
         }
 
-        int sz = r.size();
+        int sz = fileData.size();
         fileList = new String[sz];
         for (int i = 0; i < sz; i++)
         {
-            File f = r.get(i);
+            File f = fileData.get(i);
 
             if (f.isDirectory())
                 fileList[i] = f.getName() + '/';
             else
                 fileList[i] = f.getName();
+
+            fileIndex.put(fileList[i], f);
         }
     }
 
@@ -238,7 +208,7 @@ public class FileDialog
 
         if (sel.isDirectory())
         {
-            String[] list = sel.list();
+            File[] list = sel.listFiles();
             if (list != null)
                 return true;
         }
@@ -246,9 +216,6 @@ public class FileDialog
         String filename = sel.getName().toLowerCase();
         if (filename != ".." && filename.startsWith("."))
             return false;
-
-        if (selectDirectoryOption)
-            return sel.isDirectory();
 
         if (fileEndsWith == null)
             return true;
@@ -264,7 +231,7 @@ public class FileDialog
         if (fileChosen.equals(PARENT_DIR))
             return currentPath.getParentFile();
         else
-            return new File(currentPath, fileChosen);
+            return fileIndex.get(fileChosen);
     }
 
     private void setFileEndsWith(String fileEndsWith)

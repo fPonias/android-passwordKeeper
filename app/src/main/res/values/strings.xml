@@ -21,4 +21,7 @@
     </string-array>
 
     <string name="alert_okay">Okay</string>
+    <string name="confirm_okay">Okay</string>
+    <string name="confirm_cancel">Cancel</string>
+    <string name="confirm_discard">Discard</string>
 </resources>
