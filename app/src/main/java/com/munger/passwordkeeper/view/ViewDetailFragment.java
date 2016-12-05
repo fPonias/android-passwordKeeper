@@ -105,11 +105,16 @@ public class ViewDetailFragment extends Fragment
 				}
 			});
 		}
+
+		actionCallback = new EditActionCallback(this);
 	};
 
 	protected View lastFocus;
 	protected long lastFocusStamp = 0;
 	protected boolean keyboardOpened = false;
+	private ActionMode actionMode = null;
+	private TextView actionSelected = null;
+	private EditActionCallback actionCallback = null;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -142,6 +147,26 @@ public class ViewDetailFragment extends Fragment
 			}
 		});
 
+		copyMenuListener = new View.OnLongClickListener() {public boolean onLongClick(View v)
+		{
+			if (!(v instanceof TextView))
+				return false;
+
+			if (actionSelected != null)
+				selectText(actionSelected, false);
+
+			actionSelected = (TextView) v;
+			actionSelected.requestFocus();
+			selectText(actionSelected, true);
+
+			if (actionMode == null)
+			{
+				actionMode = MainState.getInstance().activity.startActionMode(actionCallback);
+			}
+
+			return true;
+		}};
+
 
 		setHasOptionsMenu(true);
 
@@ -151,37 +176,26 @@ public class ViewDetailFragment extends Fragment
 		addButton = (Button) root.findViewById(R.id.viewdetail_addbtn);
 		
 		nameLabel.getLabel().setOnLongClickListener(copyMenuListener);
+		nameLabel.getInput().setOnLongClickListener(copyMenuListener);
 		locationLabel.getLabel().setOnLongClickListener(copyMenuListener);
+		locationLabel.getInput().setOnLongClickListener(copyMenuListener);
 
 		if (details != null)
 			setupFields();
 
 		itemList.setFocusable(false);
 
-		copyMenuListener = new View.OnLongClickListener() {public boolean onLongClick(View v) 
+		nameLabel.getInput().setOnFocusChangeListener(new View.OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
 		{
-			if (actionMode != null)
-				return false;
-			
-			if (!(v instanceof TextView))
-				return false;
-			
-			actionSelected = (TextView) v;
-			selectText(actionSelected, true);
-			actionMode = MainState.getInstance().activity.startActionMode(actionCallback);
-			return true;
-		}};
-
-		nameLabel.setInputChangeListener(new TextInputWidget.InputChangedListener() {public void changed() 
-		{
-			if (details != null)
+			if (!hasFocus)
 				details.setName(nameLabel.getText());
 		}});
-		
-		locationLabel.setInputChangeListener(new TextInputWidget.InputChangedListener() {public void changed() 
+
+		locationLabel.getInput().setOnFocusChangeListener(new View.OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
 		{
-			if (details != null)
+			if (!hasFocus)
 				details.setLocation(locationLabel.getText());
+
 		}});
 		
 
@@ -316,13 +330,15 @@ public class ViewDetailFragment extends Fragment
 
 	private int nextSelect = -1;
 
+	private boolean pairAdded = false;
+
 	private void addPair()
 	{
+		pairAdded = true;
 		PasswordDetailsPair pair = details.addEmptyPair();
 		pairListAdapter.notifyDataSetChanged();
 
 		nextSelect = details.count() - 1;
-		itemList.setSelection(nextSelect);
 	}
 
 	private boolean delayedCreateEmptyPair = false;
@@ -405,17 +421,18 @@ public class ViewDetailFragment extends Fragment
 		setupEditable();
 	}
 
-	public boolean backPressed()
+	public void backPressed(final NavigationHelper.Callback callback)
 	{
 		if (editable && originalDetails != null && originalDetails.diff(details))
 		{
 			//if there are changes that need to be saved, a confirmation popup is brought up and the back action is cancelled.
 			goingBack = true;
-			saveDetails(null);
-			return false;
+			saveDetails(new Predicate<Boolean>() {public boolean apply(Boolean aBoolean)
+			{
+				callback.callback(aBoolean);
+				return true;
+			}});
 		}
-		
-		return true;
 	}
 	
 	private boolean goingBack = false;
@@ -427,6 +444,10 @@ public class ViewDetailFragment extends Fragment
 
 	private void saveDetails(final Predicate<Boolean> callback)
 	{
+		View currentFocus = MainState.getInstance().activity.getCurrentFocus();
+		if (currentFocus != null)
+			currentFocus.clearFocus();
+
 		ConfirmFragment frag = new ConfirmFragment("Save changes?", new ConfirmFragment.Listener()
 		{
 			public void okay() 
@@ -437,8 +458,6 @@ public class ViewDetailFragment extends Fragment
 
 					if (!goingBack)
 						onResume();
-					else
-						MainState.getInstance().navigationHelper.onBackPressed();
 
 					if (callback != null)
 						callback.apply(true);
@@ -451,8 +470,6 @@ public class ViewDetailFragment extends Fragment
 
 				if (!goingBack)
 					onResume();
-				else
-					MainState.getInstance().navigationHelper.onBackPressed();
 
 				if (callback != null)
 					callback.apply(true);
@@ -487,35 +504,18 @@ public class ViewDetailFragment extends Fragment
 
 			keyLabel.setOnLongClickListener(parent.copyMenuListener);
 			valueLabel.setOnLongClickListener(parent.copyMenuListener);
-
-			keyInput.addTextChangedListener(new TextWatcher() 
+			keyInput.setOnFocusChangeListener(new OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
 			{
-				public void onTextChanged(CharSequence s, int start, int before, int count) 
-				{}
-				
-				public void beforeTextChanged(CharSequence s, int start, int count,	int after) 
-				{}
-				
-				public void afterTextChanged(Editable s) 
-				{
+				if (!hasFocus)
 					pair.setKey(keyInput.getText().toString());
-				}
-			});
-			
-			valueInput.addTextChangedListener(new TextWatcher() 
-			{
-				public void onTextChanged(CharSequence s, int start, int before, int count) 
-				{}
-				
-				public void beforeTextChanged(CharSequence s, int start, int count,	int after) 
-				{}
-				
-				public void afterTextChanged(Editable s) 
-				{
-					pair.setValue(valueInput.getText().toString());
-				}
-			});
+			}});
+			keyInput.setOnLongClickListener(parent.copyMenuListener);
 
+			valueInput.setOnFocusChangeListener(new OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
+			{
+				if (!hasFocus)
+					pair.setValue(valueInput.getText().toString());
+			}});
 			valueInput.setOnLongClickListener(parent.copyMenuListener);
 
 			deleteBtn.setOnClickListener(new OnClickListener() {public void onClick(View arg0) 
@@ -580,42 +580,52 @@ public class ViewDetailFragment extends Fragment
 
 			if (host.nextSelect == position)
 			{
-				ret.requestFocus();
+				ret.findViewById(R.id.detailitem_keyinput).requestFocus();
 				host.nextSelect = -1;
 			}
 
 			return ret;
 		}
 	}
-	
-	private ActionMode actionMode = null;
-	private TextView actionSelected = null;
 
-	private ActionMode.Callback actionCallback = new ActionMode.Callback() 
+
+	public static class EditActionCallback implements ActionMode.Callback
 	{
+		public boolean isPrepared = false;
+		public ViewDetailFragment parent;
+
+		public EditActionCallback(ViewDetailFragment parent)
+		{
+			this.parent = parent;
+		}
+
 		public boolean onPrepareActionMode(ActionMode arg0, Menu arg1) 
 		{
+			isPrepared = false;
+
 			return false;
 		}
 
 		public void onDestroyActionMode(ActionMode arg0) 
 		{
-			actionMode = null;
-			
-			selectText(actionSelected, false);
-			
-			actionSelected = null;
+			parent.actionMode = null;
+
+			parent.selectText(parent.actionSelected, false);
+
+			parent.actionSelected = null;
 		}
 
 		public boolean onCreateActionMode(ActionMode mode, Menu menu) 
 		{
 			MenuInflater inf = mode.getMenuInflater();
 			
-			if (!editable)
+			if (!parent.editable)
 				inf.inflate(R.menu.detail_action, menu);
 			else
 				inf.inflate(R.menu.detailedit_action, menu);
-				
+
+			isPrepared = true;
+
 			return true;
 		}
 
@@ -627,8 +637,10 @@ public class ViewDetailFragment extends Fragment
 			
 			if (id == R.id.action_detail_copy)
 			{
-				ClipData clip = ClipData.newPlainText("password-keeper", actionSelected.getText().toString());
+				ClipData clip = ClipData.newPlainText("password-keeper", parent.actionSelected.getText().toString());
 				clipboard.setPrimaryClip(clip);
+				mode.finish();
+				return true;
 			}
 			else if (id == R.id.action_detail_paste)
 			{
@@ -639,20 +651,30 @@ public class ViewDetailFragment extends Fragment
 				{
 					ClipData.Item it = clip.getItemAt(0);
 					String data = it.coerceToText(MainState.getInstance().context).toString();
-					actionSelected.setText(data);
+					parent.actionSelected.setText(data);
+					mode.finish();
+
+					return true;
 				}
 			}
 			else if (id == R.id.action_detail_random)
 			{
-				String pw = generateRandomPassword(8);
-				actionSelected.setText(pw);
+				String pw = parent.generateRandomPassword(8);
+				parent.actionSelected.setText(pw);
 				ClipData clip = ClipData.newPlainText("password-keeper", pw);
 				clipboard.setPrimaryClip(clip);
+				mode.finish();
+				return true;
 			}
 			
 			return false;
 		}
 	};
+
+	public boolean isActionMenuPrepared()
+	{
+		return actionCallback.isPrepared;
+	}
 
 	public String generateRandomPassword(int length)
 	{

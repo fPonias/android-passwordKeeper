@@ -6,8 +6,11 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.DateTimeKeyListener;
 import android.util.AttributeSet;
+import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -62,7 +65,7 @@ public class TextInputWidget extends ViewSwitcher
 	    	input.setHint(s);
 	    }
 
-	    input.addTextChangedListener(new TextWatcher() 
+	    input.addTextChangedListener(new TextWatcher()
 	    {
 	    	public void onTextChanged(CharSequence s, int start, int before, int count) 
 	    	{
@@ -84,6 +87,30 @@ public class TextInputWidget extends ViewSwitcher
 					if (inputListener != null)
 						inputListener.changed();
 				}
+			}
+		});
+
+		input.setCustomSelectionActionModeCallback(new ActionMode.Callback()
+		{
+			public boolean onCreateActionMode(ActionMode mode, Menu menu)
+			{
+
+				return false;
+			}
+
+			public boolean onPrepareActionMode(ActionMode mode, Menu menu)
+			{
+				return false;
+			}
+
+			public boolean onActionItemClicked(ActionMode mode, MenuItem item)
+			{
+				return false;
+			}
+
+			public void onDestroyActionMode(ActionMode mode)
+			{
+
 			}
 		});
 

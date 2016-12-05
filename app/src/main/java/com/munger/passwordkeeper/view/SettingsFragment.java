@@ -146,7 +146,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
                 }
 
                 if (success)
-                    MainState.getInstance().navigationHelper.onBackPressed();
+                    MainState.getInstance().navigationHelper.onBackPressed(null);
             }});
         }});
 

@@ -47,6 +47,7 @@ import android.support.v7.widget.RecyclerView;
 
 import static com.munger.passwordkeeper.CustomMatchers.*;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(AndroidJUnit4.class)
@@ -322,7 +323,7 @@ public class SettingsFragmentTest
         doImport(true);
 
         verify(documentMock).save();
-        verify(navigationMock).onBackPressed();
+        assertEquals(1, activityRule.getActivity().getBackCalledCount());
     }
 
     @Test
@@ -331,7 +332,7 @@ public class SettingsFragmentTest
         doImport(false);
 
         verify(documentMock, never()).save();
-        verify(navigationMock, never()).onBackPressed();
+        assertEquals(0, activityRule.getActivity().getBackCalledCount());
     }
 
     @Test
@@ -344,7 +345,7 @@ public class SettingsFragmentTest
 
         verify(documentMock).save();
         verify(navigationMock).showAlert(anyString());
-        verify(navigationMock, never()).onBackPressed();
+        assertEquals(0, activityRule.getActivity().getBackCalledCount());
     }
 
     @Test

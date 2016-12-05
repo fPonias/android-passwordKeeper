@@ -31,6 +31,7 @@ import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.AlertFragment;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
 
 public class CreateFileFragment extends Fragment
 {
@@ -136,7 +137,9 @@ public class CreateFileFragment extends Fragment
 
 	protected void loadMain()
 	{
-		MainState.getInstance().navigationHelper.onBackPressed();
-		MainState.getInstance().navigationHelper.openFile();
+		MainState.getInstance().navigationHelper.onBackPressed(new NavigationHelper.Callback() {public void callback(Object result)
+		{
+			MainState.getInstance().navigationHelper.openFile();
+		}});
 	}
 }

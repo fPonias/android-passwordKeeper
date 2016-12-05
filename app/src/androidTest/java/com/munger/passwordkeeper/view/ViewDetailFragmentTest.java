@@ -1,13 +1,22 @@
 package com.munger.passwordkeeper.view;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.DataInteraction;
+import android.support.test.espresso.Espresso;
+import android.support.test.espresso.IdlingResource;
+import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.telecom.Call;
 import android.view.View;
+import android.widget.EditText;
 
 import com.munger.passwordkeeper.CustomMatchers;
 import com.munger.passwordkeeper.Helper;
@@ -17,6 +26,7 @@ import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 
 import org.hamcrest.Description;
@@ -41,7 +51,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -60,6 +72,66 @@ public class ViewDetailFragmentTest
 
     }
 
+    public class NavigationHelperDer extends NavigationHelper
+    {
+        public NavigationHelperDer()
+        {
+            super();
+        }
+
+        public void setFragment(ViewDetailFragment fragment)
+        {
+            viewDetailFragment = fragment;
+        }
+
+        private boolean successOnSaveDetails = true;
+
+        public void setSuccessOfSaveDetails(boolean success)
+        {
+            successOnSaveDetails = success;
+        }
+
+        @Override
+        public void saveDetail(PasswordDetails detail, Callback callback)
+        {
+            callback.callback(successOnSaveDetails);
+        }
+
+        public boolean lastBackResult;
+        public Callback backCallback = null;
+        private Object lock = new Object();
+
+        public void waitOnBack()
+        {
+            synchronized (lock)
+            {
+                if (backCallback == null)
+                    return;
+
+                try{lock.wait(2000);}catch(Exception e){fail();}
+            }
+        }
+
+        @Override
+        public void onBackPressed(final Callback cb)
+        {
+            synchronized (lock)
+            {
+                backCallback = new Callback() {public void callback(Object result)
+                {
+                    lastBackResult = (Boolean) result;
+                    cb.callback(result);
+
+                    synchronized (lock)
+                    {
+                        lock.notify();
+                    }
+                }};
+            }
+            super.onBackPressed(backCallback);
+        }
+    }
+
     public class MainStateDer extends MainState
     {
         @Override
@@ -71,7 +143,7 @@ public class ViewDetailFragmentTest
         @Override
         protected void setupNavigation()
         {
-            navigationMock = mock(NavigationHelper.class);
+            navigationMock = new NavigationHelperDer();
             navigationHelper = navigationMock;
         }
 
@@ -86,7 +158,8 @@ public class ViewDetailFragmentTest
     private ViewDetailFragment fragment;
     private MainStateDer mainState;
     private PasswordDocImplDer documentMock;
-    private NavigationHelper navigationMock;
+    private NavigationHelperDer navigationMock;
+    private EditMenuIdler editMenuIdler;
 
     @Before
     public void before()
@@ -97,12 +170,16 @@ public class ViewDetailFragmentTest
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
         mainState.setContext(activity, activity);
+
+        editMenuIdler = new EditMenuIdler();
+        registerIdlingResources(editMenuIdler);
     }
 
     @After
     public void after()
     {
-        activityRule.getActivity().setFragment(null);
+        //activityRule.getActivity().setFragment(null);
+        unregisterIdlingResources(editMenuIdler);
     }
 
     public static Matcher<View> pairWithKey(final String key)
@@ -201,6 +278,8 @@ public class ViewDetailFragmentTest
     {
         PasswordDetails dets = new PasswordDetails();
         fragment = new ViewDetailFragment();
+        navigationMock.setFragment(fragment);
+        editMenuIdler.setFragment(fragment);
 
         if (name != null)
             dets.setName(name);
@@ -286,28 +365,8 @@ public class ViewDetailFragmentTest
 
         if (editable)
         {
-            final Object lock = new Object();
-            doAnswer(new Answer() {public Object answer(final InvocationOnMock invocationOnMock) throws Throwable
-            {
-                MainState.getInstance().handler.post(new Runnable() {public void run()
-                {
-                    NavigationHelper.Callback callback = invocationOnMock.getArgumentAt(1, NavigationHelper.Callback.class);
-                    callback.callback(true);
-
-                    synchronized (lock)
-                    {
-                        lock.notify();
-                    }
-                }});
-
-                return null;
-            }}).when(navigationMock).saveDetail(any(PasswordDetails.class), any(NavigationHelper.Callback.class));
-
+            navigationMock.setSuccessOfSaveDetails(true);
             onView(allOf(withClassName(containsString("Button")), withText("Okay"))).perform(click());
-
-            synchronized (lock){
-                try{lock.wait(2000);}catch(Exception e){fail();}
-            }
         }
 
         assertNotEquals(editable, fragment.getEditable());
@@ -402,49 +461,411 @@ public class ViewDetailFragmentTest
 
         toggleEditableAndSave();
 
-        assertEquals(0, fragment.getDetails().count());
+        assertEquals(1, fragment.getDetails().count());
         checkDetails(fragment.getDetails());
     }
 
     @Test
     public void generatePassword()
     {
-        populateDetails("name", "location", 0);
+        populateDetails("name", "location", 1);
         toggleEditable();
 
+        onData(anything()).atPosition(0).onChildView(withChild(withId(R.id.detailitem_valueinput))).perform(longClick());
+        onView(withId(R.id.action_detail_random)).perform(click());
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).check(matches(withText(not(isEmptyString()))));
 
         toggleEditableAndSave();
+        assertNotEquals(0, fragment.getDetails().getPair(0).getValue().length());
 
         checkDetails(fragment.getDetails());
+    }
+
+    private void verifyClipboard(String expected)
+    {
+        ClipboardManager clipboard = (ClipboardManager) activityRule.getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = clipboard.getPrimaryClip();
+        ClipData.Item it = clip.getItemAt(0);
+        String data = it.coerceToText(MainState.getInstance().context).toString();
+        assertEquals(expected, data);
+    }
+
+    @Test
+    public void contextCancel()
+    {
+
+    }
+
+    private static class EditMenuIdler implements IdlingResource
+    {
+        private ResourceCallback callback;
+        private ViewDetailFragment target;
+        public EditMenuIdler()
+        {
+        }
+
+        public void setFragment(ViewDetailFragment target)
+        {
+            this.target = target;
+        }
+
+        @Override
+        public String getName()
+        {
+            return "edit menu idler";
+        }
+
+        @Override
+        public void registerIdleTransitionCallback(ResourceCallback callback)
+        {
+            this.callback = callback;
+        }
+
+        @Override
+        public boolean isIdleNow()
+        {
+            if (target == null)
+                return false;
+
+            if (!target.isActionMenuPrepared())
+            {
+                callback.onTransitionToIdle();
+                return true;
+            }
+            else
+                return false;
+        }
+    }
+
+    private void verifyEditMenuOnlyCopyVisible()
+    {
+        onView(withId(R.id.action_detail_copy)).check(matches(isDisplayed()));
+
+        try {
+            onView(withId(R.id.action_detail_paste)).check(matches(not(isDisplayed())));
+        }catch(NoMatchingViewException e){}
+
+        try {
+            onView(withId(R.id.action_detail_random)).check(matches(not(isDisplayed())));
+        }catch(NoMatchingViewException e){}
+    }
+
+    private void verifyEditMenuAllVisible()
+    {
+        onView(withId(R.id.action_detail_copy)).check(matches(isDisplayed()));
+        onView(withId(R.id.action_detail_paste)).check(matches(isDisplayed()));
+        onView(withId(R.id.action_detail_random)).check(matches(isDisplayed()));
+    }
+
+    private void verifyEditMenuClosed()
+    {
+        try {
+            onView(withId(R.id.action_detail_copy)).check(matches(not(isDisplayed())));
+        }catch(NoMatchingViewException e){}
+
+        try {
+            onView(withId(R.id.action_detail_paste)).check(matches(not(isDisplayed())));
+        }catch(NoMatchingViewException e){}
+
+        try {
+            onView(withId(R.id.action_detail_random)).check(matches(not(isDisplayed())));
+        }catch(NoMatchingViewException e){}
+    }
+
+    @Test
+    public void copyNoEdit()
+    {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+        assertFalse(fragment.getEditable());
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_namelbl)),withClassName(containsString("TextView")))).perform(longClick());
+        verifyEditMenuOnlyCopyVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard("name");
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_locationlbl)),withClassName(containsString("TextView")))).perform(longClick());
+        verifyEditMenuOnlyCopyVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard("location");
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keylabel)).perform(longClick());
+        verifyEditMenuOnlyCopyVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(fragment.getDetails().getPair(0).getKey());
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valuelabel)).perform(longClick());
+        verifyEditMenuOnlyCopyVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(fragment.getDetails().getPair(0).getValue());
+
+        assertFalse(copy.diff(fragment.getDetails()));
     }
 
     @Test
     public void copy()
     {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
 
+        toggleEditable();
+        assertTrue(fragment.getEditable());
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_namelbl)),withClassName(containsString("EditText")))).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard("name");
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_locationlbl)),withClassName(containsString("EditText")))).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard("location");
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(fragment.getDetails().getPair(0).getKey());
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_copy)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(fragment.getDetails().getPair(0).getValue());
+
+        toggleEditable();
+        assertFalse(fragment.getEditable());
+
+        assertFalse(copy.diff(fragment.getDetails()));
     }
 
     @Test
     public void paste()
     {
+        final String targetText = "foo";
+        final Object lock = new Object();
 
+        MainState.getInstance().handler.post(new Runnable() {public void run()
+        {
+            ClipboardManager clipboard = (ClipboardManager) activityRule.getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("password-keeper", targetText);
+            clipboard.setPrimaryClip(clip);
+
+            synchronized (lock){ lock.notify();}
+        }});
+
+        synchronized (lock)
+        {
+            try{lock.wait(2000);}catch(Exception e){fail();}
+        }
+
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+
+        toggleEditable();
+        assertTrue(fragment.getEditable());
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_namelbl)),withClassName(containsString("EditText")))).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_paste)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(targetText);
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_locationlbl)),withClassName(containsString("EditText")))).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_paste)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(targetText);
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_paste)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(targetText);
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_paste)).perform(click());
+        verifyEditMenuClosed();
+        verifyClipboard(targetText);
+
+        toggleEditableAndSave();
+
+        assertTrue(copy.diff(fragment.getDetails()));
+    }
+
+    @Test
+    public void menuRandom()
+    {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+
+        toggleEditable();
+        assertTrue(fragment.getEditable());
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_namelbl)),withClassName(containsString("EditText")))).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_random)).perform(click());
+        verifyEditMenuClosed();
+
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_locationlbl)),withClassName(containsString("EditText")))).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_random)).perform(click());
+        verifyEditMenuClosed();
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_random)).perform(click());
+        verifyEditMenuClosed();
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(longClick());
+        verifyEditMenuAllVisible();
+        onView(withId(R.id.action_detail_random)).perform(click());
+        verifyEditMenuClosed();
+
+        toggleEditableAndSave();
+
+        assertTrue(copy.diff(fragment.getDetails()));
+    }
+
+    private void doInteractions()
+    {
+        fragment.getDetails().setHistory(new PasswordDocumentHistory());
+
+        toggleEditable();
+
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(clearText(), typeText("value3"));
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(clearText(), typeText("value4"));
+        onView(withId(R.id.viewdetail_addbtn)).perform(click());
+        onData(anything()).atPosition(1).onChildView(withId(R.id.detailitem_keyinput)).perform(clearText(), typeText("value5"));
+        onData(anything()).atPosition(1).onChildView(withId(R.id.detailitem_valueinput)).perform(clearText(), typeText("value6"));
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_deletebtn)).perform(click());
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_namelbl)),withClassName(containsString("EditText")))).perform(clearText(), typeText("value1"));
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_locationlbl)),withClassName(containsString("EditText")))).perform(clearText(), typeText("value2"));
     }
 
     @Test
     public void save()
     {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+        doInteractions();
 
+        toggleEditableAndSave();
+
+        PasswordDetails newDets = fragment.getDetails();
+        assertTrue(copy.diff(newDets));
+        int cnt = newDets.getHistory().count();
+        assertTrue(8 <= cnt && cnt <= 14);
+        assertEquals("value1", newDets.getName());
+        assertEquals("value2", newDets.getLocation());
+        assertEquals(1, newDets.count());
+        assertEquals("value5", newDets.getPair(0).getKey());
+        assertEquals("value6", newDets.getPair(0).getValue());
+        assertEquals(0, activityRule.getActivity().getBackCalledCount());
+    }
+
+    @Test
+    public void saveOnBack()
+    {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+        doInteractions();
+
+        Espresso.closeSoftKeyboard();
+        Espresso.pressBack();
+        onView(allOf(withClassName(containsString("Button")), withText("Okay"))).perform(click());
+        navigationMock.waitOnBack();
+
+        PasswordDetails newDets = fragment.getDetails();
+        assertTrue(copy.diff(newDets));
+        int cnt = newDets.getHistory().count();
+        assertTrue(8 <= cnt && cnt <= 14);
+        assertEquals("value1", newDets.getName());
+        assertEquals("value2", newDets.getLocation());
+        assertEquals(1, newDets.count());
+        assertEquals("value5", newDets.getPair(0).getKey());
+        assertEquals("value6", newDets.getPair(0).getValue());
+
+        assertEquals(1, activityRule.getActivity().getBackCalledCount());
     }
 
     @Test
     public void cancel()
     {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+        doInteractions();
 
+        checkEditable();
+        onView(withId(R.id.action_edit)).perform(click());
+        onView(allOf(withClassName(containsString("Button")), withText("Cancel"))).perform(click());
+        checkEditable();
+        assertEquals(0, activityRule.getActivity().getBackCalledCount());
+
+        PasswordDetails newDets = fragment.getDetails();
+        assertTrue(copy.diff(newDets));
+    }
+
+    @Test
+    public void cancelOnBack()
+    {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+        doInteractions();
+
+        checkEditable();
+        Espresso.closeSoftKeyboard();
+        Espresso.pressBack();
+        onView(allOf(withClassName(containsString("Button")), withText("Cancel"))).perform(click());
+        navigationMock.waitOnBack();
+        checkEditable();
+        assertEquals(0, activityRule.getActivity().getBackCalledCount());
+        assertFalse(navigationMock.lastBackResult);
+
+        PasswordDetails newDets = fragment.getDetails();
+        assertTrue(copy.diff(newDets));
     }
 
     @Test
     public void discard()
     {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+        doInteractions();
 
+        checkEditable();
+        onView(withId(R.id.action_edit)).perform(click());
+        onView(allOf(withClassName(containsString("Button")), withText("Discard"))).perform(click());
+        checkNotEditable();
+        assertEquals(0, activityRule.getActivity().getBackCalledCount());
+
+        PasswordDetails newDets = fragment.getDetails();
+        assertFalse(copy.diff(newDets));
+    }
+
+    @Test
+    public void discardOnBack()
+    {
+        populateDetails("name", "location", 1);
+        PasswordDetails copy = fragment.getDetails().copy();
+        doInteractions();
+
+        checkEditable();
+        Espresso.closeSoftKeyboard();
+        Espresso.pressBack();
+        onView(allOf(withClassName(containsString("Button")), withText("Discard"))).perform(click());
+        navigationMock.waitOnBack();
+        checkEditable();
+        assertTrue(navigationMock.lastBackResult);
+
+        PasswordDetails newDets = fragment.getDetails();
+        assertFalse(copy.diff(newDets));
     }
 }

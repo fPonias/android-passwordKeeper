@@ -1,11 +1,13 @@
 package com.munger.passwordkeeper;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
@@ -14,6 +16,7 @@ import android.widget.LinearLayout;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.helpers.QuitTimer;
+import com.munger.passwordkeeper.view.ViewDetailFragment;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -96,10 +99,19 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	public void onBackPressed()
 	{
-		boolean handled = MainState.getInstance().navigationHelper.onBackPressed();
+		MainState.getInstance().navigationHelper.onBackPressed(new NavigationHelper.Callback() {public void callback(Object result)
+		{
+			boolean doBack = (Boolean) result;
 
-		if (!handled)
-			super.onBackPressed();
+			if (doBack)
+				realOnBackPressed();
+		}});
+
+	}
+
+	protected void realOnBackPressed()
+	{
+		super.onBackPressed();
 	}
 
 	@Override

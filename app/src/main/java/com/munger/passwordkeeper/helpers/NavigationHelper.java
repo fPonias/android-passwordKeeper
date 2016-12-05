@@ -28,6 +28,7 @@ import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by codymunger on 11/26/16.
@@ -35,12 +36,12 @@ import java.util.ArrayList;
 
 public class NavigationHelper
 {
-    private CreateFileFragment createFileFragment;
-    private ViewFileFragment viewFileFragment;
-    private ViewDetailFragment viewDetailFragment;
-    private SettingsFragment settingsFragment;
+    protected CreateFileFragment createFileFragment;
+    protected ViewFileFragment viewFileFragment;
+    protected ViewDetailFragment viewDetailFragment;
+    protected SettingsFragment settingsFragment;
 
-    private boolean editable;
+    protected boolean editable;
 
     public NavigationHelper ()
     {
@@ -204,33 +205,29 @@ public class NavigationHelper
         trans.commit();
     }
 
-    public boolean onBackPressed()
+    public void onBackPressed(final Callback cb)
     {
         FragmentManager mgr = MainState.getInstance().activity.getSupportFragmentManager();
-        int cnt = mgr.getBackStackEntryCount();
-
-        if (cnt > 0)
+        List<Fragment> fragments = mgr.getFragments();
+        if (fragments.size() > 0)
         {
-            FragmentManager.BackStackEntry entry = mgr.getBackStackEntryAt(cnt - 1);
-            String name = entry.getName();
-
+            Fragment f = fragments.get(0);
             boolean keepGoing = true;
 
-            if (name.equals(ViewDetailFragment.getName()))
+            if (f instanceof ViewDetailFragment)
             {
-                keepGoing = viewDetailFragment.backPressed();
+                ((ViewDetailFragment) f).backPressed(new Callback() {public void callback(Object result)
+                {
+                    cb.callback(result);
+                }});
             }
-
-            if (!keepGoing)
-                return false;
-
-            if (cnt > 1)
+            else
             {
-                return true;
+                cb.callback(true);
             }
         }
 
-        return true;
+        cb.callback(false);
     }
 
     public void fragmentExists(Fragment frag)
