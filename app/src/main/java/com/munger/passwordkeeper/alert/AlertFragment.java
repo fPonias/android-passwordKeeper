@@ -22,6 +22,8 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
+import com.munger.passwordkeeper.R;
+
 /**
  * Popup fragment that contains an alert message and an okay button.
  * There's nothing special about this and frankly I'm surpised Android doesn't have a simpler way to do this.
@@ -46,7 +48,7 @@ public class AlertFragment extends DialogFragment
 	{
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setMessage(message);
-		builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) 
+		builder.setPositiveButton(R.string.alert_okay, new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
 		{
 			if (callback != null)
 				callback.closed();
