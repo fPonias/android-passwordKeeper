@@ -24,4 +24,6 @@
     <string name="confirm_okay">Okay</string>
     <string name="confirm_cancel">Cancel</string>
     <string name="confirm_discard">Discard</string>
+    <string name="input_okay">Okay</string>
+    <string name="input_cancel">Cancel</string>
 </resources>

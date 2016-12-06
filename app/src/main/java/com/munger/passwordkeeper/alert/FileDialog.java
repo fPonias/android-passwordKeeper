@@ -38,6 +38,11 @@ public class FileDialog
     private String fileEndsWith;
     private boolean initted;
 
+    public boolean getInitted()
+    {
+        return initted;
+    }
+
     /**
      * @param activity
      * @param initialPath
@@ -53,16 +58,12 @@ public class FileDialog
         this.activity = activity;
         setFileEndsWith(fileEndsWith);
 
-        if (ContextCompat.checkSelfPermission(MainState.getInstance().context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+        final String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+        if (!MainState.getInstance().navigationHelper.hasPermission(permission))
         {
-            ActivityCompat.requestPermissions(MainState.getInstance().activity, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-
-            MainState.getInstance().navigationHelper.addPermisionResultListener(new NavigationHelper.IPermissionResult() {public void result(int requestCode)
+            MainState.getInstance().navigationHelper.requestPermission(permission, new NavigationHelper.Callback(){public void callback(Object result)
             {
-                if (requestCode != 1)
-                    return;
-
-                if (ContextCompat.checkSelfPermission(MainState.getInstance().context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+                if ((boolean) result == true)
                     init(initialPath);
                 else
                 {

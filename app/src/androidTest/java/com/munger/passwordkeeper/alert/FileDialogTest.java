@@ -25,10 +25,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.File;
 
 import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.junit.Assert.*;
@@ -55,6 +60,7 @@ public class FileDialogTest
         protected void setupNavigation()
         {
             navigationMock = mock(NavigationHelper.class);
+            doReturn(true).when(navigationMock).hasPermission(any(String.class));
             navigationHelper = navigationMock;
         }
 
@@ -351,15 +357,54 @@ public class FileDialogTest
         assertFalse(status.called);
     }
 
+    private void permissionTest(final boolean grant)
+    {
+        final Object lock = new Object();
+        doAnswer(new Answer<Void>() {public Void answer(InvocationOnMock invocationOnMock) throws Throwable
+        {
+            final NavigationHelper.Callback callback = invocationOnMock.getArgumentAt(1, NavigationHelper.Callback.class);
+
+            MainState.getInstance().handler.post(new Runnable() {public void run()
+            {
+                callback.callback(grant);
+
+                synchronized (lock)
+                {
+                    lock.notify();
+                }
+            }});
+
+            return null;
+        }}).when(navigationMock).requestPermission(any(String.class), any(NavigationHelper.Callback.class));
+        doReturn(false).when(navigationMock).hasPermission(any(String.class));
+
+
+        FileStruct[] list = new FileStruct[]{
+                new FileStruct("a", false, true)
+        };
+
+        File filemock = getRootMock();
+        doReturn(getFileList(list)).when(filemock).listFiles();
+
+        showDialog(filemock);
+
+        synchronized (lock)
+        {
+            try{lock.wait(250);}catch(InterruptedException e){fail();}
+        }
+    }
+
     @Test
     public void permissionGranted()
     {
-
+        permissionTest(true);
+        assertTrue(dialog.getInitted());
     }
 
     @Test
     public void permissionDenied()
     {
-
+        permissionTest(false);
+        assertFalse(dialog.getInitted());
     }
 }

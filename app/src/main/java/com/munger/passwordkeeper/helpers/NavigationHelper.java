@@ -2,11 +2,14 @@ package com.munger.passwordkeeper.helpers;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MenuItem;
 
@@ -28,6 +31,7 @@ import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -444,23 +448,45 @@ public class NavigationHelper
         t.execute(new Object(){});
     }
 
+    public boolean hasPermission(String permission)
+    {
+        if (ContextCompat.checkSelfPermission(MainState.getInstance().context, permission) != PackageManager.PERMISSION_GRANTED)
+            return true;
+        else
+            return false;
+    }
+
+    protected class PermissionStruct
+    {
+        public int requestNumber;
+        public Callback callback;
+        public String permission;
+    }
+
+    protected static int permissionRequestNumber = 1;
+    protected HashMap<Integer, PermissionStruct> permissionRequestCallbacks = new HashMap<>();
+
+    public void requestPermission(final String permission, final Callback callback)
+    {
+        PermissionStruct str = new PermissionStruct();
+        str.requestNumber = permissionRequestNumber++;
+        str.callback = callback;
+        str.permission = permission;
+
+        permissionRequestCallbacks.put(str.requestNumber, str);
+        ActivityCompat.requestPermissions(MainState.getInstance().activity, new String[]{permission}, str.requestNumber);
+    }
+
     public void notifyPermissionResults(int requestCode)
     {
-        for(IPermissionResult listener : permissionResults)
-            listener.result(requestCode);
+        PermissionStruct str = permissionRequestCallbacks.get(requestCode);
 
-        permissionResults = new ArrayList<>();
-    }
+        if (str == null)
+            return;
 
-    public interface IPermissionResult
-    {
-        void result(int requestCode);
-    }
+        boolean granted = hasPermission(str.permission);
+        str.callback.callback(granted);
 
-    private ArrayList<IPermissionResult> permissionResults = new ArrayList<>();
-
-    public void addPermisionResultListener(IPermissionResult listener)
-    {
-        permissionResults.add(listener);
+        permissionRequestCallbacks.remove(requestCode);
     }
 }

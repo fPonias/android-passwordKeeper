@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.R;
 
 public class InputFragment extends DialogFragment 
 {
@@ -77,11 +78,11 @@ public class InputFragment extends DialogFragment
 		builder.setView(inputView);
 		builder.setMessage(message);
 
-		builder.setPositiveButton("Okay", null);
+		builder.setPositiveButton(R.string.input_okay, null);
 
 		final InputFragment that = this;
 		if (cancelEnabled)
-			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+			builder.setNegativeButton(R.string.input_cancel, new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
 		{
 			listener.cancel(that);
 		}});
