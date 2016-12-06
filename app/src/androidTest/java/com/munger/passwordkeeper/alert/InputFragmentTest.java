@@ -2,12 +2,14 @@ package com.munger.passwordkeeper.alert;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.espresso.ViewInteraction;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.app.FragmentActivity;
 
+import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.TestingMainActivity;
@@ -30,6 +32,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -206,5 +209,30 @@ public class InputFragmentTest
 
         assertTrue(listener.cancelPressed);
         assertFalse(frag.isAdded());
+    }
+
+    @Test
+    public void disableCancel()
+    {
+        String message = "alert!";
+        String prompt = "prompt";
+        String newInput = "input!";
+        ConfirmListener listener = new ConfirmListener();
+        InputFragment frag = new InputFragment(message, prompt, listener);
+        frag.setCancelEnabled(false);
+        frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
+
+        onView(withText(message)).check(matches(isDisplayed()));
+        onView(withClassName(containsString("EditText"))).perform(typeText(newInput));
+
+        boolean caught = false;
+        try
+        {
+            onView(allOf(withClassName(containsString("Button")), withText(R.string.input_cancel))).check(matches(not(isDisplayed())));
+        }
+        catch(NoMatchingViewException e){
+            caught = true;
+        }
+        assertTrue(caught);
     }
 }

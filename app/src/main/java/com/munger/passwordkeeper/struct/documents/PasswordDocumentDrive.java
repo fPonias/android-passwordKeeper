@@ -72,7 +72,7 @@ public class PasswordDocumentDrive extends PasswordDocument
     {
         AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
         {
-            lastRemoteUpdate = MainState.getInstance().preferences.getLong("lastRemoteUpdate", 0);
+            lastRemoteUpdate = MainState.getInstance().settings.getLastRemoteUpdate();
 
             updateFromSource();
             setupGoogleApi();

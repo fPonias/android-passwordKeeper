@@ -22,6 +22,7 @@ import com.munger.passwordkeeper.helpers.QuitTimer;
 import com.munger.passwordkeeper.struct.Config;
 import com.munger.passwordkeeper.struct.ConfigFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.Settings;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
@@ -62,7 +63,7 @@ public class MainState
     private boolean editable = false;
 
     public Config config;
-    public SharedPreferences preferences;
+    public Settings settings;
 
     public DriveHelper driveHelper;
     public NavigationHelper navigationHelper;
@@ -96,7 +97,7 @@ public class MainState
 
     protected void setupPreferences()
     {
-        preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        settings = new Settings();
     }
 
     protected void setupConfig()
@@ -158,7 +159,7 @@ public class MainState
         if (driveHelper == null)
             driveHelper = new DriveHelper();
 
-        boolean enable = preferences.getBoolean(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD, false);
+        boolean enable = settings.getSaveToCloud();
         if (enable && driveDocument == null)
         {
             driveHelper.connect();

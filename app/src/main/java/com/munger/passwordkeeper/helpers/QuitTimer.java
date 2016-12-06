@@ -14,7 +14,7 @@ import com.munger.passwordkeeper.view.SettingsFragment;
 public class QuitTimer
 {
     private Thread thread;
-    private final long CHECK_PERIOD = 1000;
+    private long CHECK_PERIOD = 1000;
     private long time;
     private Object lock = new Object();
     private boolean checkerRunning;
@@ -24,11 +24,19 @@ public class QuitTimer
         reset();
     }
 
+    public void setCheckPeriod(long value)
+    {
+        CHECK_PERIOD = value;
+    }
+
+    public long getCheckPeriod()
+    {
+        return CHECK_PERIOD;
+    }
+
     public void reset()
     {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainState.getInstance().activity);
-        String valueStr = preferences.getString(SettingsFragment.PREF_NAME_TIMEOUT_LIST, "5");
-        int value = Integer.valueOf(valueStr);
+        float value = MainState.getInstance().settings.getTimeout();
 
         boolean doStart = false;
         boolean doStop = false;
@@ -39,7 +47,7 @@ public class QuitTimer
                 if (thread == null)
                     doStart = true;
 
-                time = System.currentTimeMillis() + value * 60000;
+                time = System.currentTimeMillis() + (int)(value * 60000);
             }
             else if (value == -1)
             {
@@ -67,6 +75,7 @@ public class QuitTimer
             checkerRunning = true;
             thread = new Thread(new Runnable() {public void run()
             {
+                Log.d("password", "Timeout thread started");
                 long currentTime;
                 while (true)
                 {
@@ -76,8 +85,9 @@ public class QuitTimer
                             return;
 
                         currentTime = System.currentTimeMillis();
+                        long diff = time - currentTime;
 
-                        if (currentTime > time)
+                        if (diff < 0)
                         {
                             MainState.getInstance().handler.post(new Runnable() {public void run()
                             {
