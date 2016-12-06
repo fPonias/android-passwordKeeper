@@ -33,6 +33,7 @@ import org.mockito.stubbing.Answer;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -98,10 +99,26 @@ public class SettingsFragmentTest
         }
     }
 
+    public static class SettingsFragmentDer extends SettingsFragment
+    {
+        protected File defaultDir;
+
+        public void setDetaultDirectory(File dir)
+        {
+            defaultDir = dir;
+        }
+
+        @Override
+        protected File getDefaultDirectory()
+        {
+            return defaultDir;
+        }
+    }
+
     @Rule
     public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
 
-    private SettingsFragment fragment;
+    private SettingsFragmentDer fragment;
     private SettingsFragmentTest.MainStateDer mainState;
     private PasswordDocument documentMock;
     private QuitTimer quitTimerMock;
@@ -129,7 +146,8 @@ public class SettingsFragmentTest
 
         mainState.handler.post(new Runnable() {public void run()
         {
-            fragment = new SettingsFragment();
+            fragment = new SettingsFragmentDer();
+            setupImportDialog();
 
             synchronized (lock)
             {
@@ -143,6 +161,28 @@ public class SettingsFragmentTest
         }
 
         activityRule.getActivity().setFragment(fragment);
+    }
+
+    private void setupImportDialog()
+    {
+        doReturn(true).when(navigationMock).hasPermission(any(String.class));
+
+        File[] fileList = new File[1];
+        File filemock = mock(File.class);
+        doReturn(true).when(filemock).exists();
+        doReturn("a").when(filemock).getName();
+        doReturn(false).when(filemock).isDirectory();
+        doReturn(true).when(filemock).canRead();
+        fileList[0] = filemock;
+
+        final File rootmock = mock(File.class);
+        doReturn(true).when(rootmock).exists();
+        doReturn(true).when(rootmock).isDirectory();
+        doReturn("..").when(rootmock).getName();
+        doReturn(true).when(rootmock).canRead();
+        doReturn(fileList).when(rootmock).listFiles();
+
+        fragment.setDetaultDirectory(rootmock);
     }
 
     @After
@@ -303,6 +343,8 @@ public class SettingsFragmentTest
             return null;
         }}).when(navigationMock).importFile(anyString(), org.mockito.Matchers.any(NavigationHelper.Callback.class));
 
+
+
         int index = getIndex(SettingsFragment.PREF_IMPORT_FILE);
         assertTrue(index > -1);
 
@@ -323,7 +365,7 @@ public class SettingsFragmentTest
         doImport(true);
 
         verify(documentMock).save();
-        assertEquals(1, activityRule.getActivity().getBackCalledCount());
+        verify(navigationMock).onBackPressed(any(NavigationHelper.Callback.class));
     }
 
     @Test
@@ -332,7 +374,7 @@ public class SettingsFragmentTest
         doImport(false);
 
         verify(documentMock, never()).save();
-        assertEquals(0, activityRule.getActivity().getBackCalledCount());
+        verify(navigationMock, never()).onBackPressed(any(NavigationHelper.Callback.class));
     }
 
     @Test
@@ -345,7 +387,7 @@ public class SettingsFragmentTest
 
         verify(documentMock).save();
         verify(navigationMock).showAlert(anyString());
-        assertEquals(0, activityRule.getActivity().getBackCalledCount());
+        verify(navigationMock, never()).onBackPressed(any(NavigationHelper.Callback.class));
     }
 
     @Test

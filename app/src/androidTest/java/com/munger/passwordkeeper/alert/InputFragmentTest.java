@@ -69,6 +69,11 @@ public class InputFragmentTest
         public void setupDriveHelper()
         {
         }
+
+        @Override
+        public void setupQuitTimer()
+        {
+        }
     }
 
     private MainStateDer mainState;

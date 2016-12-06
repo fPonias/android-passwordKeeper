@@ -150,6 +150,11 @@ public class ViewDetailFragmentTest
         @Override
         public void setupDriveHelper() {
         }
+
+        @Override
+        public void setupQuitTimer()
+        {
+        }
     }
 
     @Rule

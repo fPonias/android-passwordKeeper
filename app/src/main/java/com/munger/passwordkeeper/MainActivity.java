@@ -70,7 +70,8 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onDestroy()
 	{
-		MainState.getInstance().quitTimer.stop();
+		if (MainState.getInstance().quitTimer != null)
+			MainState.getInstance().quitTimer.stop();
 
 		super.onDestroy();
 	}
@@ -92,7 +93,9 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	public void onUserInteraction()
 	{
-		MainState.getInstance().quitTimer.reset();
+		if (MainState.getInstance().quitTimer != null)
+			MainState.getInstance().quitTimer.reset();
+
 		super.onUserInteraction();
 	}
 

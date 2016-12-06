@@ -21,6 +21,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 
@@ -28,7 +30,9 @@ import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -56,11 +60,24 @@ public class CreateFileFragmentTest
         protected void setupNavigation()
         {
             navigationMock = mock(NavigationHelper.class);
+
+            doAnswer(new Answer<Void>() {public Void answer(InvocationOnMock invocationOnMock) throws Throwable
+            {
+                NavigationHelper.Callback cb = invocationOnMock.getArgumentAt(0, NavigationHelper.Callback.class);
+                cb.callback(true);
+                return null;
+            }}).when(navigationMock).onBackPressed(any(NavigationHelper.Callback.class));
+
             navigationHelper = navigationMock;
         }
 
         @Override
         public void setupDriveHelper()
+        {
+        }
+
+        @Override
+        public void setupQuitTimer()
         {
         }
     }

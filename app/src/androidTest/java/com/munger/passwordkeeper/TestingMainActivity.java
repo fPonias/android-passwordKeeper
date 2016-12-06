@@ -29,4 +29,7 @@ public class TestingMainActivity extends MainActivity
     {
         backCalledCount++;
     }
+
+    @Override
+    public void onUserInteraction() {}
 }

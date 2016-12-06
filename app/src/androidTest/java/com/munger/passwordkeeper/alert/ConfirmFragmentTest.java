@@ -57,6 +57,11 @@ public class ConfirmFragmentTest
         public void setupDriveHelper()
         {
         }
+
+        @Override
+        public void setupQuitTimer()
+        {
+        }
     }
 
     private MainStateDer mainState;

@@ -79,6 +79,11 @@ public class ViewFileFragmentTest
         @Override
         public void setupDriveHelper() {
         }
+
+        @Override
+        public void setupQuitTimer()
+        {
+        }
     }
 
     @Rule

@@ -114,17 +114,23 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
         timeoutList.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {public boolean onPreferenceChange(Preference preference, Object newValue)
         {
-            MainState.getInstance().quitTimer.reset();
+            if (MainState.getInstance().quitTimer != null)
+                MainState.getInstance().quitTimer.reset();
             return true;
         }});
 
         loadSettings();
     }
 
-    private void doImport()
+    protected File getDefaultDirectory()
     {
         File mPath = new File(Environment.getExternalStorageDirectory() + "//DIR//");
-        FileDialog fileDialog = new FileDialog(MainState.getInstance().activity, mPath);
+        return mPath;
+    }
+
+    private void doImport()
+    {
+        FileDialog fileDialog = new FileDialog(MainState.getInstance().activity, getDefaultDirectory());
 
         fileDialog.addFileListener(new FileDialog.FileSelectedListener() {public void fileSelected(File file)
         {
