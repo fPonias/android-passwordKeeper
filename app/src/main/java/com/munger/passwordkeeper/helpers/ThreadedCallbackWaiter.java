@@ -26,6 +26,8 @@ public class ThreadedCallbackWaiter
             kill = false;
             thread = new Thread(routine);
             thread.start();
+
+            try{lock.wait();}catch(InterruptedException e){return;}
         }
     }
 
@@ -49,6 +51,11 @@ public class ThreadedCallbackWaiter
 
     private Runnable routine = new Runnable() {public void run()
     {
+        synchronized (lock)
+        {
+            lock.notify();
+        }
+
         while (kill == false)
         {
             synchronized(lock)

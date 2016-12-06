@@ -58,6 +58,12 @@ public class AES256
 	{
 		if (decodeCallbackWaiter != null)
 			decodeCallbackWaiter.doDecodeCallback(progress);
+
+		if (progress >= 1.0f)
+		{
+			decodeCallbackWaiter.CleanUp();
+			decodeCallbackWaiter = null;
+		}
 	}
 
 	private native int init(String password);
