@@ -17,11 +17,14 @@ import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.events.ChangeEvent;
+import com.google.android.gms.drive.events.ChangeListener;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -54,8 +57,6 @@ public class PasswordDocumentDrive extends PasswordDocument
 
         sourceDoc = source;
         name += ".pwc";
-
-        init();
     }
 
     public PasswordDocumentDrive(PasswordDocument source, String name)
@@ -68,17 +69,20 @@ public class PasswordDocumentDrive extends PasswordDocument
         this(source, name);
     }
 
-    protected void init()
+    public void init()
     {
-        AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
-        {
-            lastRemoteUpdate = MainState.getInstance().settings.getLastRemoteUpdate();
+        MainState.getInstance().driveHelper.awaitConnection();
 
-            updateFromSource();
-            setupGoogleApi();
-            return null;
-        }};
-        t.execute(new Object[]{});
+        if (!MainState.getInstance().driveHelper.isConnected())
+        {
+            Log.d("password", "google drive init failed");
+            return;
+        }
+
+        lastRemoteUpdate = MainState.getInstance().settings.getLastRemoteUpdate();
+
+        updateFromSource();
+        handleConnected();
     }
 
     private void updateFromSource()
@@ -95,28 +99,6 @@ public class PasswordDocumentDrive extends PasswordDocument
         }
     }
 
-    private void setupGoogleApi()
-    {
-        apiClient = MainState.getInstance().driveHelper.getClient();
-        apiClient.registerConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks()
-        {
-            @Override
-            public void onConnected(@Nullable Bundle bundle)
-            {
-                handleConnected();
-            }
-
-            @Override
-            public void onConnectionSuspended(int i)
-            {
-
-            }
-        });
-
-        if (apiClient.isConnected())
-            handleConnected();
-    }
-
     private void handleConnected()
     {
         rootFolder = Drive.DriveApi.getRootFolder(apiClient);
@@ -131,22 +113,22 @@ public class PasswordDocumentDrive extends PasswordDocument
                 Log.v("password", "file query success");
                 int sz = metadataBufferResult.getMetadataBuffer().getCount();
 
-                try
+                if (sz == 0)
                 {
-                    if (sz == 0)
+                    metadataBufferResult.release();
+                    createEmpty(new Callback() {public void callback(boolean result)
                     {
                         save();
-                    }
-                    else
-                    {
-                        Metadata metadata = metadataBufferResult.getMetadataBuffer().get(0);
-                        targetFile = metadata.getDriveId().asDriveFile();
-
-                        load(false);
-                    }
+                    }});
                 }
-                catch(Exception e){
-                    Log.e("password", "initial remote file load failed");
+                else
+                {
+                    Metadata metadata = metadataBufferResult.getMetadataBuffer().get(0);
+                    DriveFile f = metadata.getDriveId().asDriveFile();
+                    setTargetFile(f);
+                    metadataBufferResult.release();
+
+                    load(false);
                 }
             }
 
@@ -158,75 +140,86 @@ public class PasswordDocumentDrive extends PasswordDocument
         });
     }
 
-    public void save() throws Exception
+    public interface Callback
+    {
+        void callback(boolean success);
+    }
+
+
+    protected void createEmpty(final Callback callback)
+    {
+        MetadataChangeSet set = new MetadataChangeSet.Builder()
+                .setTitle(name)
+                .setMimeType("application/octet-stream")
+                .build();
+
+        rootFolder.createFile(apiClient, set, null).setResultCallback(new ResolvingResultCallbacks<DriveFolder.DriveFileResult>(MainState.getInstance().activity, FILE_CREATE_REQUEST)
+        {
+            @Override
+            public void onSuccess(@NonNull DriveFolder.DriveFileResult driveFileResult)
+            {
+                DriveFile f = driveFileResult.getDriveFile();
+                setTargetFile(f);
+                callback.callback(true);
+            }
+
+            @Override
+            public void onUnresolvableFailure(@NonNull Status status)
+            {
+                Log.v("password", "file query failed");
+            }
+        });
+    }
+
+    protected ChangeListener listener = new ChangeListener()
+    {
+        @Override
+        public void onChange(ChangeEvent changeEvent)
+        {
+            load(false);
+        }
+    };
+
+    protected void setTargetFile(DriveFile file)
+    {
+        targetFile = file;
+        targetFile.addChangeListener(apiClient, listener);
+    }
+
+    protected boolean hasRemoteLock()
+    {
+        return false;
+    }
+
+    protected void getRemoteLock()
     {
         if (targetFile == null)
         {
-            createEmpty();
-            return;
+            Log.v("password", "target file never opened");
         }
 
-        AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
-        {
-            awaitHistoryLoaded();
 
-            PendingResult<DriveResource.MetadataResult> pres = targetFile.getMetadata(apiClient);
-            DriveResource.MetadataResult mres = pres.await();
-            long sz = mres.getMetadata().getFileSize();
-
-            if (sz > 0)
-            {
-                saveFresh();
-            }
-            else
-            {
-                update();
-            }
-            return null;
-        }};
-        t.execute(new Object[] {});
     }
 
-    private void saveFresh()
+    protected void releaseRemoteLock()
     {
-        PendingResult<DriveApi.DriveContentsResult> res = targetFile.open(apiClient, DriveFile.MODE_WRITE_ONLY, null);
-        DriveApi.DriveContentsResult result = res.await();
-        OutputStream os = result.getDriveContents().getOutputStream();
-        DataOutputStream dos = new DataOutputStream(os);
-
-        try
+        if (targetFile == null)
         {
-            deltasToEncryptedString(dos);
-
-            dos.flush();
-        }
-        catch(Exception e){
-            Log.v("password", "file update failed");
-        }
-        finally{
-            try
-            {
-                dos.close();
-                result.getDriveContents().commit(apiClient, null).setResultCallback(new ResolvingResultCallbacks<Status>(MainState.getInstance().activity, FILE_SAVE_REQUEST) {
-                    @Override
-                    public void onSuccess(@NonNull Status status)
-                    {
-                        Log.v("password", "file update succeeded");
-                    }
-
-                    @Override
-                    public void onUnresolvableFailure(@NonNull Status status)
-                    {
-                        Log.v("password", "file update failed");
-                    }
-                });
-            }
-            catch(Exception e){}
+            Log.v("password", "target file never opened");
         }
     }
 
-    private void update()
+    public void save()
     {
+        if (targetFile == null)
+        {
+            Log.v("password", "target file never opened");
+        }
+
+        getRemoteLock();
+    }
+
+        /*
         PendingResult<DriveApi.DriveContentsResult> res = targetFile.open(apiClient, DriveFile.MODE_READ_WRITE, null);
         DriveApi.DriveContentsResult result = res.await();
 
@@ -268,42 +261,12 @@ public class PasswordDocumentDrive extends PasswordDocument
                     dos.close();
             }
             catch(Exception e){}
-        }
-    }
+        }*/
 
-    private void createEmpty()
+    public void load(boolean force)
     {
-        MetadataChangeSet set = new MetadataChangeSet.Builder()
-                .setTitle(name)
-                .setMimeType("application/octet-stream")
-                .build();
+        getRemoteLock();
 
-        rootFolder.createFile(apiClient, set, null).setResultCallback(new ResolvingResultCallbacks<DriveFolder.DriveFileResult>(MainState.getInstance().activity, FILE_CREATE_REQUEST)
-        {
-            @Override
-            public void onSuccess(@NonNull DriveFolder.DriveFileResult driveFileResult)
-            {
-                targetFile = driveFileResult.getDriveFile();
-
-                try
-                {
-                    save();
-                }
-                catch(Exception e){
-
-                }
-            }
-
-            @Override
-            public void onUnresolvableFailure(@NonNull Status status)
-            {
-                Log.v("password", "file query failed");
-            }
-        });
-    }
-
-    public void load(boolean force) throws Exception
-    {
         AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
         {
             DriveResource.MetadataResult metadata = targetFile.getMetadata(apiClient).await();
@@ -311,11 +274,6 @@ public class PasswordDocumentDrive extends PasswordDocument
             if (metadata.getMetadata().isTrashed())
             {
                 targetFile.untrash(apiClient);
-                saveFresh();
-            }
-            else if (sz == 0)
-            {
-                saveFresh();
             }
 
             PendingResult<DriveApi.DriveContentsResult> res = targetFile.open(apiClient, DriveFile.MODE_READ_ONLY, null);
@@ -349,14 +307,18 @@ public class PasswordDocumentDrive extends PasswordDocument
         t.execute(new Object[] {});
     }
 
-    protected void onClose() throws Exception
+    public void delete() throws Exception
     {
 
     }
 
-    public void delete() throws Exception
+    @Override
+    protected void onClose() throws Exception
     {
+        targetFile.removeChangeListener(apiClient, listener);
 
+        if (hasRemoteLock())
+            releaseRemoteLock();
     }
 
     public boolean testPassword()

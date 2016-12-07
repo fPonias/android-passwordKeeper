@@ -18,7 +18,7 @@ public class Settings
 
     public Settings()
     {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainState.getInstance().activity);
+        preferences = PreferenceManager.getDefaultSharedPreferences(MainState.getInstance().activity);
     }
 
     public boolean getSaveToCloud()

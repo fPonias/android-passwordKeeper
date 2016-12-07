@@ -57,12 +57,14 @@ public class AES256
 	public void doCallback(float progress)
 	{
 		if (decodeCallbackWaiter != null)
+		{
 			decodeCallbackWaiter.doDecodeCallback(progress);
 
-		if (progress >= 1.0f)
-		{
-			decodeCallbackWaiter.CleanUp();
-			decodeCallbackWaiter = null;
+			if (progress >= 1.0f)
+			{
+				decodeCallbackWaiter.CleanUp();
+				decodeCallbackWaiter = null;
+			}
 		}
 	}
 

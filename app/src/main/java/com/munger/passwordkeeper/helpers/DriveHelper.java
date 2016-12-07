@@ -3,6 +3,7 @@ package com.munger.passwordkeeper.helpers;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 
@@ -14,7 +15,7 @@ import com.google.android.gms.drive.Drive;
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 
-public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener
+public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks
 {
     private GoogleApiClient mGoogleApiClient;
 
@@ -28,16 +29,35 @@ public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener
 
     public GoogleApiClient connect()
     {
+        synchronized (lock)
+        {
+            if (connected != null)
+                return mGoogleApiClient;
+
+            connecting = true;
+        }
+
         if (mGoogleApiClient == null)
         {
             mGoogleApiClient = new GoogleApiClient.Builder(MainState.getInstance().context)
                     .enableAutoManage(MainState.getInstance().activity, this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
                     .addApi(Drive.API)
                     .addScope(Drive.SCOPE_FILE)
                     .build();
         }
 
         mGoogleApiClient.connect();
+
+        synchronized (lock)
+        {
+            if (mGoogleApiClient.isConnected())
+            {
+                onConnected(null);
+            }
+        }
+
         return mGoogleApiClient;
     }
 
@@ -54,9 +74,58 @@ public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener
         mGoogleApiClient.disconnect();
     }
 
+    private Object lock = new Object();
+    private boolean connecting = false;
+    private Boolean connected = null;
+
+    public Boolean isConnected()
+    {
+        return connected;
+    }
+
+    public void awaitConnection()
+    {
+        synchronized (lock)
+        {
+            if (connected != null)
+                return;
+
+            try{lock.wait();}catch(InterruptedException e){return;}
+        }
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle)
+    {
+        synchronized (lock)
+        {
+            connected = true;
+            connecting = false;
+
+            lock.notify();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i)
+    {
+        synchronized (lock)
+        {
+            connected = false;
+        }
+    }
+
     @Override
     public void onConnectionFailed(ConnectionResult result)
     {
+        synchronized (lock)
+        {
+            connected = false;
+            connecting = false;
+
+            lock.notify();
+        }
+
         Log.v("password", "Google API connection failed");
         showErrorDialog(result.getErrorCode());
         mResolvingError = true;
