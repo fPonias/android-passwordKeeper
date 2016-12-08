@@ -52,11 +52,8 @@ public class PasswordDocumentDriveTest
         @Override
         public void setupDriveHelper()
         {
-            if (!USE_MOCKED_DRIVE)
-            {
-                driveHelper = new DriveHelper();
-                driveHelper.connect();
-            }
+            driveHelper = new DriveHelper();
+            driveHelper.connect();
         }
 
         @Override
@@ -73,7 +70,6 @@ public class PasswordDocumentDriveTest
     private NavigationHelper navigationMock;
     private Settings settingsMock;
 
-    private final static boolean USE_MOCKED_DRIVE = false;
     private final static String DEFAULT_FILENAME = "password-test";
     private final static String DEFAULT_PASSWORD = "pass";
 
@@ -88,53 +84,71 @@ public class PasswordDocumentDriveTest
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
         mainState.setContext(activity, activity);
+        status = new Status();
     }
 
     private class Status
     {
+        public int wasCalled = 0;
         public boolean initted = false;
+        public boolean wasSaved = false;
+        public boolean wasUpdated = false;
     }
+
+    private class DefaultEventHandler implements PasswordDocumentDrive.DocumentEvents
+    {
+        @Override
+        public void initFailed(Exception e)
+        {
+            status.wasCalled++;
+            status.initted = false;
+        }
+
+        @Override
+        public void initted()
+        {
+            status.wasCalled++;
+            status.initted = true;
+        }
+
+        @Override
+        public void saved()
+        {
+            status.wasCalled++;
+            status.wasSaved = true;
+        }
+
+        @Override
+        public void updated()
+        {
+            status.wasCalled++;
+            status.wasUpdated = true;
+        }
+    }
+
+    private Object lock = new Object();
+    private Status status;
+    private PasswordDocumentDrive.DocumentEvents listener;
 
     @Test
     public void connects() throws InterruptedException
     {
-        final Object lock = new Object();
-        final Status status = new Status();
-        PasswordDocumentDrive.DocumentEvents listener = new PasswordDocumentDrive.DocumentEvents()
+        listener = new DefaultEventHandler()
         {
-            @Override
-            public void initFailed(Exception e)
-            {
-                status.initted = false;
-                synchronized (lock)
-                {
-                    lock.notify();
-                }
-            }
-
             @Override
             public void initted()
             {
-                status.initted = true;
-                synchronized (lock)
-                {
-                    lock.notify();
-                }
+                super.initted();
+                synchronized (lock){ lock.notify(); }
             }
 
             @Override
-            public void saved()
+            public void initFailed(Exception e)
             {
-
-            }
-
-            @Override
-            public void updated()
-            {
-
+                super.initFailed(e);
+                synchronized (lock){lock.notify(); }
             }
         };
-
         doc = Helper.generateDocument(2, 2);
         final PasswordDocumentDrive driveDoc = new PasswordDocumentDrive(doc, DEFAULT_FILENAME, DEFAULT_PASSWORD);
         driveDoc.addListener(listener);
@@ -150,43 +164,38 @@ public class PasswordDocumentDriveTest
             lock.wait(10000);
         }
 
+        assertEquals(1, status.wasCalled);
         assertTrue(status.initted);
     }
 
     @Test
     public void handlesPermissionDenied()
     {
-
     }
 
     @Test
     public void handlesConnectFail()
     {
-
     }
 
     @Test
     public void createsEmptyFileOnMissingTarget()
     {
-
     }
 
     @Test
     public void deletesTrashedFileAndCreatesEmpty()
     {
-
     }
 
     @Test
     public void handleQueryError()
     {
-
     }
 
     @Test
     public void handleCreateError()
     {
-
     }
 
     @Test
