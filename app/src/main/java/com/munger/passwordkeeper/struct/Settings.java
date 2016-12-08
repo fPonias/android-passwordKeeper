@@ -8,6 +8,8 @@ import android.support.v7.preference.PreferenceManager;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.view.SettingsFragment;
 
+import java.util.UUID;
+
 /**
  * Created by codymunger on 12/5/16.
  */
@@ -36,5 +38,20 @@ public class Settings
     public long getLastRemoteUpdate()
     {
         return preferences.getLong("lastRemoteUpdate", 0);
+    }
+
+    public String getDeviceUID()
+    {
+        if (!preferences.contains("UUID"))
+        {
+            UUID newid = UUID.randomUUID();
+            preferences.edit().putString("UUID", newid.toString()).commit();
+        }
+
+        String ret = preferences.getString("UUID", null);
+        if(ret == null)
+            throw new RuntimeException("unable to create unique program id");
+
+        return ret;
     }
 }

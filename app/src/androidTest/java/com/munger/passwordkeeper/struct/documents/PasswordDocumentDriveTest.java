@@ -6,8 +6,10 @@ import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.DriveHelper;
@@ -19,7 +21,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assert.*;
 
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -35,8 +39,7 @@ public class PasswordDocumentDriveTest
         @Override
         protected void setupDocument()
         {
-            documentMock = mock(PasswordDocumentFile.class);
-            document = documentMock;
+            this.document = doc;
         }
 
         @Override
@@ -60,16 +63,19 @@ public class PasswordDocumentDriveTest
         protected void setupPreferences()
         {
             settingsMock = mock(Settings.class);
+            doReturn("123").when(settingsMock).getDeviceUID();
             settings = settingsMock;
         }
     }
 
     private MainStateDer mainState;
-    private PasswordDocument documentMock;
+    private PasswordDocument doc;
     private NavigationHelper navigationMock;
     private Settings settingsMock;
 
     private final static boolean USE_MOCKED_DRIVE = false;
+    private final static String DEFAULT_FILENAME = "password-test";
+    private final static String DEFAULT_PASSWORD = "pass";
 
     @Rule
     public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
@@ -84,15 +90,67 @@ public class PasswordDocumentDriveTest
         mainState.setContext(activity, activity);
     }
 
-    @Test
-    public void connects()
+    private class Status
     {
-        PasswordDocumentDrive doc = new PasswordDocumentDrive(documentMock, "password", "pass");
-        doc.init();
+        public boolean initted = false;
+    }
 
-        int i = 0;
-        while (i == 0)
-        {}
+    @Test
+    public void connects() throws InterruptedException
+    {
+        final Object lock = new Object();
+        final Status status = new Status();
+        PasswordDocumentDrive.DocumentEvents listener = new PasswordDocumentDrive.DocumentEvents()
+        {
+            @Override
+            public void initFailed(Exception e)
+            {
+                status.initted = false;
+                synchronized (lock)
+                {
+                    lock.notify();
+                }
+            }
+
+            @Override
+            public void initted()
+            {
+                status.initted = true;
+                synchronized (lock)
+                {
+                    lock.notify();
+                }
+            }
+
+            @Override
+            public void saved()
+            {
+
+            }
+
+            @Override
+            public void updated()
+            {
+
+            }
+        };
+
+        doc = Helper.generateDocument(2, 2);
+        final PasswordDocumentDrive driveDoc = new PasswordDocumentDrive(doc, DEFAULT_FILENAME, DEFAULT_PASSWORD);
+        driveDoc.addListener(listener);
+        Log.d("password", "created document");
+
+        new Thread(new Runnable() {public void run()
+        {
+            Log.d("password", "initting document");
+            driveDoc.init();
+        }}, "driveDocInit").start();
+
+        synchronized (lock){
+            lock.wait(10000);
+        }
+
+        assertTrue(status.initted);
     }
 
     @Test

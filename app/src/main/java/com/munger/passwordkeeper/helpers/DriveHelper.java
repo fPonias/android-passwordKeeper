@@ -50,14 +50,6 @@ public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener, 
 
         mGoogleApiClient.connect();
 
-        synchronized (lock)
-        {
-            if (mGoogleApiClient.isConnected())
-            {
-                onConnected(null);
-            }
-        }
-
         return mGoogleApiClient;
     }
 
