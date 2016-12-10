@@ -28,6 +28,7 @@ public class DriveRemoteLock
     protected Object lock = new Object();
     protected CustomPropertyKey key = new CustomPropertyKey("remoteLock", CustomPropertyKey.PUBLIC);
     protected long timeout = 15000;
+    protected boolean waitingForChange = false;
 
     protected ChangeListener listener = new ChangeListener()
     {
@@ -36,7 +37,11 @@ public class DriveRemoteLock
         {
             synchronized (lock)
             {
-                lock.notify();
+                if (waitingForChange)
+                {
+                    Log.d("remote lock", "remote metadata changed");
+                    lock.notify();
+                }
             }
         }
     };
@@ -98,7 +103,8 @@ public class DriveRemoteLock
             String uid = MainState.getInstance().settings.getDeviceUID();
             long current = System.currentTimeMillis();
 
-            long stamp = Long.getLong(parts[1], 0);
+            long stamp = 0;
+            try {stamp = Long.parseLong(parts[1]);} catch(NumberFormatException e){}
             if (current - stamp >= timeout)
             {
                 Log.d("remote lock", "expired lock found");
@@ -108,15 +114,16 @@ public class DriveRemoteLock
             if (uid.equals(parts[0]))
             {
                 Log.d("remote lock", "owned current lock found");
-                return RemoteLockState.OWNED;
-            }
-            else
-            {
+
                 synchronized (lock)
                 {
                     hasRemoteLock = true;
                 }
 
+                return RemoteLockState.OWNED;
+            }
+            else
+            {
                 Log.d("remote lock", "current unowned lock found");
                 return RemoteLockState.LOCKED;
             }
@@ -128,6 +135,7 @@ public class DriveRemoteLock
         Log.d("remote lock", "attaining remote lock");
         while(true)
         {
+            Log.d("remote lock", "checking remote lock");
             RemoteLockState state = check();
             if (state == RemoteLockState.OWNED)
             {
@@ -142,15 +150,21 @@ public class DriveRemoteLock
 
             synchronized (lock)
             {
+                waitingForChange = true;
+
                 String[] parts = lastValue.split(" ");
                 long current = System.currentTimeMillis();
-                long diff = timeout - (current - Long.getLong(parts[1], 0));
+                long then = 0;
+                try{then = Long.parseLong(parts[1]);}catch(Exception e){}
+                long diff = timeout - (current - then);
 
                 if (diff > 0)
                 {
                     Log.d("remote lock", "waiting for remote lock release");
                     try{lock.wait(diff);} catch(InterruptedException e){return;}
                 }
+
+                waitingForChange = false;
             }
         }
     }
@@ -200,10 +214,11 @@ public class DriveRemoteLock
             PendingResult<DriveResource.MetadataResult> result = targetFile.updateMetadata(apiClient, set);
             DriveResource.MetadataResult mresult = result.await();
             lastValue = mresult.getMetadata().getCustomProperties().get(key);
-            hasRemoteLock = false;
 
             if (!lastValue.equals(newval))
                 Log.d("password", "failed to release remote file lock");
+            else
+                hasRemoteLock = false;
         }
     }
 }
