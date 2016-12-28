@@ -2,37 +2,46 @@ package com.munger.passwordkeeper.struct.documents;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
-import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResolvingResultCallbacks;
+import com.google.android.gms.drive.DriveApi;
+import com.google.android.gms.drive.DriveFile;
+import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.DriveId;
+import com.google.android.gms.drive.Metadata;
+import com.google.android.gms.drive.MetadataBuffer;
+import com.google.android.gms.drive.query.Query;
 import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
-import com.munger.passwordkeeper.helpers.QuitTimerTest;
 import com.munger.passwordkeeper.struct.Settings;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.junit.Assert.*;
+import org.junit.runners.model.InitializationError;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
- * Created by codymunger on 12/7/16.
+ * Created by codymunger on 12/18/16.
  */
 
-@RunWith(AndroidJUnit4.class)
-@SmallTest
-public class PasswordDocumentDriveTest
+public class PasswordDocumentDriveInstTest
 {
     public class MainStateDer extends MainState
     {
@@ -45,23 +54,61 @@ public class PasswordDocumentDriveTest
         @Override
         protected void setupNavigation()
         {
-            navigationMock = mock(NavigationHelper.class);
+            navigationMock = Mockito.mock(NavigationHelper.class);
             navigationHelper = navigationMock;
         }
 
         @Override
         public void setupDriveHelper()
         {
-            driveHelper = new DriveHelper();
-            driveHelper.connect();
+            driveHelperMock = Mockito.mock(DriveHelper.class);
+            driveHelper = driveHelperMock;
+            googleApiMock = Mockito.mock(GoogleApiClient.class);
+            Mockito.doReturn(googleApiMock).when(driveHelper).getClient();
+            Mockito.doReturn(googleApiMock).when(driveHelper).connect();
         }
 
         @Override
         protected void setupPreferences()
         {
-            settingsMock = mock(Settings.class);
-            doReturn("123").when(settingsMock).getDeviceUID();
+            settingsMock = Mockito.mock(Settings.class);
+            Mockito.doReturn("123").when(settingsMock).getDeviceUID();
             settings = settingsMock;
+        }
+    }
+
+    public class MainStateDerRealDrive extends MainStateDer
+    {
+        @Override
+        public void setupDriveHelper()
+        {
+            driveHelper = new DriveHelper();
+            driveHelper.connect();
+        }
+    }
+
+    public class PasswordDocumentDriveDer extends PasswordDocumentDrive
+    {
+        public PasswordDocumentDriveDer(PasswordDocument source)
+        {
+            super(source);
+        }
+
+        public PasswordDocumentDriveDer(PasswordDocument source, String name)
+        {
+            this(source);
+        }
+
+        public PasswordDocumentDriveDer(PasswordDocument source, String name, String password)
+        {
+            this(source, name);
+        }
+
+        @Override
+        protected void setupDriveApi()
+        {
+            driveApiMock = Mockito.mock(DriveApi.class);
+            driveApi = driveApiMock;
         }
     }
 
@@ -69,12 +116,21 @@ public class PasswordDocumentDriveTest
     private PasswordDocument doc;
     private NavigationHelper navigationMock;
     private Settings settingsMock;
+    private DriveHelper driveHelperMock;
+    private GoogleApiClient googleApiMock;
+    private DriveApi driveApiMock;
 
     private final static String DEFAULT_FILENAME = "password-test";
     private final static String DEFAULT_PASSWORD = "pass";
 
     @Rule
     public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
+
+    @BeforeClass
+    public void beforeClass() throws InitializationError
+    {
+        AndroidJUnit4 runner = new AndroidJUnit4(PasswordDocumentDriveInstTest.class, null);
+    }
 
     @Before
     public void before()
@@ -131,8 +187,15 @@ public class PasswordDocumentDriveTest
     private PasswordDocumentDrive.DocumentEvents listener;
 
     @Test
-    public void connects() throws InterruptedException
+    public void connectsForReal() throws InterruptedException
     {
+        Context context = InstrumentationRegistry.getContext();
+        FragmentActivity activity = activityRule.getActivity();
+        mainState = new MainStateDerRealDrive();
+        MainState.setInstance(mainState);
+        mainState.setContext(activity, activity);
+        status = new Status();
+
         listener = new DefaultEventHandler()
         {
             @Override
@@ -149,6 +212,7 @@ public class PasswordDocumentDriveTest
                 synchronized (lock){lock.notify(); }
             }
         };
+
         doc = Helper.generateDocument(2, 2);
         final PasswordDocumentDrive driveDoc = new PasswordDocumentDrive(doc, DEFAULT_FILENAME, DEFAULT_PASSWORD);
         driveDoc.addListener(listener);
@@ -166,59 +230,5 @@ public class PasswordDocumentDriveTest
 
         assertEquals(1, status.wasCalled);
         assertTrue(status.initted);
-    }
-
-    @Test
-    public void handlesPermissionDenied()
-    {
-    }
-
-    @Test
-    public void handlesConnectFail()
-    {
-    }
-
-    @Test
-    public void createsEmptyFileOnMissingTarget()
-    {
-    }
-
-    @Test
-    public void deletesTrashedFileAndCreatesEmpty()
-    {
-    }
-
-    @Test
-    public void handleQueryError()
-    {
-    }
-
-    @Test
-    public void handleCreateError()
-    {
-    }
-
-    @Test
-    public void obtainsLockNoContest()
-    {
-
-    }
-
-    @Test
-    public void obtainsLockAfterRelease()
-    {
-
-    }
-
-    @Test
-    public void obtainsLockAfterTimeout()
-    {
-
-    }
-
-    @Test
-    public void handlesLockError()
-    {
-
     }
 }

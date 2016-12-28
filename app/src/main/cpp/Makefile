@@ -1,13 +1,19 @@
-all: test
+all: test libaes256.so
 
-test: aes256.o MD5.o test.o
-	gcc aes256.o MD5.o test.o -g -o test
+test: libaes256.so test.o
+	gcc -L. -laes256 test.o -o test
+
+test.o: test.c
+	gcc -L. -laes256 -c test.c
+
+libaes256.so: aes256.o MD5.o com_munger_passwordkeeper_struct_AES256.o
+	gcc aes256.o MD5.o com_munger_passwordkeeper_struct_AES256.o -shared -g -o libaes256.so
 
 aes256.o: aes256.c aes256.h
-	gcc -g -c -lc aes256.c
+	gcc -g -c -lc -fPIC aes256.c
 	
 MD5.o: MD5.c MD5.h
-	gcc -g -c MD5.c
-	
-test.o: test.c
-	gcc -g -c -I /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers test.c
+	gcc -g -c -fPIC MD5.c
+
+com_munger_passwordkeeper_struct_AES256.o: com_munger_passwordkeeper_struct_AES256.c com_munger_passwordkeeper_struct_AES256.h
+	gcc -g -I"/Applications/Android Studio.app/Contents/jre/jdk/Contents/Home/include" -I"/Applications/Android Studio.app/Contents/jre/jdk/Contents/Home/include/darwin" -c -fPIC com_munger_passwordkeeper_struct_AES256.c	

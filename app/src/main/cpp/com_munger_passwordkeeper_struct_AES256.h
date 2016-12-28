@@ -8,30 +8,38 @@
 extern "C" {
 #endif
 
-JNIEXPORT jint JNICALL Java_com_munger_passwordkeeper_struct_AES256_init
+JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_init
   (JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_destroy
-  (JNIEnv *, jobject, jint);
+        (JNIEnv*, jobject, jbyteArray);
 
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode
-  (JNIEnv *, jobject, jint, jstring);
+  (JNIEnv *, jobject, jbyteArray, jstring);
 
 
 JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_encodeToBytes
-        (JNIEnv *, jobject, jint, jstring);
+        (JNIEnv *, jobject, jbyteArray, jstring);
 
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode
-  (JNIEnv *, jobject, jint, jstring);
+  (JNIEnv *, jobject, jbyteArray, jstring);
 
+JNIEXPORT jfloat JNICALL Java_com_munger_passwordkeeper_struct_AES256_getDecodeProgress
+        (JNIEnv *, jobject);
+
+JNIEXPORT jboolean JNICALL Java_com_munger_passwordkeeper_struct_AES256_getDecodeIsDone
+        (JNIEnv *, jobject);
 
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFromBytes
-        (JNIEnv *, jobject, jint, jbyteArray);
+        (JNIEnv *, jobject, jbyteArray, jbyteArray);
 
 
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_md5Hash
         (JNIEnv*, jobject, jstring);
 
+
+JNIEXPORT jfloat JNICALL Java_com_munger_passwordkeeper_struct_AES256_getDecodeProgress
+        (JNIEnv * env, jobject jthis);
 
 #ifdef __cplusplus
 }

@@ -1,27 +1,31 @@
 package com.munger.passwordkeeper.struct;
 
-import android.content.Context;
-
-import com.munger.passwordkeeper.Helper;
+import com.munger.passwordkeeper.HelperNoInst;
 import com.munger.passwordkeeper.helpers.ThreadedCallbackWaiter;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.File;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class AES256Test
 {
     private static String DEFAULT_PASSWORD = "pass";
     private static String DEFAULT_STRING = "test";
 
-    private AES256 encoder;
-
     public AES256Test()
     {
 
     }
+
+    private AES256 encoder;
 
     @Before
     public void init()
@@ -30,7 +34,7 @@ public class AES256Test
     }
 
     @After
-    public void cleanUp()
+    public void cleanUp() throws InterruptedException
     {
         if (encoder != null)
             encoder.cleanUp();
@@ -59,7 +63,7 @@ public class AES256Test
     @Test
     public void testMD5Big()
     {
-        String longStr = Helper.longString();
+        String longStr = HelperNoInst.longString();
         String hash = encoder.md5Hash(longStr);
         assertEquals(32, hash.length());
     }
@@ -87,7 +91,7 @@ public class AES256Test
     @Test
     public void encodeLarge()
     {
-        String longStr = Helper.longString();
+        String longStr = HelperNoInst.longString();
         String cipher = encoder.encode(longStr);
         assertNotEquals(longStr, cipher);
         assertNotEquals(0, cipher.length());
@@ -101,7 +105,7 @@ public class AES256Test
     {
         byte[] cipher = encoder.encodeToBytes("");
         assertEquals(0, cipher.length);
-        String plain = encoder.decodeFromBytes(cipher);
+        String plain = encoder.decodeFromByteArray(cipher);
         assertEquals("", plain);
     }
 
@@ -112,24 +116,24 @@ public class AES256Test
         assertNotEquals(DEFAULT_STRING, cipher);
         assertNotEquals(0, cipher.length);
 
-        String plain = encoder.decodeFromBytes(cipher);
+        String plain = encoder.decodeFromByteArray(cipher);
         assertEquals(DEFAULT_STRING, plain);
     }
 
     @Test
     public void encodeBytesLarge()
     {
-        String longStr = Helper.longString();
+        String longStr = HelperNoInst.longString();
         byte[] cipher = encoder.encodeToBytes(longStr);
         assertNotEquals(longStr, cipher);
         assertNotEquals(0, cipher.length);
 
-        String plain = encoder.decodeFromBytes(cipher);
+        String plain = encoder.decodeFromByteArray(cipher);
         assertEquals(longStr, plain);
     }
 
     @Test
-    public void differentPasswords()
+    public void differentPasswords() throws InterruptedException
     {
         String cipher1 = encoder.encode(DEFAULT_STRING);
         String plain1 = encoder.decode(cipher1);
@@ -142,7 +146,7 @@ public class AES256Test
         String cipher3 = encoder3.encode(DEFAULT_STRING);
         String plain3 = encoder3.decode(cipher3);
 
-        String longStr = Helper.longString();
+        String longStr = HelperNoInst.longString();
         AES256 encoder4 = new AES256(longStr);
         String cipher4 = encoder4.encode(DEFAULT_STRING);
         String plain4 = encoder4.decode(cipher4);
@@ -185,7 +189,7 @@ public class AES256Test
 
             status.wasCalled++;
 
-            if (progress == 1.0f)
+            if (progress >= 1.0f)
             {
                 status.wasCompleted = true;
                 synchronized (locker)
@@ -195,13 +199,13 @@ public class AES256Test
             }
         }});
 
-        String longStr = Helper.longString();
+        String longStr = HelperNoInst.longString();
         byte[] cipher = encoder.encodeToBytes(longStr);
-        String plain = encoder.decodeFromBytes(cipher, waiter);
+        String plain = encoder.decodeFromByteArray(cipher, waiter);
 
         synchronized (locker)
         {
-            try{locker.wait(2000);} catch(Exception e){}
+            try{locker.wait(20000);} catch(Exception e){}
         }
 
         assertTrue(status.wasCalled > 1);

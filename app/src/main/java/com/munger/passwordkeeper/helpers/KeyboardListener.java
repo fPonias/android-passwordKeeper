@@ -29,6 +29,9 @@ public class KeyboardListener
         keyboardChangedListeners = new ArrayList<>();
 
         final View activityRootView = parent.findViewById(R.id.container);
+        if (activityRootView == null)
+            return;
+
         activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener()
         {
             @Override

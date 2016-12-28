@@ -58,7 +58,7 @@ public class DriveRemoteLock
         targetFile.removeChangeListener(apiClient, listener);
 
         if (hasRemoteLock)
-            release();
+            try{release();}catch(FailedToReleaseLockException e){}
     }
 
     protected enum RemoteLockState
@@ -130,7 +130,13 @@ public class DriveRemoteLock
         }
     }
 
-    public void get()
+    public class FailedToAttainLockException extends Exception
+    {}
+
+    public class FailedToReleaseLockException extends Exception
+    {}
+
+    public void get() throws FailedToAttainLockException
     {
         Log.d("remote lock", "attaining remote lock");
         while(true)
@@ -169,7 +175,12 @@ public class DriveRemoteLock
         }
     }
 
-    protected void claim()
+    protected MetadataChangeSet.Builder getMetadataBuilder()
+    {
+        return new MetadataChangeSet.Builder();
+    }
+
+    protected void claim() throws FailedToAttainLockException
     {
         Log.d("remote lock", "claiming remote lock");
         synchronized (lock)
@@ -178,7 +189,9 @@ public class DriveRemoteLock
             long current = System.currentTimeMillis();
             String newval = uid + " " + current;
             Log.d("remote lock", "setting remote lock to " + newval);
-            MetadataChangeSet set = new MetadataChangeSet.Builder().setCustomProperty(key, newval).build();
+            MetadataChangeSet.Builder builder = getMetadataBuilder();
+            builder = builder.setCustomProperty(key, newval);
+            MetadataChangeSet set = builder.build();
             PendingResult<DriveResource.MetadataResult> result = targetFile.updateMetadata(apiClient, set);
             DriveResource.MetadataResult mresult = result.await();
             lastValue = mresult.getMetadata().getCustomProperties().get(key);
@@ -192,11 +205,12 @@ public class DriveRemoteLock
             {
                 hasRemoteLock = false;
                 Log.d("password", "failed to obtain remote file lock");
+                throw new FailedToAttainLockException();
             }
         }
     }
 
-    public void release()
+    public void release() throws FailedToReleaseLockException
     {
         Log.d("remote lock", "releasing remote lock");
         RemoteLockState state = check();

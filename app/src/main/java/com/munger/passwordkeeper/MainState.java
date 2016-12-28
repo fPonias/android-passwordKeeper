@@ -77,7 +77,7 @@ public class MainState
     {
         this.activity = activity;
         this.context = context;
-        handler = new Handler(Looper.getMainLooper());
+        handler = new Handler(context.getMainLooper());
 
         keyboardListener = new KeyboardListener(activity);
 

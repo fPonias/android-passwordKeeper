@@ -1,6 +1,6 @@
 package com.munger.passwordkeeper.struct;
 
-import com.munger.passwordkeeper.Helper;
+import com.munger.passwordkeeper.HelperNoInst;
 import com.munger.passwordkeeper.struct.history.HistoryEvent;
 import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
@@ -144,8 +144,8 @@ public class PasswordDetailsTest
         dets.setLocation("loc loc");
         doSerialization(dets);
 
-        dets.setName(Helper.longString());
-        dets.setLocation(Helper.longString());
+        dets.setName(HelperNoInst.longString());
+        dets.setLocation(HelperNoInst.longString());
         doSerialization(dets);
 
         PasswordDetailsPair pair = dets.addEmptyPair();
@@ -170,8 +170,8 @@ public class PasswordDetailsTest
         }
         doSerialization(dets);
 
-        pair.setKey(Helper.longString());
-        pair.setValue(Helper.longString());
+        pair.setKey(HelperNoInst.longString());
+        pair.setValue(HelperNoInst.longString());
         doSerialization(dets);
     }
 

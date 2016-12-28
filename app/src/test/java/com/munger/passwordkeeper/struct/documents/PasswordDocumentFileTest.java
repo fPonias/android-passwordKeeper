@@ -1,6 +1,6 @@
 package com.munger.passwordkeeper.struct.documents;
 
-import com.munger.passwordkeeper.Helper;
+import com.munger.passwordkeeper.HelperNoInst;
 
 import org.junit.After;
 import org.junit.Before;
@@ -73,7 +73,7 @@ public class PasswordDocumentFileTest
     @Test
     public void constructors() throws IOException
     {
-        PasswordDocumentFileOver doc = new PasswordDocumentFileOver(Helper.DEFAULT_NAME, Helper.DEFAULT_PASSWORD);
+        PasswordDocumentFileOver doc = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
     }
 
     @Test
@@ -84,9 +84,9 @@ public class PasswordDocumentFileTest
 
     private PasswordDocumentFileOver dosave() throws Exception
     {
-        PasswordDocumentFileOver doc = new PasswordDocumentFileOver(Helper.DEFAULT_NAME, Helper.DEFAULT_PASSWORD);
+        PasswordDocumentFileOver doc = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
         assertFalse(doc.exists());
-        Helper.fillDocument(doc, 5, 5);
+        HelperNoInst.fillDocument(doc, 5, 5);
         doc.save();
 
 
@@ -119,7 +119,7 @@ public class PasswordDocumentFileTest
     {
         PasswordDocumentFileOver doc = dosave();
         assertEquals(1, doc.overwriteCalled);
-        Helper.fillDocument(doc, 3, 5);
+        HelperNoInst.fillDocument(doc, 3, 5);
 
         assertTrue(doc.count() > 3);
         doc.save();
@@ -132,7 +132,7 @@ public class PasswordDocumentFileTest
     {
         PasswordDocumentFileOver doc = dosave();
 
-        PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(Helper.DEFAULT_NAME, Helper.DEFAULT_PASSWORD);
+        PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
         assertTrue(doc2.exists());
         assertTrue(doc2.testPassword());
         doc2.load(true);

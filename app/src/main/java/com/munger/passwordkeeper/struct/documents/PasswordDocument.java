@@ -369,7 +369,7 @@ public abstract class PasswordDocument
 	{
 		byte[] lineEnc = new byte[sz];
 		inArr.readFully(lineEnc);
-		String ret = encoder.decodeFromBytes(lineEnc);
+		String ret = encoder.decodeFromByteArray(lineEnc);
 
 		return ret;
 	}

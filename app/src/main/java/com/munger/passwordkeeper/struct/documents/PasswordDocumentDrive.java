@@ -15,6 +15,7 @@ import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.query.Filter;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
@@ -37,10 +38,11 @@ public class PasswordDocumentDrive extends PasswordDocument
     private static final int FILE_CREATE_REQUEST = 1002;
     private static final int FILE_SAVE_REQUEST = 1003;
 
+    protected DriveApi driveApi;
     private GoogleApiClient apiClient;
     private DriveFolder rootFolder;
-    private DriveFile targetFile;
-    private DriveRemoteLock targetLock;
+    protected DriveFile targetFile;
+    protected DriveRemoteLock targetLock;
     private PasswordDocument sourceDoc;
 
     private long lastRemoteUpdate;
@@ -79,11 +81,17 @@ public class PasswordDocumentDrive extends PasswordDocument
         }
 
         apiClient = MainState.getInstance().driveHelper.getClient();
+        setupDriveApi();
         lastRemoteUpdate = MainState.getInstance().settings.getLastRemoteUpdate();
 
         updateFromSource();
         Log.d("password", "syncing with remote");
         handleConnected();
+    }
+
+    protected void setupDriveApi()
+    {
+        driveApi = Drive.DriveApi;
     }
 
     public static interface DocumentEvents
@@ -155,14 +163,19 @@ public class PasswordDocumentDrive extends PasswordDocument
         }
     }
 
+    protected Query.Builder getQueryBuilder()
+    {
+        return new Query.Builder();
+    }
+
     private void handleConnected()
     {
         Log.d("password", "checking for remote document");
-        rootFolder = Drive.DriveApi.getRootFolder(apiClient);
-        Query q = new Query.Builder()
-                .addFilter(Filters.contains(SearchableField.TITLE, name))
-                .build();
-        rootFolder.queryChildren(apiClient, q).setResultCallback(new ResolvingResultCallbacks<DriveApi.MetadataBufferResult>(MainState.getInstance().activity, FILE_EXISTS_REQUEST)
+        rootFolder = driveApi.getRootFolder(apiClient);
+        Filter f = Filters.contains(SearchableField.TITLE, name);
+        Query q = getQueryBuilder().addFilter(f).build();
+        PendingResult<DriveApi.MetadataBufferResult> result = rootFolder.queryChildren(apiClient, q);
+        result.setResultCallback(new ResolvingResultCallbacks<DriveApi.MetadataBufferResult>(MainState.getInstance().activity, FILE_EXISTS_REQUEST)
         {
             @Override
             public void onSuccess(@NonNull final DriveApi.MetadataBufferResult metadataBufferResult)
@@ -200,12 +213,13 @@ public class PasswordDocumentDrive extends PasswordDocument
         else
         {
             Metadata metadata = metadataBufferResult.getMetadataBuffer().get(0);
+            DriveFile f = metadata.getDriveId().asDriveFile();
             if (metadata.isTrashed())
             {
                 Log.d("password", "replacing trashed remote document");
                 try
                 {
-                    PendingResult<com.google.android.gms.common.api.Status> result =  targetFile.delete(apiClient);
+                    PendingResult<com.google.android.gms.common.api.Status> result =  f.delete(apiClient);
                     result.await();
                 }
                 catch(Exception e){
@@ -222,7 +236,6 @@ public class PasswordDocumentDrive extends PasswordDocument
             }
             else
             {
-                DriveFile f = metadata.getDriveId().asDriveFile();
                 setTargetFile(f);
 
                 if (metadata.getFileSize() == 0)
@@ -280,8 +293,8 @@ public class PasswordDocumentDrive extends PasswordDocument
     {
         Log.d("password", "updating remote document");
 
-        targetLock.get();
-        targetLock.release();
+        try{targetLock.get();} catch(DriveRemoteLock.FailedToAttainLockException e){return;}
+        try{targetLock.release();} catch(DriveRemoteLock.FailedToReleaseLockException e){return;}
     }
 
         /*
@@ -331,7 +344,7 @@ public class PasswordDocumentDrive extends PasswordDocument
     public void load(boolean force)
     {
         Log.d("password", "loading remote document");
-        targetLock.get();
+        try{targetLock.get();} catch(DriveRemoteLock.FailedToAttainLockException e){return;}
 
         AsyncTask t = new AsyncTask() {protected Object doInBackground(Object[] params)
         {
@@ -364,7 +377,7 @@ public class PasswordDocumentDrive extends PasswordDocument
                 catch(Exception e){}
 
                 result.getDriveContents().discard(apiClient);
-                targetLock.release();
+                try{targetLock.release();} catch(DriveRemoteLock.FailedToReleaseLockException e){}
             }
 
             return null;

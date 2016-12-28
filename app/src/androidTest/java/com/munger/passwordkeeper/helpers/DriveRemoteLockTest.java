@@ -225,7 +225,7 @@ public class DriveRemoteLockTest
     }
 
     @Test
-    public void claimNoContest()
+    public void claimNoContest() throws Exception
     {
         target = new DriveRemoteLock(apiClientMock, driveFileMock);
         setupLockValue("");
@@ -238,7 +238,7 @@ public class DriveRemoteLockTest
     }
 
     @Test
-    public void claimAlreadyOwned()
+    public void claimAlreadyOwned() throws Exception
     {
         target = new DriveRemoteLock(apiClientMock, driveFileMock);
         long timestamp = System.currentTimeMillis();
@@ -253,7 +253,7 @@ public class DriveRemoteLockTest
     private ChangeListener fileMockListener;
 
     @Test
-    public void claimNotifyFreed() throws InterruptedException
+    public void claimNotifyFreed() throws Exception
     {
         doAnswer(new Answer<Void>() {public Void answer(InvocationOnMock invocation) throws Throwable
         {
@@ -274,7 +274,7 @@ public class DriveRemoteLockTest
                 lock.notify();
             }
 
-            target.get();
+            try{target.get();}catch(Exception e){return;}
 
             synchronized (lock)
             {
@@ -345,7 +345,7 @@ public class DriveRemoteLockTest
     }
 
     @Test
-    public void claimWaitExpired() throws InterruptedException
+    public void claimWaitExpired() throws Exception
     {
         target = new ShortTimeoutRemoteLock(apiClientMock, driveFileMock);
         long timestamp = System.currentTimeMillis();
@@ -360,7 +360,7 @@ public class DriveRemoteLockTest
                 lock.notify();
             }
 
-            target.get();
+            try{target.get();}catch(Exception e){return;}
 
             synchronized (lock)
             {
@@ -391,13 +391,21 @@ public class DriveRemoteLockTest
         setupLockValue("");
         setupLockUpdate("");
 
-        target.get();
+        boolean thrown = false;
+        try
+        {
+            target.get();
+        }
+        catch(Exception e){
+            thrown = true;
+        }
 
+        assertTrue(thrown);
         assertFalse(target.hasRemoteLock);
     }
 
     @Test
-    public void releaseNotOwned()
+    public void releaseNotOwned() throws Exception
     {
         target = new DriveRemoteLock(apiClientMock, driveFileMock);
         setupLockValue("");
@@ -410,7 +418,7 @@ public class DriveRemoteLockTest
     }
 
     @Test
-    public void release()
+    public void release() throws Exception
     {
         target = new DriveRemoteLock(apiClientMock, driveFileMock);
         long current = System.currentTimeMillis();
@@ -426,7 +434,7 @@ public class DriveRemoteLockTest
     }
 
     @Test
-    public void releaseFailed()
+    public void releaseFailed() throws Exception
     {
         target = new DriveRemoteLock(apiClientMock, driveFileMock);
         long current = System.currentTimeMillis();
@@ -436,9 +444,18 @@ public class DriveRemoteLockTest
         assertTrue(target.hasRemoteLock);
 
         setupLockUpdate(value);
-        target.release();
+
+        boolean thrown = false;
+        try
+        {
+            target.release();
+        }
+        catch(DriveRemoteLock.FailedToReleaseLockException e){
+            thrown = true;
+        }
 
         assertTrue(target.hasRemoteLock);
+        assertTrue(thrown);
     }
 
     @Test

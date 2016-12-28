@@ -5,7 +5,7 @@ package com.munger.passwordkeeper.struct.documents;
  */
 
 
-import com.munger.passwordkeeper.Helper;
+import com.munger.passwordkeeper.HelperNoInst;
 import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
@@ -23,7 +23,7 @@ public class PasswordDocumentStreamTest
     @Test
     public void works() throws Exception
     {
-        PasswordDocument doc = Helper.generateDocument(3, 3);
+        PasswordDocument doc = HelperNoInst.generateDocument(3, 3);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         doc.deltasToEncryptedString(dos);
@@ -32,7 +32,7 @@ public class PasswordDocumentStreamTest
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         DataInputStream dis = new DataInputStream(bais);
         PasswordDocumentStream docin = new PasswordDocumentStream(dis, bytes.length);
-        docin.setPassword(Helper.DEFAULT_PASSWORD);
+        docin.setPassword(HelperNoInst.DEFAULT_PASSWORD);
         docin.load(false);
         dis.close(); bais.close();
 

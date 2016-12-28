@@ -23,62 +23,43 @@
 #include "com_munger_passwordkeeper_struct_AES256.h"
 
 
-JNIEnv* decodeCallbackEnv = 0;
-jobject* decodeCallbackObject = 0;
-jmethodID decodeCallbackMethodID = 0;
-
-void setupDecodeCallback(JNIEnv * env, jobject* jthis)
-{
-    decodeCallbackEnv = env;
-
-    if (decodeCallbackObject != 0)
-        return;
-
-    decodeCallbackObject = (*env)->NewGlobalRef(env, *jthis);
-    if (decodeCallbackObject == 0)
-        return;
-
-    jclass clazz = (*env)->GetObjectClass(env, decodeCallbackObject);
-    decodeCallbackMethodID = (*env)->GetMethodID(env, clazz, "doCallback", "(F)V");
-}
-
-void cleanupDecodeCallback(JNIEnv* env)
-{
-    (*env)->DeleteGlobalRef(env, decodeCallbackObject);
-    decodeCallbackMethodID = 0;
-    decodeCallbackObject = 0;
-    decodeCallbackEnv = 0;
-}
+float decodeProgress = 0.0f;
 
 void doDecodeCallback(float percent)
 {
-    if (decodeCallbackMethodID == 0)
-        return;
-
-    (*decodeCallbackEnv)->CallVoidMethod(decodeCallbackEnv, decodeCallbackObject, decodeCallbackMethodID, percent);
+    decodeProgress = percent;
 }
 
-JNIEXPORT jint JNICALL Java_com_munger_passwordkeeper_struct_AES256_init(JNIEnv * env, jobject jthis, jstring jpass)
+JNIEXPORT jfloat JNICALL Java_com_munger_passwordkeeper_struct_AES256_getDecodeProgress (JNIEnv * env, jobject jthis)
+{
+    return (jfloat) decodeProgress;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_init(JNIEnv * env, jobject jthis, jstring jpass)
 {
 	const char* password = (*env)->GetStringUTFChars(env, jpass, 0);
-	aes256_context* ret = malloc(sizeof(aes256_context));
-	aes256_initFromPassword(ret, password);
+	aes256_context ret;
+	aes256_initFromPassword(&ret, password);
 
-    setupDecodeCallback(env, &jthis);
-
-	return (long) ret;
+    int sz = sizeof(aes256_context);
+    printf("context size: %i", sz);
+    jbyteArray retArr = (*env)->NewByteArray(env, sz);
+    (*env)->SetByteArrayRegion(env, retArr, 0, sz, (uint8_t *) (&ret));
+	return retArr;
 }
 
-JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_destroy(JNIEnv * env, jobject jthis, jint jcontext)
+JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_destroy(JNIEnv * env, jobject jthis, jbyteArray jcontext)
 {
-	aes256_context* ctx = (aes256_context*) jcontext;
-	free(ctx);
-    cleanupDecodeCallback(env);
+    aes256_context ctx;
+    int size = sizeof(aes256_context);
+    (*env)->ReleaseByteArrayElements(env, jcontext, (uint8_t *) (&ctx), 0);
 }
 
-JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode(JNIEnv * env, jobject jthis, jint jcontext, jstring jtarget)
+JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode(JNIEnv * env, jobject jthis, jbyteArray jcontext, jstring jtarget)
 {
-	aes256_context* ctx = (aes256_context*) jcontext;
+	aes256_context ctx;
+    int size = sizeof(aes256_context);
+    (*env)->GetByteArrayRegion(env, jcontext, 0, size, (uint8_t *) (&ctx));
 	const char* targetPtr = (*env)->GetStringUTFChars(env, jtarget, 0);
 
     unsigned int sz = strlen(targetPtr);
@@ -90,7 +71,7 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode(JN
 
     char retPtr[retSz];
     char* retPtr2 = &(retPtr[0]);
-    aes256_encryptString(ctx, targetPtr, retPtr2);
+    aes256_encryptString(&ctx, targetPtr, retPtr2);
     char retPtrEnc[retSz * 2 + 1];
 
     int i;
@@ -106,9 +87,11 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode(JN
 	return ret;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_encodeToBytes (JNIEnv * env, jobject jthis, jint jcontext, jstring jtarget)
+JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_encodeToBytes (JNIEnv * env, jobject jthis, jbyteArray jcontext, jstring jtarget)
 {
-    aes256_context* ctx = (aes256_context*) jcontext;
+    aes256_context ctx;
+    int size = sizeof(aes256_context);
+    (*env)->GetByteArrayRegion(env, jcontext, 0, size, (uint8_t *) (&ctx));
     const char* targetPtr = (*env)->GetStringUTFChars(env, jtarget, 0);
 
     unsigned int sz = strlen(targetPtr);
@@ -120,16 +103,18 @@ JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_encode
 
     char retPtr[retSz];
     char* retPtr2 = &(retPtr[0]);
-    aes256_encryptString(ctx, targetPtr, retPtr2);
+    aes256_encryptString(&ctx, targetPtr, retPtr2);
 
     jbyteArray ret = (*env)->NewByteArray(env, retSz);
     (*env)->SetByteArrayRegion(env, ret, 0, retSz, retPtr2);
     return ret;
 }
 
-JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JNIEnv * env, jobject jthis, jint jcontext, jstring jtarget)
+JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JNIEnv * env, jobject jthis, jbyteArray jcontext, jstring jtarget)
 {
-	aes256_context* ctx = (aes256_context*) jcontext;
+    aes256_context ctx;
+    int size = sizeof(aes256_context);
+    (*env)->GetByteArrayRegion(env, jcontext, 0, size, (uint8_t *) (&ctx));
 	const char* targetPtr = (*env)->GetStringUTFChars(env, jtarget, 0);
 	unsigned int sz = strlen(targetPtr);
 
@@ -149,8 +134,7 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JN
     char retPtr[decSz];
     retPtr[decSz - 1] = '\0';
 
-    decodeCallbackEnv = env;
-    aes256_decryptString(ctx, decPtr, retPtr, decSz - 1, &doDecodeCallback);
+    aes256_decryptString(&ctx, decPtr, retPtr, decSz - 1, &doDecodeCallback);
 
     jstring ret;
     int found = 1;
@@ -173,9 +157,11 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decode(JN
     return ret;
 }
 
-JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFromBytes (JNIEnv *env, jobject jthis, jint jcontext, jbyteArray jtarget)
+JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFromBytes (JNIEnv *env, jobject jthis, jbyteArray jcontext, jbyteArray jtarget)
 {
-    aes256_context* ctx = (aes256_context*) jcontext;
+    aes256_context ctx;
+    int size = sizeof(aes256_context);
+    (*env)->GetByteArrayRegion(env, jcontext, 0, size, (uint8_t *) (&ctx));
     int sz = (*env)->GetArrayLength(env, jtarget);
     char targetArr[sz];
     char* targetPtr = &(targetArr[0]);
@@ -184,8 +170,7 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFro
     char retArr[sz + 1];
     retArr[sz] = '\0';
     char* retPtr = &(retArr[0]);
-    decodeCallbackEnv = env;
-    aes256_decryptString(ctx, targetPtr, retPtr, sz, &doDecodeCallback);
+    aes256_decryptString(&ctx, targetPtr, retPtr, sz, &doDecodeCallback);
 
     jstring ret;
     int found = 1;
@@ -206,13 +191,6 @@ JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFro
         ret = (*env)->NewStringUTF(env, retPtr);
 
     return ret;
-}
-
-JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_clearDecodeCallback (JNIEnv *env)
-{
-    decodeCallbackEnv = 0;
-    decodeCallbackObject = 0;
-    decodeCallbackMethodID = 0;
 }
 
 JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_md5Hash (JNIEnv* env, jobject jthis, jstring jtarget)

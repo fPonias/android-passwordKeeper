@@ -253,7 +253,7 @@ public class PasswordDocumentFile extends PasswordDocument
 			int sz = dis.readInt();
 			byte[] lineEnc = new byte[sz];
 			dis.read(lineEnc);
-			String line = encoder.decodeFromBytes(lineEnc);
+			String line = encoder.decodeFromByteArray(lineEnc);
 
 			if (line.equals("test string"))
 			{

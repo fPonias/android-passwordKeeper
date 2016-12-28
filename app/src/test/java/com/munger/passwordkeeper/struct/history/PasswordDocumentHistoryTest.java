@@ -4,7 +4,7 @@ package com.munger.passwordkeeper.struct.history;
  * Created by codymunger on 11/24/16.
  */
 
-import com.munger.passwordkeeper.Helper;
+import com.munger.passwordkeeper.HelperNoInst;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
@@ -12,10 +12,9 @@ import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 public class PasswordDocumentHistoryTest
 {
@@ -148,8 +147,8 @@ public class PasswordDocumentHistoryTest
     @Test
     public void play() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(5, 5);
-        Helper.PasswordDocumentImpl doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(5, 5);
+        HelperNoInst.PasswordDocumentImpl doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
 
         assertTrue(doc1.equals(doc2));
@@ -158,7 +157,7 @@ public class PasswordDocumentHistoryTest
     @Test
     public void toFromString() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(5, 5);
+        PasswordDocument doc1 = HelperNoInst.generateDocument(5, 5);
         String out = doc1.getHistory().toString();
         PasswordDocumentHistory hist = new PasswordDocumentHistory();
         hist.fromString(out);
@@ -169,7 +168,7 @@ public class PasswordDocumentHistoryTest
     @Test
     public void partToFromString() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(5, 5);
+        PasswordDocument doc1 = HelperNoInst.generateDocument(5, 5);
         PasswordDocumentHistory hist = doc1.getHistory();
         String out = hist.partToString(10, 10);
         PasswordDocumentHistory partHist = new PasswordDocumentHistory();
@@ -189,7 +188,7 @@ public class PasswordDocumentHistoryTest
     @Test
     public void cloneTest()
     {
-        PasswordDocument doc1 = Helper.generateDocument(5, 5);
+        PasswordDocument doc1 = HelperNoInst.generateDocument(5, 5);
         String out = doc1.getHistory().toString();
         PasswordDocumentHistory hist = doc1.getHistory().clone();
 
@@ -200,12 +199,12 @@ public class PasswordDocumentHistoryTest
     @Test
     public void noChangeMerge() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(2, 2);
-        PasswordDocument doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
+        PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
 
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
-        PasswordDocument doc3 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
 
         assertEquals(2, doc3.count());
@@ -218,8 +217,8 @@ public class PasswordDocumentHistoryTest
     @Test
     public void localSidedMerge() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(2, 2);
-        PasswordDocument doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
+        PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
 
         PasswordDetails dets = new PasswordDetails();
@@ -229,7 +228,7 @@ public class PasswordDocumentHistoryTest
 
 
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
-        PasswordDocument doc3 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
 
         assertEquals(3, doc3.count());
@@ -244,8 +243,8 @@ public class PasswordDocumentHistoryTest
     @Test
     public void remoteSidedMerge() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(2, 2);
-        PasswordDocument doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
+        PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
 
         PasswordDetails dets = new PasswordDetails();
@@ -255,7 +254,7 @@ public class PasswordDocumentHistoryTest
 
 
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
-        PasswordDocument doc3 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
 
         assertEquals(3, doc3.count());
@@ -270,8 +269,8 @@ public class PasswordDocumentHistoryTest
     @Test
     public void straightMerge() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(2, 2);
-        PasswordDocument doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
+        PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
         int oldSz = doc1.getHistory().count();
 
@@ -296,15 +295,15 @@ public class PasswordDocumentHistoryTest
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
         int newSz = hist.count();
         assertEquals(newSz - 11, oldSz);
-        PasswordDocument doc3 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
     }
 
     @Test
     public void conflictedMerge() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(2, 2);
-        PasswordDocument doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
+        PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
         int oldSz = doc1.getHistory().count();
 
@@ -322,7 +321,7 @@ public class PasswordDocumentHistoryTest
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
         int newSz = hist.count();
         assertEquals(newSz - 4, oldSz);
-        PasswordDocument doc3 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
         PasswordDetails det3 = doc3.getDetails(0);
         assertEquals(det3.getName(), "det value 1");
@@ -333,8 +332,8 @@ public class PasswordDocumentHistoryTest
     @Test
     public void conflictedMergeDeletedPair() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(2, 2);
-        PasswordDocument doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
+        PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
         int oldSz = doc1.getHistory().count();
 
@@ -352,7 +351,7 @@ public class PasswordDocumentHistoryTest
         det2.removePair(pair2);
 
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
-        PasswordDocument doc3 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
         PasswordDetails det3 = doc3.getDetails(0);
         assertEquals(0, det3.count());
@@ -361,8 +360,8 @@ public class PasswordDocumentHistoryTest
     @Test
     public void conflictedMergeDeletedDetails() throws Exception
     {
-        PasswordDocument doc1 = Helper.generateDocument(2, 2);
-        PasswordDocument doc2 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
+        PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
         int oldSz = doc1.getHistory().count();
 
@@ -378,7 +377,7 @@ public class PasswordDocumentHistoryTest
         doc2.removeDetails(det2);
 
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
-        PasswordDocument doc3 = new Helper.PasswordDocumentImpl();
+        PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
         assertEquals(0, doc3.count());
     }
