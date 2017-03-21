@@ -495,11 +495,104 @@ public abstract class PasswordDocument
 		public void callback(float progress);
 	}
 
-	abstract public void save() throws Exception;
-	abstract public void load(boolean force) throws Exception;
+	protected boolean initting = false;
+
+	public static interface DocumentEvents
+	{
+		void initFailed(Exception e);
+		void initted();
+		void saved();
+		void loaded();
+		void deleted();
+		void closed();
+	}
+
+	protected ArrayList<DocumentEvents> listeners = new ArrayList<>();
+	public void addListener(DocumentEvents listener)
+	{
+		listeners.add(listener);
+	}
+
+	public void removeListener(DocumentEvents listener)
+	{
+		listeners.remove(listener);
+	}
+
+	public void removeListeners()
+	{
+		listeners = new ArrayList<>();
+	}
+
+	protected void notifyInitted()
+	{
+		if(!initting)
+			return;
+
+		initting = false;
+		int sz = listeners.size();
+		for (int i = sz - 1; i >= 0; i--)
+			listeners.get(i).initted();
+	}
+
+	protected void notifyInitError(Exception e)
+	{
+		initting = false;
+		int sz = listeners.size();
+		for (int i = sz - 1; i >= 0; i--)
+			listeners.get(i).initFailed(e);
+	}
+
+	protected void notifySaved()
+	{
+		int sz = listeners.size();
+		for (int i = sz - 1; i >= 0; i--)
+			listeners.get(i).saved();
+	}
+
+	protected void notifyLoaded()
+	{
+		int sz = listeners.size();
+		for (int i = sz - 1; i >= 0; i--)
+			listeners.get(i).loaded();
+	}
+
+	protected void notifyDeleted()
+	{
+		int sz = listeners.size();
+		for (int i = sz - 1; i >= 0; i--)
+			listeners.get(i).deleted();
+	}
+
+	protected void notifyClosed()
+	{
+		int sz = listeners.size();
+		for (int i = sz - 1; i >= 0; i--)
+			listeners.get(i).closed();
+	}
+
+	abstract protected void onSave() throws Exception;
+	abstract protected void onLoad(boolean force) throws Exception;
 	abstract protected void onClose() throws Exception;
-	abstract public void delete() throws Exception;
+	abstract protected void onDelete() throws Exception;
 	abstract public boolean testPassword();
+
+	public void save() throws Exception
+	{
+		notifySaved();
+		onSave();
+	}
+
+	public void load(boolean force) throws Exception
+	{
+		notifyLoaded();
+		onLoad(force);
+	}
+
+	public void delete() throws Exception
+	{
+		notifyDeleted();
+		onDelete();
+	}
 
 	public void close() throws Exception
 	{
@@ -514,6 +607,9 @@ public abstract class PasswordDocument
 		history = new PasswordDocumentHistory();
 		mostRecentHistoryEvent = null;
 		historyLoaded = true;
+
+		onClose();
+		notifyClosed();
 	}
 
 	protected HashMap<String, PasswordDetails> detailsIndex;

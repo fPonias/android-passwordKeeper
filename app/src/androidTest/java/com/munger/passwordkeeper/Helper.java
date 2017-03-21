@@ -85,12 +85,12 @@ public class Helper
             super(name, pass);
         }
 
-        public void save() throws Exception
+        public void onSave() throws Exception
         {
 
         }
 
-        public void load(boolean force) throws Exception
+        public void onLoad(boolean force) throws Exception
         {
 
         }
@@ -100,7 +100,7 @@ public class Helper
 
         }
 
-        public void delete() throws Exception
+        public void onDelete() throws Exception
         {
 
         }

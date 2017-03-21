@@ -72,12 +72,12 @@ public class HelperNoInst
             super(name, pass);
         }
 
-        public void save() throws Exception
+        protected void onSave() throws Exception
         {
 
         }
 
-        public void load(boolean force) throws Exception
+        protected void onLoad(boolean force) throws Exception
         {
 
         }
@@ -87,7 +87,7 @@ public class HelperNoInst
 
         }
 
-        public void delete() throws Exception
+        protected void onDelete() throws Exception
         {
 
         }

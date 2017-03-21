@@ -35,11 +35,6 @@ public class Settings
         return Float.parseFloat(valueStr);
     }
 
-    public long getLastRemoteUpdate()
-    {
-        return preferences.getLong("lastRemoteUpdate", 0);
-    }
-
     public String getDeviceUID()
     {
         if (!preferences.contains("UUID"))

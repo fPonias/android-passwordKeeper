@@ -13,12 +13,22 @@ public class AES256
 			System.loadLibrary("aes256");
 		}
 		catch(UnsatisfiedLinkError e){
-			String jniPath = "./src/main/cpp/libaes256.so";
-			File jniPathFile = new File(jniPath);
-			String path = jniPathFile.getAbsolutePath();
-
-			System.load(path);
+			try
+			{
+				loadExternalLib("./app/src/main/cpp/libaes256.so");
+			}
+			catch(UnsatisfiedLinkError e1){
+				loadExternalLib("./src/main/cpp/libaes256.so");
+			}
 		}
+	}
+
+	private static void loadExternalLib(String jniPath) throws UnsatisfiedLinkError
+	{
+		File jniPathFile = new File(jniPath);
+		String path = jniPathFile.getAbsolutePath();
+
+		System.load(path);
 	}
 
 	private String password;

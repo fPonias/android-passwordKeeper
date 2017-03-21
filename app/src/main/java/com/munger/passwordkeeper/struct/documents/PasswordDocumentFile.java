@@ -82,7 +82,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		return rootPath + name + "-history-tmp";
 	}
 
-	public void save() throws IOException
+	public void onSave() throws IOException
 	{
 		saveTempHistory();
 		saveTempDetails();
@@ -186,7 +186,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		tmpTarget.delete();
 	}
 
-	public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public void onLoad(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		String path = getDetailsFilePath();
 		File target = new File(path);
@@ -277,7 +277,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		return ret;
 	}
 
-	public void delete()
+	public void onDelete()
 	{
 		String path = getDetailsFilePath();
 		File target = new File(path);

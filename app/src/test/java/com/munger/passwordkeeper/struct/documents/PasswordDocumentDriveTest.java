@@ -9,7 +9,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResolvingResultCallbacks;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFile;
@@ -19,6 +18,7 @@ import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.events.ChangeEvent;
 import com.google.android.gms.drive.events.ChangeListener;
 import com.google.android.gms.drive.metadata.CustomPropertyKey;
 import com.google.android.gms.drive.metadata.SearchableMetadataField;
@@ -32,6 +32,8 @@ import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.helpers.DriveRemoteLock;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.Config;
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.Settings;
 
 import org.mockito.Matchers;
@@ -46,6 +48,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -133,6 +137,28 @@ public class PasswordDocumentDriveTest
             targetFile = target;
             targetLock = new DriveRemoteLockDer(googleApiMock, target);
         }
+
+        @Override
+        protected void doSave()
+        {
+            Thread t = new Thread(new Runnable() {public void run()
+            {
+                try{Thread.sleep(100);}catch(Exception e){}
+                notifySaved();
+            }});
+            t.start();
+        }
+
+        @Override
+        public void onLoad(boolean force)
+        {
+            Thread t = new Thread(new Runnable() {public void run()
+            {
+                try{Thread.sleep(100);}catch(Exception e){}
+                notifyLoaded();
+            }});
+            t.start();
+        }
     }
 
     public class DriveRemoteLockDer extends DriveRemoteLock
@@ -163,7 +189,7 @@ public class PasswordDocumentDriveTest
     private DriveFile driveFileMock;
     private DriveFolder driveRootMock;
     private MetadataChangeSet.Builder metadataBuilderMock;
-    private ChangeListener lockChangeListener;
+    private ArrayList<ChangeListener> fileChangeListeners;
 
     private final static String DEFAULT_FILENAME = "password-test";
     private final static String DEFAULT_PASSWORD = "pass";
@@ -177,9 +203,11 @@ public class PasswordDocumentDriveTest
         filterMock = mock(Filter.class);
         when(Filters.contains(any(SearchableMetadataField.class), any(String.class))).thenReturn(filterMock);
         driveFileMock = Mockito.mock(DriveFile.class);
+        fileChangeListeners = new ArrayList<>();
         doAnswer(new Answer<PendingResult<com.google.android.gms.common.api.Status>>() {public PendingResult<com.google.android.gms.common.api.Status> answer(InvocationOnMock invocation) throws Throwable
         {
-            lockChangeListener = invocation.getArgumentAt(1, ChangeListener.class);
+            ChangeListener listener = invocation.getArgumentAt(1, ChangeListener.class);
+            fileChangeListeners.add(listener);
             PendingResult<com.google.android.gms.common.api.Status> ret = mock(PendingResult.class);
             return ret;
         }}).when(driveFileMock).addChangeListener(any(GoogleApiClient.class), any(ChangeListener.class));
@@ -222,9 +250,10 @@ public class PasswordDocumentDriveTest
         public boolean initted = false;
         public boolean wasSaved = false;
         public boolean wasUpdated = false;
+        public boolean failed = false;
     }
 
-    private class DefaultEventHandler implements PasswordDocumentDrive.DocumentEvents
+    protected class DefaultEventHandler implements PasswordDocumentDrive.DocumentEvents
     {
         @Override
         public void initFailed(Exception e)
@@ -248,11 +277,17 @@ public class PasswordDocumentDriveTest
         }
 
         @Override
-        public void updated()
+        public void loaded()
         {
             status.wasCalled++;
             status.wasUpdated = true;
         }
+
+        public void deleted()
+        {}
+
+        public void closed()
+        {}
     }
 
     private Object lock = new Object();
@@ -267,11 +302,11 @@ public class PasswordDocumentDriveTest
         public boolean isTrashed = false;
         public boolean throwQueryError = false;
         public boolean throwDeleteError = false;
+        public PasswordDocument remoteDoc = null;
     }
 
     private void setupDriveMock(final driveMockOptions options)
     {
-        long lastUpdate = System.currentTimeMillis() - 100000;
         PendingResult<?> result = Mockito.mock(PendingResult.class);
         final DriveApi.MetadataBufferResult bresult = Mockito.mock(DriveApi.MetadataBufferResult.class);
         MetadataBuffer mbuf = Mockito.mock(MetadataBuffer.class);
@@ -287,7 +322,6 @@ public class PasswordDocumentDriveTest
         }}).when(driveHelperMock).awaitConnection();
 
         doReturn(options.isConnected).when(driveHelperMock).isConnected();
-        doReturn(lastUpdate).when(settingsMock).getLastRemoteUpdate();
         doReturn(driveRootMock).when(driveApiMock).getRootFolder(any(GoogleApiClient.class));
         doReturn(result).when(driveRootMock).queryChildren(Matchers.any(GoogleApiClient.class), Matchers.any(Query.class));
 
@@ -322,7 +356,17 @@ public class PasswordDocumentDriveTest
         public Metadata metadata;
         public Map<CustomPropertyKey, String> props;
 
+        public MockedMetadata()
+        {
+            this("");
+        }
+
         public MockedMetadata(String value)
+        {
+            this(value, System.currentTimeMillis());
+        }
+
+        public MockedMetadata(String value, long modifiedDate)
         {
             lockValue = value;
 
@@ -347,6 +391,9 @@ public class PasswordDocumentDriveTest
 
             doReturn(metadata).when(mresult).getMetadata();
             doReturn(props).when(metadata).getCustomProperties();
+
+            Date lastMod = new Date(modifiedDate);
+            doReturn(lastMod).when(metadata).getModifiedDate();
         }
     }
 
@@ -379,7 +426,12 @@ public class PasswordDocumentDriveTest
         doReturn(data.result).when(driveFileMock).updateMetadata(any(GoogleApiClient.class), any(MetadataChangeSet.class));
     }
 
-    private void awaitEvents(int count) throws InterruptedException
+    private PasswordDocumentDrive awaitInitEvents(int count) throws InterruptedException
+    {
+        return awaitInitEvents(count, true);
+    }
+
+    private PasswordDocumentDrive awaitInitEvents(int count, boolean doTimeout) throws InterruptedException
     {
         listener = new DefaultEventHandler()
         {
@@ -396,6 +448,12 @@ public class PasswordDocumentDriveTest
                 super.initFailed(e);
                 synchronized (lock){lock.notify(); }
             }
+
+            @Override
+            public void loaded() {
+                super.loaded();
+                synchronized (lock){lock.notify();}
+            }
         };
 
         doc = HelperNoInst.generateDocument(2, 2);
@@ -411,9 +469,14 @@ public class PasswordDocumentDriveTest
         {
             synchronized (lock)
             {
-                lock.wait(5000);
+                if (doTimeout)
+                    lock.wait(5000);
+                else
+                    lock.wait();
             }
         }
+
+        return driveDoc;
     }
 
     @Test
@@ -422,14 +485,15 @@ public class PasswordDocumentDriveTest
         driveMockOptions options = new driveMockOptions();
         options.isConnected = true;
         options.driveFileCount = 1;
+        options.driveFileSize = 1000;
         setupDriveMock(options);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-        awaitEvents(1);
+        awaitInitEvents(2);
 
-        assertEquals(1, status.wasCalled);
+        assertTrue(status.wasCalled >= 1);
         assertTrue(status.initted);
     }
 
@@ -440,10 +504,10 @@ public class PasswordDocumentDriveTest
         options.isConnected = false;
         setupDriveMock(options);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-        awaitEvents(1);
+        awaitInitEvents(1);
 
         assertEquals(1, status.wasCalled);
         assertFalse(status.initted);
@@ -503,10 +567,10 @@ public class PasswordDocumentDriveTest
         setupDriveMock(options);
         setupCreateFile(true);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-        awaitEvents(2);
+        awaitInitEvents(2);
 
         verify(driveRootMock, times(1)).createFile(any(GoogleApiClient.class), any(MetadataChangeSet.class), any(DriveContents.class));
         assertEquals(2, status.wasCalled);
@@ -523,10 +587,10 @@ public class PasswordDocumentDriveTest
         options.driveFileSize = 1000;
         setupDriveMock(options);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-        awaitEvents(2);
+        awaitInitEvents(2);
 
         assertEquals(2, status.wasCalled);
         assertEquals(true, status.initted);
@@ -544,10 +608,10 @@ public class PasswordDocumentDriveTest
         setupCreateFile(true);
         setupDeleteFile(true);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-        awaitEvents(2);
+        awaitInitEvents(2);
 
         verify(driveFileMock, times(1)).delete(any(GoogleApiClient.class));
         verify(driveRootMock, times(1)).createFile(any(GoogleApiClient.class), any(MetadataChangeSet.class), any(DriveContents.class));
@@ -562,15 +626,16 @@ public class PasswordDocumentDriveTest
         driveMockOptions options = new driveMockOptions();
         options.isConnected = true;
         options.driveFileCount = 1;
+        options.driveFileSize = 1000;
         options.isTrashed = false;
         options.throwQueryError = true;
         setupDriveMock(options);
         setupCreateFile(true);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-
+        awaitInitEvents(1);
 
         assertEquals(1, status.wasCalled);
         assertEquals(false, status.initted);
@@ -586,10 +651,10 @@ public class PasswordDocumentDriveTest
         setupDriveMock(options);
         setupCreateFile(false);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-        awaitEvents(1);
+        awaitInitEvents(1);
 
         verify(driveRootMock, times(1)).createFile(any(GoogleApiClient.class), any(MetadataChangeSet.class), any(DriveContents.class));
         assertEquals(1, status.wasCalled);
@@ -608,55 +673,134 @@ public class PasswordDocumentDriveTest
         setupCreateFile(true);
         setupDeleteFile(false);
 
-        MockedMetadata data = new MockedMetadata("");
+        MockedMetadata data = new MockedMetadata();
         setupLockClaim(data);
 
-        awaitEvents(1);
+        awaitInitEvents(1);
 
         verify(driveFileMock, times(1)).delete(any(GoogleApiClient.class));
         assertEquals(1, status.wasCalled);
         assertEquals(false, status.initted);
     }
 
-    @Test
-    public void loadsOnUpdateEvent()
-    {
 
+    private PasswordDocumentDrive doLoad() throws InterruptedException
+    {
+        return doLoad(true);
+    }
+
+    private PasswordDocumentDrive doLoad(boolean doTimeout) throws InterruptedException
+    {
+        driveMockOptions options = new driveMockOptions();
+        options.isConnected = true;
+        options.driveFileCount = 1;
+        options.driveFileSize = 0;
+        setupDriveMock(options);
+
+        MockedMetadata data = new MockedMetadata();
+        setupLockClaim(data);
+
+        PasswordDocumentDrive doc = awaitInitEvents(2, doTimeout);
+
+        assertEquals(2, status.wasCalled);
+        assertEquals(true, status.initted);
+        assertEquals(true, status.wasUpdated);
+
+        doc.removeListeners();
+
+        return doc;
     }
 
     @Test
-    public void savesOnLocalSaveEvent()
+    public void loadsOnUpdateEvent() throws InterruptedException
     {
-
+        doLoad();
     }
 
     @Test
-    public void noMerge()
+    public void savesOnLocalSaveEvent() throws InterruptedException
     {
+        final PasswordDocumentDrive doc = doLoad();
 
+
+        status = new Status();
+        listener = new DefaultEventHandler()
+        {
+            @Override
+            public void saved() {
+                super.saved();
+                synchronized (lock){lock.notify();}
+            }
+        };
+
+        doc.addListener(listener);
+
+        new Thread(new Runnable() {public void run()
+        {
+            PasswordDetails dets = new PasswordDetails();
+            PasswordDetailsPair pair = dets.addEmptyPair();
+            pair.setKey("key9");
+            pair.setValue("value9");
+
+            try
+            {
+                doc.addDetails(dets);
+                doc.save();
+            }
+            catch(Exception e){
+                status.failed = true;
+                synchronized (lock){lock.notify();}
+            }
+        }}, "driveDocSave").start();
+
+        for (int i = 0; i < 1; i++)
+        {
+            synchronized (lock)
+            {
+                lock.wait(5000);
+            }
+        }
+
+        assertEquals(1, status.wasCalled);
+        assertFalse(status.failed);
+        assertTrue(status.wasSaved);
     }
 
     @Test
-    public void remoteChanges()
+    public void remoteChanges() throws InterruptedException
     {
+        final PasswordDocumentDrive doc = doLoad();
 
-    }
+        status = new Status();
+        listener = new DefaultEventHandler()
+        {
+            @Override
+            public void loaded()
+            {
+                super.loaded();
+                synchronized (lock){lock.notify();}
+            }
+        };
 
-    @Test
-    public void localChanges()
-    {
+        doc.addListener(listener);
 
-    }
+        new Thread(new Runnable() {public void run()
+        {
+            try{Thread.sleep(10);}catch(Exception e){}
+            //there is no way to simulate actual drive change events
+            doc.onLoad(false);
+        }}, "driveDocLoad").start();
 
-    @Test
-    public void conflictingChanges()
-    {
+        for (int i = 0; i < 1; i++)
+        {
+            synchronized (lock)
+            {
+                lock.wait();
+            }
+        }
 
-    }
-
-    @Test
-    public void changePushError()
-    {
-
+        assertEquals(1, status.wasCalled);
+        assertFalse(status.failed);
+        assertTrue(status.wasUpdated);
     }
 }

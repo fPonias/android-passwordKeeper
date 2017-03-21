@@ -31,7 +31,7 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
     }
 
     @Override
-    public void load(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException
+    public void onLoad(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException
     {
         BufferedReader br = getReader();
         String line =  null;

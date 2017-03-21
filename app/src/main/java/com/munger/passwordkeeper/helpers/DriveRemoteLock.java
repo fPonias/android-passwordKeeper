@@ -35,12 +35,15 @@ public class DriveRemoteLock
         @Override
         public void onChange(ChangeEvent changeEvent)
         {
-            synchronized (lock)
+            if (changeEvent.hasMetadataChanged())
             {
-                if (waitingForChange)
+                synchronized (lock)
                 {
-                    Log.d("remote lock", "remote metadata changed");
-                    lock.notify();
+                    if (waitingForChange)
+                    {
+                        Log.d("remote lock", "remote metadata changed");
+                        lock.notify();
+                    }
                 }
             }
         }

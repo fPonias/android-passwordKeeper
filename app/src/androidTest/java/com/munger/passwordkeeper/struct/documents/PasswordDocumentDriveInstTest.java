@@ -175,11 +175,17 @@ public class PasswordDocumentDriveInstTest
         }
 
         @Override
-        public void updated()
+        public void loaded()
         {
             status.wasCalled++;
             status.wasUpdated = true;
         }
+
+        public void deleted()
+        {}
+
+        public void closed()
+        {}
     }
 
     private Object lock = new Object();

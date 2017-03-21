@@ -17,12 +17,12 @@ public class PasswordDocumentStream extends PasswordDocument
         this.size = sz;
     }
 
-    public void save() throws Exception
+    public void onSave() throws Exception
     {
 
     }
 
-    public void load(boolean force) throws Exception
+    public void onLoad(boolean force) throws Exception
     {
         deltasFromEncryptedString(stream, size);
     }
@@ -32,7 +32,7 @@ public class PasswordDocumentStream extends PasswordDocument
 
     }
 
-    public void delete() throws Exception
+    public void onDelete() throws Exception
     {
 
     }
