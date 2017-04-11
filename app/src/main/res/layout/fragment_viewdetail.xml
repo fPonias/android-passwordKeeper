@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:noDelete="true"
-        app:hint="Detail name"
+        app:hint="@string/detail_title_hint"
     />
 	<com.munger.passwordkeeper.view.widget.TextInputWidget
 	    android:id="@+id/viewdetail_locationlbl"
@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/viewdetail_namelbl"
         app:noDelete="true"
-        app:hint="URL / Location"
+        app:hint="@string/detail_location_hint"
     />
     
     

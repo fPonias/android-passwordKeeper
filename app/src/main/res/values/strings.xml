@@ -26,4 +26,12 @@
     <string name="confirm_discard">Discard</string>
     <string name="input_okay">Okay</string>
     <string name="input_cancel">Cancel</string>
+
+    <string name="new_entry_title">&lt;new entry&gt;</string>
+    <string name="untitled_entry_title">&lt;untitled&gt;</string>
+
+    <string name="detail_title_hint">Detail name</string>
+    <string name="detail_location_hint">URL / Location</string>
+    <string name="detail_item_key_hint">Key</string>
+    <string name="detail_item_value_hint">Value</string>
 </resources>

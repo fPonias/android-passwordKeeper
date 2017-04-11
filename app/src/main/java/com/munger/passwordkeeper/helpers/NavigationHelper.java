@@ -60,7 +60,7 @@ public class NavigationHelper
 
         viewFileFragment.setDocument(MainState.getInstance().document);
 
-        trans.replace(R.id.container, viewFileFragment);
+        trans.replace(R.id.container, viewFileFragment, ViewFileFragment.getName());
         trans.addToBackStack(ViewFileFragment.getName());
         trans.commit();
     }
@@ -73,7 +73,7 @@ public class NavigationHelper
         if (!document.exists())
         {
             createFileFragment = new CreateFileFragment();
-            MainState.getInstance().activity.getSupportFragmentManager().beginTransaction().add(R.id.container, createFileFragment).commit();
+            MainState.getInstance().activity.getSupportFragmentManager().beginTransaction().add(R.id.container, createFileFragment, CreateFileFragment.getName()).commit();
         }
         else
         {
@@ -133,7 +133,7 @@ public class NavigationHelper
 
             public void cancel(InputFragment that)
             {
-                System.exit(0);
+                doExit();
             }
         });
 
@@ -179,7 +179,7 @@ public class NavigationHelper
         FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
         settingsFragment = new SettingsFragment();
 
-        trans.replace(R.id.container, settingsFragment);
+        trans.replace(R.id.container, settingsFragment, SettingsFragment.getName());
         trans.addToBackStack(SettingsFragment.getName());
         trans.commit();
     }
@@ -193,7 +193,7 @@ public class NavigationHelper
         viewDetailFragment.setDetails(detail);
         viewDetailFragment.setEditable(editable);
 
-        trans.replace(R.id.container, viewDetailFragment);
+        trans.replace(R.id.container, viewDetailFragment, ViewDetailFragment.getName());
         trans.addToBackStack(ViewDetailFragment.getName());
         trans.commit();
 
@@ -204,7 +204,7 @@ public class NavigationHelper
         FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
         AboutFragment frag = new AboutFragment();
 
-        trans.replace(R.id.container, frag);
+        trans.replace(R.id.container, frag, AboutFragment.getName());
         trans.addToBackStack(AboutFragment.getName());
         trans.commit();
     }
@@ -213,9 +213,10 @@ public class NavigationHelper
     {
         FragmentManager mgr = MainState.getInstance().activity.getSupportFragmentManager();
         List<Fragment> fragments = mgr.getFragments();
-        if (fragments.size() > 0)
+        int sz = fragments.size();
+        if (sz > 0)
         {
-            Fragment f = fragments.get(0);
+            Fragment f = fragments.get(sz - 1);
             boolean keepGoing = true;
 
             if (f instanceof ViewDetailFragment)
@@ -257,7 +258,7 @@ public class NavigationHelper
         if (MainState.getInstance().isActive)
         {
             if (gettingPassword)
-                System.exit(0);
+                doExit();
             else
             {
                 Intent i = new Intent(MainState.getInstance().context, MainActivity.class);
@@ -267,8 +268,13 @@ public class NavigationHelper
         }
         else
         {
-            System.exit(0);
+            doExit();
         }
+    }
+
+    protected void doExit()
+    {
+        ((MainActivity)MainState.getInstance().activity).doexit();
     }
 
     public void showAlert(String message)

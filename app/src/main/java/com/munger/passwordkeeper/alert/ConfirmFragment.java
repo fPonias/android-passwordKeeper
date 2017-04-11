@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
+import com.munger.passwordkeeper.R;
+
 public class ConfirmFragment extends DialogFragment
 {
 	private String message;
@@ -23,15 +25,15 @@ public class ConfirmFragment extends DialogFragment
 	{
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setMessage(message);
-		builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which) 
+		builder.setPositiveButton(getString(R.string.confirm_okay), new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
 		{
 			listener.okay();
 		}});
-		builder.setNegativeButton("Discard", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+		builder.setNegativeButton(getString(R.string.confirm_discard), new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
 		{
 			listener.discard();
 		}});
-		builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+		builder.setNeutralButton(getString(R.string.confirm_cancel), new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
 		{
 			listener.cancel();
 		}});

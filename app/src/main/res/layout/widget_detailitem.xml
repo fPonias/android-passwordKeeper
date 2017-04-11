@@ -46,8 +46,8 @@
 		    android:layout_width="0dp"
 		    android:layout_height="wrap_content"
 		    android:layout_weight=".5"
-		    android:hint="Key"
-		    android:singleLine="true"
+		    android:hint="@string/detail_item_key_hint"
+            android:maxLines="1"
         />
         
         <EditText 
@@ -55,8 +55,8 @@
 		    android:layout_width="0dp"
 		    android:layout_height="wrap_content"
 		    android:layout_weight=".5"
-		    android:hint="Value"
-		    android:singleLine="true"
+		    android:hint="@string/detail_item_value_hint"
+            android:maxLines="1"
         />
         
 	    <Button

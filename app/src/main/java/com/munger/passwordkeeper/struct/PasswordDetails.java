@@ -48,7 +48,24 @@ public class PasswordDetails implements Parcelable
 		history = new PasswordDocumentHistory();
 	}
 
-	public static String generateId()
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof PasswordDetails)
+        {
+            return ((PasswordDetails)obj).id == id;
+        }
+        else if (obj instanceof String)
+        {
+            return ((String) obj).equals(name);
+        }
+        else
+        {
+            return super.equals(obj);
+        }
+    }
+
+    public static String generateId()
 	{
 		long timestamp = System.currentTimeMillis();
 		long rand = (long) Math.floor(Math.random() * 10000.0);

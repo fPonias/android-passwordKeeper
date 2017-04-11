@@ -1,27 +1,21 @@
 package com.munger.passwordkeeper;
 
 /**
- * Created by codymunger on 11/29/16.
+ * Created by codymunger on 3/20/17.
  */
 
-public class TestingMainActivity extends MainActivity
+public class FunctionalTestingMainActivity extends MainActivity
 {
     @Override
     protected void init()
     {
         backCalledCount = 0;
         doexitCalled = false;
-        pauseCalled = false;
-    }
-
-    public void superInit()
-    {
         super.init();
     }
 
     private int backCalledCount;
     private boolean doexitCalled;
-    private boolean pauseCalled;
 
     public boolean getDoexitCalled()
     {
@@ -38,11 +32,6 @@ public class TestingMainActivity extends MainActivity
         return backCalledCount;
     }
 
-    public boolean getPauseCalled()
-    {
-        return pauseCalled;
-    }
-
     protected void realOnBackPressed()
     {
         backCalledCount++;
@@ -55,12 +44,8 @@ public class TestingMainActivity extends MainActivity
     }
 
     @Override
-    protected void onPause()
+    public void onUserInteraction()
     {
-        pauseCalled = true;
-        super.onPause();
+        super.onUserInteraction();
     }
-
-    @Override
-    public void onUserInteraction() {}
 }

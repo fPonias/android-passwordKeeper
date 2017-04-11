@@ -112,6 +112,11 @@ public class MainActivity extends AppCompatActivity
 
 	}
 
+	public void doexit()
+    {
+        System.exit(0);
+    }
+
 	protected void realOnBackPressed()
 	{
 		super.onBackPressed();
@@ -125,6 +130,7 @@ public class MainActivity extends AppCompatActivity
 
 	private Fragment currentFagment = null;
 
+    //only used in test cases
 	public void setFragment(Fragment fragment)
 	{
 		FragmentTransaction trans = getSupportFragmentManager().beginTransaction();
@@ -142,4 +148,15 @@ public class MainActivity extends AppCompatActivity
 		currentFagment = fragment;
 		trans.commit();
 	}
+
+    public Fragment getCurrentFagment()
+    {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        int sz = fragmentManager.getBackStackEntryCount();
+        if (sz == 0)
+            return null;
+
+        String tag = fragmentManager.getBackStackEntryAt(sz - 1).getName();
+        return fragmentManager.findFragmentByTag(tag);
+    }
 }

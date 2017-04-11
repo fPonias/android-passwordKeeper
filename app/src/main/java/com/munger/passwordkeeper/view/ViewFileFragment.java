@@ -110,7 +110,14 @@ public class ViewFileFragment extends Fragment
 			details = dets;
 			
 			if (details != null)
-				setText(dets.getName());
+            {
+                if (dets.getName().isEmpty() && dets.getLocation().isEmpty() && dets.getList().isEmpty())
+                    setText(getContext().getString(R.string.new_entry_title));
+                else if (dets.getName().isEmpty())
+                    setText(getContext().getString(R.string.untitled_entry_title));
+                else
+                    setText(dets.getName());
+            }
 		}
 		
 		public PasswordDetails getDetails()
