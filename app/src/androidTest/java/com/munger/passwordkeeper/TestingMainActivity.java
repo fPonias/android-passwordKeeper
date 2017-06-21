@@ -9,6 +9,7 @@ public class TestingMainActivity extends MainActivity
     @Override
     protected void init()
     {
+        backTriggeredCount = 0;
         backCalledCount = 0;
         doexitCalled = false;
         pauseCalled = false;
@@ -19,6 +20,7 @@ public class TestingMainActivity extends MainActivity
         super.init();
     }
 
+    private int backTriggeredCount;
     private int backCalledCount;
     private boolean doexitCalled;
     private boolean pauseCalled;
@@ -30,6 +32,7 @@ public class TestingMainActivity extends MainActivity
 
     public void resetBackCalledCount()
     {
+        backTriggeredCount = 0;
         backCalledCount = 0;
     }
 
@@ -38,12 +41,17 @@ public class TestingMainActivity extends MainActivity
         return backCalledCount;
     }
 
+    public int getBackTriggeredCount()
+    {
+        return backTriggeredCount;
+    }
+
     public boolean getPauseCalled()
     {
         return pauseCalled;
     }
 
-    protected void realOnBackPressed()
+    public void realOnBackPressed()
     {
         backCalledCount++;
         super.realOnBackPressed();
@@ -59,6 +67,13 @@ public class TestingMainActivity extends MainActivity
     {
         pauseCalled = true;
         super.onPause();
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        backTriggeredCount++;
+        super.onBackPressed();
     }
 
     @Override

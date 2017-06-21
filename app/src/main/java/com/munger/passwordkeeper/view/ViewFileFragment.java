@@ -174,6 +174,8 @@ public class ViewFileFragment extends Fragment
 				
 				
 				that.detailListAdapter.notifyDataSetChanged();
+
+				openDetail(details);
 			}
 		}});
 		

@@ -29,10 +29,20 @@ public class Settings
         return enable;
     }
 
+    public void setSaveToCloud(boolean value)
+    {
+        preferences.edit().putBoolean(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD, value).apply();
+    }
+
     public float getTimeout()
     {
         String valueStr = preferences.getString(SettingsFragment.PREF_NAME_TIMEOUT_LIST, "5");
         return Float.parseFloat(valueStr);
+    }
+
+    public void setTimeout(float value)
+    {
+        preferences.edit().putFloat(SettingsFragment.PREF_NAME_TIMEOUT_LIST, value).apply();
     }
 
     public String getDeviceUID()

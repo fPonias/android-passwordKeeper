@@ -67,10 +67,7 @@ import static org.mockito.Mockito.mock;
 @SmallTest
 public class ViewDetailFragmentTest
 {
-    public class PasswordDocImplDer extends Helper.PasswordDocumentImpl
-    {
-
-    }
+    public class PasswordDocImplDer extends Helper.PasswordDocumentImpl {}
 
     public class NavigationHelperDer extends NavigationHelper
     {
@@ -135,7 +132,7 @@ public class ViewDetailFragmentTest
     public class MainStateDer extends MainState
     {
         @Override
-        protected void setupDocument()
+        public void setupDocument()
         {
             document = documentMock;
         }
@@ -167,7 +164,7 @@ public class ViewDetailFragmentTest
     private EditMenuIdler editMenuIdler;
 
     @Before
-    public void before()
+    public void before() throws Exception
     {
         Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();

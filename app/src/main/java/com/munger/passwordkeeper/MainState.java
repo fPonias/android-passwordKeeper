@@ -111,9 +111,21 @@ public class MainState
         }
     }
 
-    protected void setupDocument()
+    public void setupDocument()
     {
-        document = new PasswordDocumentFile(config.localDataFilePath);
+        document = createDocument();
+    }
+
+    protected PasswordDocument createDocument()
+    {
+        PasswordDocument doc = new PasswordDocumentFile(config.localDataFilePath);
+        return doc;
+    }
+
+    public PasswordDocument createTmpDocument()
+    {
+        PasswordDocument doc = new PasswordDocumentFile(config.localDataFilePath + "-tmp");
+        return doc;
     }
 
     public void cleanUp()
@@ -154,21 +166,52 @@ public class MainState
 
     private PasswordDocumentDrive driveDocument;
 
+    private Object setupLock = new Object();
+    private boolean settingUp = false;
+
     public void setupDriveHelper()
     {
-        if (driveHelper == null)
-            driveHelper = new DriveHelper();
+        synchronized (setupLock)
+        {
+            if (settingUp)
+                return;
 
-        boolean enable = settings.getSaveToCloud();
-        if (enable && driveDocument == null)
-        {
-            driveHelper.connect();
-            driveDocument = new PasswordDocumentDrive(document);
+            settingUp = true;
         }
-        else if (!enable && driveDocument != null)
+
+        Thread t = new Thread(new Runnable() {public void run()
         {
-            driveHelper.cleanUp();
-            driveDocument = null;
-        }
+            if (driveHelper == null)
+                driveHelper = new DriveHelper();
+
+            boolean enable = settings.getSaveToCloud();
+            if (enable && driveDocument == null)
+            {
+                driveHelper.connect();
+                driveHelper.awaitConnection();
+
+                if (!driveHelper.isConnected())
+                {
+                    driveHelper.cleanUp();
+                    driveDocument = null;
+                }
+                else
+                {
+                    driveDocument = new PasswordDocumentDrive(document);
+                    driveDocument.init();
+                }
+            }
+            else if (!enable && driveDocument != null)
+            {
+                driveHelper.cleanUp();
+                driveDocument = null;
+            }
+
+            synchronized (setupLock)
+            {
+                settingUp = false;
+            }
+        }});
+        t.start();
     }
 }

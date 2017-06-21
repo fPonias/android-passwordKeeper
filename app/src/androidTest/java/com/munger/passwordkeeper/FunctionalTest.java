@@ -1,15 +1,25 @@
 package com.munger.passwordkeeper;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
+import android.os.Build;
+import android.os.Environment;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.DataInteraction;
 import android.support.test.espresso.assertion.ViewAssertions;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiSelector;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
+import android.widget.EditText;
 
 import com.munger.passwordkeeper.helpers.KeyboardListenerTest;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
@@ -19,7 +29,11 @@ import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.Settings;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
+import com.munger.passwordkeeper.view.AboutFragment;
+import com.munger.passwordkeeper.view.CreateFileFragment;
+import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
+import com.munger.passwordkeeper.view.ViewDetailFragmentTest;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 import com.munger.passwordkeeper.view.widget.TextInputWidget;
@@ -28,20 +42,28 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.Espresso.pressBack;
 import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.scrollTo;
 import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static android.support.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -59,6 +81,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
+import static android.support.test.InstrumentationRegistry.*;
+
 
 /**
  * Created by codymunger on 12/6/16.
@@ -68,19 +92,82 @@ import static org.mockito.Mockito.*;
 @SmallTest
 public class FunctionalTest
 {
-    private MainState mainState;
+    private MainStateDer mainState;
     private Context context;
+
+    public class SettingsDer extends Settings
+    {
+        public float timeout = 1.0f;
+
+        @Override
+        public float getTimeout()
+        {
+            return timeout;
+        }
+
+        public float getRealTimeout() {return super.getTimeout();}
+
+        public boolean saveToCloud = false;
+
+        @Override
+        public boolean getSaveToCloud() {
+            return saveToCloud;
+        }
+
+        public boolean getRealSaveToCloud(){
+            return super.getSaveToCloud();
+        }
+    }
+
+    public class NavDer extends NavigationHelper
+    {
+        public boolean exitCalled = false;
+
+        @Override
+        protected void doExit()
+        {
+            exitCalled = true;
+        }
+    }
+
+    public class MainStateDer extends MainState
+    {
+        protected SettingsDer mySettings;
+        public void updateTimeout(float minutes)
+        {
+            mySettings.timeout = minutes;
+            quitTimer.reset();
+        }
+
+        @Override
+        protected void setupPreferences()
+        {
+            mySettings = new SettingsDer();
+            settings = mySettings;
+        }
+
+        protected NavDer myNavigationHelper;
+        @Override
+        protected void setupNavigation()
+        {
+            myNavigationHelper = new NavDer();
+            navigationHelper = myNavigationHelper;
+        }
+    }
+
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(10); // 10 seconds max per method tested
 
     @Rule
     public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
-
 
     @Before
     public void before() throws Exception
     {
         context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
-        mainState = MainState.getInstance();
+        mainState = new MainStateDer();
+        MainState.setInstance(mainState);
         mainState.setContext(activity, activity);
         mainState.document.delete();
     }
@@ -287,9 +374,10 @@ public class FunctionalTest
         Thread.sleep(25);
 
         onView(withId(R.id.viewdetail_addbtn)).perform(click());
-        onData(anything()).atPosition(1).onChildView(withId(R.id.detailitem_keyinput)).perform(clearText(), typeText(detKey2));
+        DataInteraction intera = onData(anything()).atPosition(1);
+        intera.onChildView(withId(R.id.detailitem_keyinput)).perform(clearText(), typeText(detKey2));
         Thread.sleep(25);
-        onData(anything()).atPosition(1).onChildView(withId(R.id.detailitem_valueinput)).perform(clearText(), typeText(detValue2));
+        intera.onChildView(withId(R.id.detailitem_valueinput)).perform(clearText(), typeText(detValue2));
     }
 
     @Test
@@ -299,7 +387,7 @@ public class FunctionalTest
 
         //back out
         activityRule.getActivity().resetBackCalledCount();
-        while (activityRule.getActivity().getBackCalledCount() == 0)
+        while (activityRule.getActivity().getBackTriggeredCount() == 0)
         {
             pressBack();
             Thread.sleep(50);
@@ -332,7 +420,7 @@ public class FunctionalTest
 
         //back out
         activityRule.getActivity().resetBackCalledCount();
-        while (activityRule.getActivity().getBackCalledCount() == 0)
+        while (activityRule.getActivity().getBackTriggeredCount() == 0)
         {
             pressBack();
             Thread.sleep(50);
@@ -374,56 +462,259 @@ public class FunctionalTest
         assertTrue(frag instanceof ViewFileFragment);
 
         //back out
+        int tries = 0;
         activityRule.getActivity().resetBackCalledCount();
-        while (activityRule.getActivity().getBackCalledCount() == 0)
+        while (activityRule.getActivity().getBackCalledCount() == 0 && tries < 5)
         {
             pressBack();
             Thread.sleep(50);
+            tries++;
         }
 
         assertFalse(activityRule.getActivity().getDoexitCalled());
     }
 
-    @Test
-    public void openFileEditExistingEntryCreateNewEntry()
-    {
+    private String existingTitle = "name";
 
+    protected void createExistingFile() throws Exception
+    {
+        String password = "pass";
+        mainState.document.setPassword(password);
+        PasswordDetails dets1 = new PasswordDetails();
+        dets1.setName(existingTitle);
+        dets1.setLocation("location");
+        dets1.addPair(new PasswordDetailsPair(detKey1, detValue1));
+        dets1.addPair(new PasswordDetailsPair(detKey2, detValue2));
+        mainState.document.addDetails(dets1);
+        mainState.document.save();
+    }
+
+    protected void createAndOpenExistingFile() throws Exception
+    {
+        createExistingFile();
+
+        //password view
+        activityRule.getActivity().superInit();
+
+        onView(allOf(withClassName(containsString("EditText")))).perform(typeText("pass"));
+        onView(allOf(withClassName(containsString("Button")), withText("Okay"))).perform(click());
+
+        //document view
+        Thread.sleep(25);
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof ViewFileFragment);
     }
 
     @Test
-    public void openFileSearchEntry()
+    public void openFileEditExistingEntryCreateNewEntry() throws Exception
     {
+        createAndOpenExistingFile();
 
+        onView(withId(R.id.action_edit)).perform(click());
+        onView(withId(R.id.viewfile_addbtn)).perform(click());
+
+        //details view
+        String newName = "new name";
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_namelbl)),withClassName(containsString("EditText")))).perform(clearText(), typeText(newName));
+        onView(allOf(isDescendantOfA(withId(R.id.viewdetail_locationlbl)),withClassName(containsString("EditText")))).perform(clearText(), typeText(location));
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(clearText(), typeText(detKey1));
+        Thread.sleep(25);
+        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(clearText(), typeText(detValue1));
+        Thread.sleep(25);
+
+        //back out
+        activityRule.getActivity().resetBackCalledCount();
+        while (activityRule.getActivity().getBackTriggeredCount() == 0)
+        {
+            pressBack();
+            Thread.sleep(50);
+        }
+
+        onView(withText(R.string.confirm_okay)).perform(click());
+
+        Thread.sleep(50);
+        //document view
+        Fragment frag = ((MainActivity) mainState.activity).getCurrentFagment();
+        assertTrue(frag instanceof ViewFileFragment);
+        onData(is(instanceOf(PasswordDetails.class))).atPosition(1).check(matches(hasDescendant(withText(newName))));
+
+        boolean thrown = false;
+
+        try
+        {
+            onData(is(instanceOf(PasswordDetails.class))).atPosition(2).check(doesNotExist());
+        }
+        catch(Exception e){
+            thrown = true;
+        }
+
+        assertTrue(thrown);
     }
 
     @Test
-    public void openFileEditEntrySaveFail()
+    public void openFileSearchEntry() throws Exception
     {
+        String password = "pass";
+        String searchShortTitle = "search";
+        String searchTitle = "searchable";
+        mainState.document.setPassword(password);
+        int randIdx = new Random().nextInt(10);
+        int randIdx2 = new Random().nextInt(10) + 10;
 
+        for (int i = 0; i < 20; i++)
+        {
+            PasswordDetails dets1 = new PasswordDetails();
+
+            if (i == randIdx)
+                dets1.setName(searchTitle);
+            else if (i == randIdx2)
+                dets1.setName(searchShortTitle);
+            else
+                dets1.setName("name" + i);
+
+            mainState.document.addDetails(dets1);
+        }
+
+        mainState.document.save();
+
+        //password view
+        activityRule.getActivity().superInit();
+
+        onView(allOf(withClassName(containsString("EditText")))).perform(typeText("pass"));
+        onView(allOf(withClassName(containsString("Button")), withText("Okay"))).perform(click());
+
+        //document view
+        onView(allOf(withId(R.id.action_search))).perform(click());
+        onView(isAssignableFrom(EditText.class)).perform(typeText(searchShortTitle));
+
+        onData(is(instanceOf(PasswordDetails.class))).atPosition(0).check(matches(hasDescendant(withText(searchTitle))));
+        onData(is(instanceOf(PasswordDetails.class))).atPosition(1).check(matches(hasDescendant(withText(searchShortTitle))));
+
+        boolean thrown = false;
+
+        try
+        {
+            onData(is(instanceOf(PasswordDetails.class))).atPosition(2).check(doesNotExist());
+        }
+        catch(Exception e){
+            thrown = true;
+        }
+
+        assertTrue(thrown);
     }
 
     @Test
-    public void timeout()
+    public void timeout() throws Exception
     {
+        createAndOpenExistingFile();
 
+        mainState.updateTimeout(0.05f);
+        Thread.sleep(4000);
+
+        assertTrue(mainState.myNavigationHelper.exitCalled);
     }
 
     @Test
-    public void settingsBackOut()
+    public void settingsTimeoutChange() throws Exception
     {
+        createAndOpenExistingFile();
 
+        onView(withId(R.id.action_settings)).perform(click());
+
+        onView(withText(R.string.settings_timeout_title)).perform(click());
+        Resources res = MainState.getInstance().activity.getApplicationContext().getResources();
+        String[] arr = res.getStringArray(R.array.timeoutStrings);
+        String[] arrvals = res.getStringArray(R.array.timeoutValues);
+
+        onView(withText(arr[1])).perform(click());
+
+        Thread.sleep(50);
+        float timeout = mainState.mySettings.getRealTimeout();
+        float timeoutVal = Float.parseFloat(arrvals[1]);
+        assertTrue(Math.abs(timeout - timeoutVal) < 0.0001);
     }
 
     @Test
-    public void changePassword()
+    public void settingsBackOut() throws Exception
     {
+        createAndOpenExistingFile();
 
+        onView(withId(R.id.action_settings)).perform(click());
+
+        pressBack();
+
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof ViewFileFragment);
     }
 
     @Test
-    public void remoteSync()
+    public void changePassword() throws Exception
     {
+        createAndOpenExistingFile();
 
+        onView(withId(R.id.action_settings)).perform(click());
+
+        onView(withText(R.string.settings_password_title)).perform(click());
+
+        //change password view
+        onView(withId(R.id.createfile_oldpasswordipt)).perform(typeText("pass"));
+        onView(withId(R.id.createfile_password1ipt)).perform(typeText("password"));
+        onView(withId(R.id.createfile_password2ipt)).perform(typeText("password"));
+        onView(withId(R.id.createfile_okaybtn)).perform(click());
+
+        //settings view
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof SettingsFragment);
+
+        //back out
+        int tries = 0;
+        activityRule.getActivity().resetBackCalledCount();
+        while (activityRule.getActivity().getBackCalledCount() == 0 && tries < 5)
+        {
+            pressBack();
+            Thread.sleep(50);
+            tries++;
+        }
+
+        //document view
+        frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof ViewFileFragment);
+    }
+
+    private void selectAccountIfNeeded() throws Exception
+    {
+        if (Build.VERSION.SDK_INT >= 23) {
+            UiDevice device = UiDevice.getInstance(getInstrumentation());
+            UiObject allowPermissions = device.findObject(new UiSelector().text("mungerc@gmail.com"));
+            if (allowPermissions.exists()) {
+                try {
+                    allowPermissions.click();
+                } catch (UiObjectNotFoundException e) {
+                }
+            }
+        }
+    }
+
+    @Test
+    public void remoteSync() throws Exception
+    {
+        if (mainState.mySettings.getRealSaveToCloud() != mainState.mySettings.saveToCloud)
+            mainState.mySettings.setSaveToCloud(false);
+
+        createAndOpenExistingFile();
+
+        onView(withId(R.id.action_settings)).perform(click());
+
+        mainState.mySettings.saveToCloud = true;
+        onView(withText(R.string.settings_cloud_title)).perform(click());
+        selectAccountIfNeeded();
+
+        mainState.driveHelper.awaitConnection();
+
+        Thread.sleep(100000);
     }
 
     @Test
@@ -438,21 +729,242 @@ public class FunctionalTest
 
     }
 
-    @Test
-    public void importFile()
+    private void allowPermissionsIfNeeded() throws Exception
     {
+        if (Build.VERSION.SDK_INT >= 23) {
+            UiDevice device = UiDevice.getInstance(getInstrumentation());
+            UiObject allowPermissions = device.findObject(new UiSelector().text("Allow"));
+            if (allowPermissions.exists()) {
+                try {
+                    allowPermissions.click();
+                } catch (UiObjectNotFoundException e) {
+                }
+            }
+        }
+    }
 
+    protected boolean hasReadPermission = false;
+    protected boolean hasWritePermission = false;
+    protected boolean requestedReturned = false;
+
+    protected void writeImportFile(String content, String fileName) throws Exception
+    {
+        final Object lock = new Object();
+        final String[] permissions =
+        {
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        };
+
+        hasWritePermission = MainState.getInstance().navigationHelper.hasPermission(permissions[0]);
+        hasReadPermission = MainState.getInstance().navigationHelper.hasPermission(permissions[1]);
+        requestedReturned = false;
+        if (!hasWritePermission)
+        {
+            MainState.getInstance().navigationHelper.requestPermissions(permissions, new NavigationHelper.Callback(){public void callback(Object result)
+            {
+                synchronized (lock)
+                {
+                    requestedReturned = true;
+                    hasWritePermission = (boolean) result;
+                    lock.notify();
+                }
+            }});
+
+            allowPermissionsIfNeeded();
+
+            synchronized (lock)
+            {
+                if (!requestedReturned)
+                    lock.wait();
+            }
+        }
+
+        if (!hasWritePermission)
+            throw new IOException("No permission to write test file");
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        String tmpPage = downloadDir.getAbsolutePath() + "/" + fileName;
+        File tmpFile = new File(tmpPage);
+
+        if (tmpFile.exists())
+            tmpFile.delete();
+
+        tmpFile.createNewFile();
+
+        FileWriter fw = new FileWriter(tmpFile);
+        fw.write(content);
+        fw.flush();fw.close();
     }
 
     @Test
-    public void about()
+    public void importFile() throws Exception
     {
+        createAndOpenExistingFile();
 
+        onView(withId(R.id.action_settings)).perform(click());
+
+        onView(withText(R.string.settings_import_title)).perform(click());
+        allowPermissionsIfNeeded();
+
+        String filename = "password-keeper-tmp";
+        String firstEntryTitle = "test";
+        StringBuilder sb = new StringBuilder();
+        sb.append(firstEntryTitle);
+        sb.append("\tuser1\tpass1\n");
+        sb.append("\tuser2\tpass2\n");
+        sb.append("\tuser3\tpass3\n");
+        writeImportFile(sb.toString(), filename);
+
+        onData(is("Download/")).perform(click());
+        onData(is(filename)).perform(click());
+
+        onView(withText(R.string.confirm_okay)).perform(click());
+
+        //settings view
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof SettingsFragment);
+
+        //back out
+        int tries = 0;
+        activityRule.getActivity().resetBackCalledCount();
+        while (activityRule.getActivity().getBackCalledCount() == 0 && tries < 5)
+        {
+            pressBack();
+            Thread.sleep(50);
+            tries++;
+        }
+
+        //document view
+        frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof ViewFileFragment);
+
+        onData(is(instanceOf(PasswordDetails.class))).atPosition(0).check(matches(hasDescendant(withText(existingTitle))));
+        onData(is(instanceOf(PasswordDetails.class))).atPosition(1).check(matches(hasDescendant(withText(firstEntryTitle))));
+
+        boolean thrown = false;
+
+        try
+        {
+            onData(is(instanceOf(PasswordDetails.class))).atPosition(2).check(doesNotExist());
+        }
+        catch(Exception e){
+            thrown = true;
+        }
+
+        assertTrue(thrown);
     }
 
     @Test
-    public void deleteLocal()
+    public void importFileFail() throws Exception
     {
+        createAndOpenExistingFile();
 
+        onView(withId(R.id.action_settings)).perform(click());
+
+        onView(withText(R.string.settings_import_title)).perform(click());
+        allowPermissionsIfNeeded();
+
+        String filename = "password-keeper-tmp";
+        String firstEntryTitle = "test";
+        StringBuilder sb = new StringBuilder();
+        sb.append(firstEntryTitle);
+        sb.append("\tuser1\tpass1\n");
+        sb.append("\tthis\twill\tcause\ta\tparse\tfail\n");
+        sb.append("\tuser3\tpass3\n");
+        writeImportFile(sb.toString(), filename);
+
+        onData(is("Download/")).perform(click());
+        onData(is(filename)).perform(click());
+
+        onView(withText(R.string.confirm_okay)).perform(click());
+
+
+        boolean thrown = false;
+
+        try
+        {
+            onView(withText(R.string.confirm_okay)).perform(click());
+        }
+        catch(Exception e){
+            thrown = true;
+        }
+
+        assertTrue(thrown);
+
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof SettingsFragment);
+
+        pressBack();
+        Thread.sleep(50);
+
+        //document view
+        frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof ViewFileFragment);
+
+        onData(is(instanceOf(PasswordDetails.class))).atPosition(0).check(matches(hasDescendant(withText(existingTitle))));
+
+        thrown = false;
+
+        try
+        {
+            onData(is(instanceOf(PasswordDetails.class))).atPosition(1).check(doesNotExist());
+        }
+        catch(Exception e){
+            thrown = true;
+        }
+
+        assertTrue(thrown);
+    }
+
+    @Test
+    public void about() throws Exception
+    {
+        createAndOpenExistingFile();
+
+        onView(withId(R.id.action_settings)).perform(click());
+
+        onView(withText(R.string.settings_about_title)).perform(click());
+
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof AboutFragment);
+
+        pressBack();
+
+        frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof SettingsFragment);
+    }
+
+    @Test
+    public void deleteLocalYes() throws Exception
+    {
+        createAndOpenExistingFile();
+        onView(withId(R.id.action_settings)).perform(click());
+
+        onView(withText(R.string.settings_delete_title)).perform(click());
+
+        onView(withText(R.string.alert_positive)).perform(click());
+
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof CreateFileFragment);
+        assertTrue(((CreateFileFragment) frag).getIsCreating());
+    }
+
+    @Test
+    public void deleteLocalNo() throws Exception
+    {
+        createAndOpenExistingFile();
+        onView(withId(R.id.action_settings)).perform(click());
+
+        onView(withText(R.string.settings_delete_title)).perform(click());
+
+        onView(withText(R.string.alert_negative)).perform(click());
+
+        MainActivity activity = (MainActivity) MainState.getInstance().activity;
+        Fragment frag = activity.getCurrentFagment();
+        assertTrue(frag instanceof SettingsFragment);
     }
 }

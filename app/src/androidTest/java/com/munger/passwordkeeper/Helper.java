@@ -80,7 +80,7 @@ public class Helper
             super(pass);
         }
 
-        public PasswordDocumentImpl(String name, String pass)
+        public PasswordDocumentImpl(String name, String pass) throws Exception
         {
             super(name, pass);
         }
@@ -114,7 +114,7 @@ public class Helper
     public static final String DEFAULT_NAME = "name";
     public static final String DEFAULT_PASSWORD = "pass";
 
-    public static PasswordDocumentImpl generateDocument(int detSz, int pairSz)
+    public static PasswordDocumentImpl generateDocument(int detSz, int pairSz) throws Exception
     {
         PasswordDocumentImpl doc = new PasswordDocumentImpl(DEFAULT_NAME, DEFAULT_PASSWORD);
         fillDocument(doc, detSz, pairSz);

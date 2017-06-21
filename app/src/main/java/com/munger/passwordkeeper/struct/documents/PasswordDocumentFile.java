@@ -14,6 +14,7 @@ import java.util.ArrayList;
 
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
+import com.munger.passwordkeeper.struct.AES256;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
@@ -44,10 +45,39 @@ public class PasswordDocumentFile extends PasswordDocument
 		setPassword(password);
 	}
 
+	@Override
+	public void setPassword(String password)
+	{
+		super.setPassword(password);
+
+		String path = getDetailsFilePath();
+		File target = new File(path);
+
+		if (!target.exists() || target.length() == 0)
+		{
+			setHistoryLoaded();
+		}
+
+	}
+
 	protected void updateRootPath()
 	{
 		if (rootPath == null)
 			rootPath = MainState.getInstance().context.getFilesDir().getAbsolutePath() + "/";
+	}
+
+	public void changePassword(String password) throws Exception
+	{
+		PasswordDocumentFile tmp = new PasswordDocumentFile("tmp", password);
+		tmp.playSubHistory(getHistory());
+		tmp.save();
+
+		replaceWithTemp(new File(getHistoryFilePath()), new File(tmp.getHistoryFilePath()));
+		replaceWithTemp(new File(getDetailsFilePath()), new File(tmp.getDetailsFilePath()));
+
+		tmp.delete();
+
+		setPassword(password);
 	}
 
 	public void onClose()
@@ -84,6 +114,10 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public void onSave() throws IOException
 	{
+		File hist = new File(getHistoryFilePath());
+		if (!hist.exists())
+			setHistoryLoaded();
+
 		saveTempHistory();
 		saveTempDetails();
 
@@ -191,20 +225,26 @@ public class PasswordDocumentFile extends PasswordDocument
 		String path = getDetailsFilePath();
 		File target = new File(path);
 
+		if (!target.exists() || target.length() == 0)
+		{
+			setHistoryLoaded();
+			return;
+		}
+
 		long lastMod = target.lastModified();
 
 		if (!force && lastLoad > lastMod)
 			return;
 
 		lastLoad = System.currentTimeMillis();
-		
+
+		loadHistory();
+		setHistoryLoaded();
+
 		loadDetails();
 
 		for(ILoadEvents evt : loadEvents)
 			evt.detailsLoaded();
-
-		loadHistory();
-		setHistoryLoaded();
 	}
 
 	private void loadDetails() throws IOException

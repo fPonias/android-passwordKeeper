@@ -32,6 +32,11 @@ import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+
+import java.util.ArrayList;
 
 public class CreateFileFragment extends Fragment
 {
@@ -47,28 +52,64 @@ public class CreateFileFragment extends Fragment
 
 
 	private Button okayBtn;
+	private EditText oldpassIn;
 	private EditText pass1In;
 	private EditText pass2In;
-	private TextView nameLbl;
+
+	private TextView titleLbl;
+	private TextView subtitleLbl;
 
 	public static final int MIN_PASSWORD_LENGTH = 3;
 	public static final int MAX_PASSWORD_LENGTH = 40;
 	
-	private View root;
+	private View root = null;
+
+	private boolean isCreating = true;
+
+	public boolean getIsCreating()
+	{
+		return isCreating;
+	}
+
+	public void setIsCreating(boolean value)
+	{
+		isCreating = value;
+
+		if (root == null)
+			return;
+
+		if (!isCreating)
+		{
+			oldpassIn.setVisibility(View.VISIBLE);
+			titleLbl.setText("Welcome to Password Crypt.  Please set your master password.");
+			subtitleLbl.setVisibility(View.VISIBLE);
+		}
+		else
+		{
+			oldpassIn.setVisibility(View.GONE);
+			titleLbl.setText("Changing current password");
+			subtitleLbl.setVisibility(View.GONE);
+		}
+	}
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
 	{
 		root = inflater.inflate(R.layout.fragment_createfile, container, false);
 
-		nameLbl = (TextView) root.findViewById(R.id.createfile_title);
 		okayBtn = (Button) root.findViewById(R.id.createfile_okaybtn);
 		pass1In = (EditText) root.findViewById(R.id.createfile_password1ipt);
 		pass2In = (EditText) root.findViewById(R.id.createfile_password2ipt);
+		oldpassIn = (EditText) root.findViewById(R.id.createfile_oldpasswordipt);
+
+		titleLbl = (TextView) root.findViewById(R.id.createfile_title);
+		subtitleLbl = (TextView) root.findViewById(R.id.createfile_subtitle);
 
 		okayBtn.setOnClickListener(new View.OnClickListener() {public void onClick(View v) 
 		{
 			submit();
 		}});
+
+		setIsCreating(isCreating);
 
 		return root;
 	}
@@ -79,15 +120,25 @@ public class CreateFileFragment extends Fragment
 		if (!valid)
 			return;
 
-		valid = saveNewFile();
+		valid = saveFile();
+
 		if (!valid)
 			return;
 
-		loadMain();
+		if (submittedListener != null)
+			submittedListener.submitted();
 	}
 
 	protected boolean validate()
 	{
+		if (!isCreating)
+		{
+			boolean result = validateOldPassword();
+
+			if (!result)
+				return false;
+		}
+
 		String pass1 = pass1In.getText().toString();
 
 		if (pass1.length() < MIN_PASSWORD_LENGTH)
@@ -113,13 +164,43 @@ public class CreateFileFragment extends Fragment
 		return true;
 	}
 
-	protected boolean saveNewFile()
+	protected boolean validateOldPassword()
 	{
-		String pass1 = pass1In.getText().toString();
-		MainState.getInstance().document.setPassword(pass1);
+		String oldPass = oldpassIn.getText().toString();
+
+		PasswordDocument oldDoc = MainState.getInstance().document;
+		MainState state = MainState.getInstance();
+		state.setupDocument();
 
 		try
 		{
+			state.document.setPassword(oldPass);
+		}
+		catch(Exception e)
+		{
+			showError("incorrect current password");
+			return false;
+		}
+
+		boolean testResult = state.document.testPassword();
+		state.document = oldDoc;
+
+		if (!testResult)
+		{
+			showError("incorrect current password");
+			return false;
+		}
+
+		return true;
+	}
+
+	protected boolean saveFile()
+	{
+		String pass1 = pass1In.getText().toString();
+
+		try
+		{
+			MainState.getInstance().document.setPassword(pass1);
 			MainState.getInstance().document.save();
 		}
 		catch(Exception e) {
@@ -135,11 +216,10 @@ public class CreateFileFragment extends Fragment
 		MainState.getInstance().navigationHelper.showAlert(message);
 	}
 
-	protected void loadMain()
+	public interface ISubmittedListener
 	{
-		MainState.getInstance().navigationHelper.onBackPressed(new NavigationHelper.Callback() {public void callback(Object result)
-		{
-			MainState.getInstance().navigationHelper.openFile();
-		}});
+		public void submitted();
 	}
+
+	public ISubmittedListener submittedListener = null;
 }

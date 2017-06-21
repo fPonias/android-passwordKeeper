@@ -1,6 +1,8 @@
 package com.munger.passwordkeeper.struct.documents;
 
 import com.munger.passwordkeeper.HelperNoInst;
+import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 
 import org.junit.After;
 import org.junit.Before;
@@ -84,9 +86,14 @@ public class PasswordDocumentFileTest
 
     private PasswordDocumentFileOver dosave() throws Exception
     {
+        return dosave(5);
+    }
+
+    private PasswordDocumentFileOver dosave(int sz) throws Exception
+    {
         PasswordDocumentFileOver doc = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
         assertFalse(doc.exists());
-        HelperNoInst.fillDocument(doc, 5, 5);
+        HelperNoInst.fillDocument(doc, sz, sz);
         doc.save();
 
 
@@ -133,6 +140,43 @@ public class PasswordDocumentFileTest
         PasswordDocumentFileOver doc = dosave();
 
         PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
+        assertTrue(doc2.exists());
+        assertTrue(doc2.testPassword());
+        doc2.load(true);
+
+        assertTrue(doc2.equals(doc));
+
+        doc2.delete();
+        assertFalse(doc2.exists());
+    }
+
+    private class MainStateDer extends MainState
+    {
+
+    }
+
+    private class ActivityDer extends MainActivity
+    {
+        @Override
+        public File getFilesDir()
+        {
+            String path = tmp.getRoot().getAbsolutePath() + "/";
+            return new File(path);
+        }
+    }
+
+    @Test
+    public void passwordChange() throws Exception
+    {
+        MainStateDer ms = new MainStateDer();
+        MainState.setInstance(ms);
+        ms.context = new ActivityDer();
+
+        String newPassword = "newpass";
+        PasswordDocumentFileOver doc = dosave();
+        doc.setPassword(newPassword);
+
+        PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, newPassword);
         assertTrue(doc2.exists());
         assertTrue(doc2.testPassword());
         doc2.load(true);

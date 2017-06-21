@@ -22,12 +22,14 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
     {
         super(name);
         this.path = path;
+        setHistoryLoaded();
     }
 
     public PasswordDocumentFileImport(String path, String name, String password)
     {
         super(name, password);
         this.path = path;
+        setHistoryLoaded();
     }
 
     @Override

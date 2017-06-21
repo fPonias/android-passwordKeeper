@@ -67,7 +67,7 @@ public class PasswordDocumentDriveTest
     public class MainStateDer extends MainState
     {
         @Override
-        protected void setupDocument()
+        public void setupDocument()
         {
             this.document = doc;
         }
@@ -405,9 +405,9 @@ public class PasswordDocumentDriveTest
     private void setupLockClaim(final MockedMetadata data, final String retValue)
     {
         final MetadataBundle b = PowerMockito.mock(MetadataBundle.class);
-        when(b.zzbcz()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
+        //when(b.zzbcz()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
         PowerMockito.mockStatic(MetadataBundle.class);
-        when(MetadataBundle.zzbcy()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
+        //when(MetadataBundle.zzbcy()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
         MetadataChangeSet set = new MetadataChangeSet(b);
         doAnswer(new Answer<MetadataChangeSet.Builder>() {public MetadataChangeSet.Builder answer(InvocationOnMock invocation) throws Throwable
         {

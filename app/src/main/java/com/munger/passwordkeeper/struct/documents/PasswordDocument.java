@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public abstract class PasswordDocument
 
 	protected PasswordDocumentHistory history;
 	protected String mostRecentHistoryEvent = null;
-	protected boolean historyLoaded = true;
+	protected boolean historyLoaded = false;
 	protected Object historyLoadedLock = new Object();
 
 
@@ -66,6 +67,11 @@ public abstract class PasswordDocument
 	public void setPassword(String password)
 	{
 		encoder = new AES256(password);
+	}
+
+	public void changePassword(String password) throws Exception
+	{
+		setPassword(password);
 	}
 
 	AES256 getEncoder()

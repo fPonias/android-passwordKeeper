@@ -163,13 +163,13 @@ public class SettingsFragment extends PreferenceFragmentCompat
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage("Are you sure you want to delete all of your password data?");
-        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+        builder.setPositiveButton(R.string.alert_positive, new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
             MainState.getInstance().deleteData();
             MainState.getInstance().deleteRemoteData();
             MainState.getInstance().navigationHelper.openInitialView();
         }});
-        builder.setNeutralButton("No", new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
+        builder.setNeutralButton(R.string.alert_negative, new DialogInterface.OnClickListener() {public void onClick(DialogInterface dialog, int which)
         {
         }});
 

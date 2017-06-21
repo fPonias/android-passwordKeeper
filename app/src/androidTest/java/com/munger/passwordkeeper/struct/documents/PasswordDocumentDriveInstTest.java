@@ -46,7 +46,7 @@ public class PasswordDocumentDriveInstTest
     public class MainStateDer extends MainState
     {
         @Override
-        protected void setupDocument()
+        public void setupDocument()
         {
             this.document = doc;
         }
@@ -193,7 +193,7 @@ public class PasswordDocumentDriveInstTest
     private PasswordDocumentDrive.DocumentEvents listener;
 
     @Test
-    public void connectsForReal() throws InterruptedException
+    public void connectsForReal() throws Exception
     {
         Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();

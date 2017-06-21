@@ -60,6 +60,7 @@ public class PasswordDocumentDrive extends PasswordDocument
 
         sourceDoc = source;
         name += ".pwc";
+        historyLoaded = true;
     }
 
     public PasswordDocumentDrive(PasswordDocument source, String name)

@@ -112,12 +112,18 @@ public class MainActivity extends AppCompatActivity
 
 	}
 
+	@Override
+	public void onAttachFragment(Fragment frag)
+	{
+		MainState.getInstance().navigationHelper.fragmentAttached(frag);
+	}
+
 	public void doexit()
     {
         System.exit(0);
     }
 
-	protected void realOnBackPressed()
+	public void realOnBackPressed()
 	{
 		super.onBackPressed();
 	}

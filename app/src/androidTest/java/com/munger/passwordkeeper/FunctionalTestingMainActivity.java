@@ -32,7 +32,7 @@ public class FunctionalTestingMainActivity extends MainActivity
         return backCalledCount;
     }
 
-    protected void realOnBackPressed()
+    public void realOnBackPressed()
     {
         backCalledCount++;
         super.realOnBackPressed();

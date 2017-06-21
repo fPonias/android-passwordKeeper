@@ -40,7 +40,7 @@ public class ConfirmFragmentTest
     public class MainStateDer extends MainState
     {
         @Override
-        protected void setupDocument()
+        public void setupDocument()
         {
             documentMock = mock(PasswordDocumentFile.class);
             document = documentMock;

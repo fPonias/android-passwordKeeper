@@ -30,6 +30,7 @@ import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +66,19 @@ public class NavigationHelper
         trans.commit();
     }
 
+    public CreateFileFragment openCreateFileFragment(boolean isCreating)
+    {
+        FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
+        CreateFileFragment frag = new CreateFileFragment();
+        frag.setIsCreating(isCreating);
+
+        trans.replace(R.id.container, frag, CreateFileFragment.getName());
+        trans.addToBackStack(CreateFileFragment.getName());
+        trans.commit();
+
+        return frag;
+    }
+
     public void openInitialView()
     {
         FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
@@ -72,8 +86,14 @@ public class NavigationHelper
         PasswordDocumentFile document = (PasswordDocumentFile) MainState.getInstance().document;
         if (!document.exists())
         {
-            createFileFragment = new CreateFileFragment();
-            MainState.getInstance().activity.getSupportFragmentManager().beginTransaction().add(R.id.container, createFileFragment, CreateFileFragment.getName()).commit();
+            createFileFragment = openCreateFileFragment(true);
+            createFileFragment.submittedListener = new CreateFileFragment.ISubmittedListener() {public void submitted()
+            {
+                onBackPressed(new NavigationHelper.Callback() {public void callback(Object result)
+                {
+                    openFile();
+                }});
+            }};
         }
         else
         {
@@ -83,7 +103,11 @@ public class NavigationHelper
 
     public void changePassword()
     {
-
+        CreateFileFragment frag = openCreateFileFragment(false);
+        frag.submittedListener = new CreateFileFragment.ISubmittedListener() {public void submitted()
+        {
+            ((MainActivity) MainState.getInstance().activity).realOnBackPressed();
+        }};
     }
 
     protected boolean gettingPassword = false;
@@ -106,8 +130,16 @@ public class NavigationHelper
             public boolean okay(InputFragment that, String password)
             {
                 PasswordDocument document = MainState.getInstance().document;
-                document.setPassword(password);
-                boolean passed = document.testPassword();
+                boolean passed;
+
+                try
+                {
+                    document.setPassword(password);
+                    passed = document.testPassword();
+                }
+                catch(Exception e){
+                    passed = false;
+                }
 
                 if (!passed)
                 {
@@ -209,10 +241,39 @@ public class NavigationHelper
         trans.commit();
     }
 
+    List<WeakReference<Fragment>> fragList = new ArrayList<>();
+
+    public void fragmentAttached(Fragment frag)
+    {
+        int sz = fragList.size();
+        for(int i = sz - 1; i >= 0; i--)
+        {
+            WeakReference<Fragment> ref = fragList.get(i);
+            Fragment f = ref.get();
+            if (f == null || (f != null && f.isDetached()))
+                fragList.remove(i);
+        }
+
+        fragList.add(new WeakReference<Fragment>(frag));
+    }
+
+    public List<Fragment> getActiveFragments()
+    {
+        ArrayList<Fragment> ret = new ArrayList<>();
+        for(WeakReference<Fragment> ref : fragList)
+        {
+            Fragment f = ref.get();
+            if (f != null && f.isVisible())
+                ret.add(f);
+        }
+
+        return ret;
+    }
+
     public void onBackPressed(final Callback cb)
     {
         FragmentManager mgr = MainState.getInstance().activity.getSupportFragmentManager();
-        List<Fragment> fragments = mgr.getFragments();
+        List<Fragment> fragments = getActiveFragments();
         int sz = fragments.size();
         if (sz > 0)
         {
@@ -223,16 +284,19 @@ public class NavigationHelper
             {
                 ((ViewDetailFragment) f).backPressed(new Callback() {public void callback(Object result)
                 {
-                    cb.callback(result);
+                    if (cb != null)
+                        cb.callback(result);
                 }});
             }
-            else
+            else if (!(f instanceof ViewFileFragment))
             {
-                cb.callback(true);
+                if (cb != null)
+                    cb.callback(true);
             }
         }
 
-        cb.callback(false);
+        if (cb != null)
+            cb.callback(false);
     }
 
     public void fragmentExists(Fragment frag)
@@ -356,8 +420,21 @@ public class NavigationHelper
         }});
     }
 
+    private boolean importing = false;
+    private boolean importSuccess = false;
+    private Object importLock = new Object();
+
     public void importFile(final String path, final Callback callback)
     {
+        synchronized (importLock)
+        {
+            if (importing)
+                return;
+
+            importing = true;
+            importSuccess = false;
+        }
+
         final ProgressDialog loadingDialog = new ProgressDialog(MainState.getInstance().context);
         loadingDialog.setMessage("Importing password data");
         loadingDialog.show();
@@ -370,12 +447,24 @@ public class NavigationHelper
                 {
                     PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
                     fileImport.load(false);
-                    MainState.getInstance().document.playSubHistory(fileImport.getHistory());
-                    MainState.getInstance().document.save();
+                    PasswordDocument doc =  MainState.getInstance().document;
+                    doc.playSubHistory(fileImport.getHistory());
+                    doc.save();
                 }
                 catch(Exception e){
                     showAlert("Failed to import the document: " + path);
+
+                    synchronized (importLock)
+                    {
+                        importSuccess = false;
+                    }
+
                     return false;
+                }
+
+                synchronized (importLock)
+                {
+                    importSuccess = true;
                 }
 
                 return true;
@@ -385,8 +474,15 @@ public class NavigationHelper
             {
                 loadingDialog.dismiss();
 
-                showAlert("Successfully imported!");
+                synchronized (importLock)
+                {
+                    importing = false;
 
+                    if (!importSuccess)
+                        return;
+                }
+
+                showAlert("Successfully imported!");
                 callback.callback(o);
             }
         };
@@ -399,7 +495,7 @@ public class NavigationHelper
         openInitialView();
     }
 
-    public void setFile(String password)
+    public void setFile(String password) throws Exception
     {
         MainState.getInstance().password = password;
         MainState.getInstance().document.setPassword(password);
@@ -456,7 +552,7 @@ public class NavigationHelper
 
     public boolean hasPermission(String permission)
     {
-        if (ContextCompat.checkSelfPermission(MainState.getInstance().context, permission) != PackageManager.PERMISSION_GRANTED)
+        if (ContextCompat.checkSelfPermission(MainState.getInstance().context, permission) == PackageManager.PERMISSION_GRANTED)
             return true;
         else
             return false;
@@ -466,7 +562,7 @@ public class NavigationHelper
     {
         public int requestNumber;
         public Callback callback;
-        public String permission;
+        public String[] permissions;
     }
 
     protected static int permissionRequestNumber = 1;
@@ -474,13 +570,18 @@ public class NavigationHelper
 
     public void requestPermission(final String permission, final Callback callback)
     {
+        requestPermissions(new String[] {permission}, callback);
+    }
+
+    public void requestPermissions(final String[] permissions, final Callback callback)
+    {
         PermissionStruct str = new PermissionStruct();
         str.requestNumber = permissionRequestNumber++;
         str.callback = callback;
-        str.permission = permission;
+        str.permissions = permissions;
 
         permissionRequestCallbacks.put(str.requestNumber, str);
-        ActivityCompat.requestPermissions(MainState.getInstance().activity, new String[]{permission}, str.requestNumber);
+        ActivityCompat.requestPermissions(MainState.getInstance().activity, permissions, str.requestNumber);
     }
 
     public void notifyPermissionResults(int requestCode)
@@ -490,7 +591,14 @@ public class NavigationHelper
         if (str == null)
             return;
 
-        boolean granted = hasPermission(str.permission);
+        boolean granted = false;
+        for(String permission : str.permissions)
+        {
+            granted = hasPermission(permission);
+
+            if (!granted)
+                break;
+        }
         str.callback.callback(granted);
 
         permissionRequestCallbacks.remove(requestCode);

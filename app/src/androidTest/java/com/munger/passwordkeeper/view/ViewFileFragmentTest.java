@@ -64,7 +64,7 @@ public class ViewFileFragmentTest
     public class MainStateDer extends MainState
     {
         @Override
-        protected void setupDocument()
+        public void setupDocument()
         {
             document = documentMock;
         }
