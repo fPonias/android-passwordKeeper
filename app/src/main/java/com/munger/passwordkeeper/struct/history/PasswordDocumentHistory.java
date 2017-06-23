@@ -2,6 +2,11 @@ package com.munger.passwordkeeper.struct.history;
 
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -97,6 +102,7 @@ public class PasswordDocumentHistory
     public PasswordDocumentHistory mergeHistory(PasswordDocumentHistory mergeHistory)
     {
         PasswordDocumentHistory ret = new HistoryMerger(this, mergeHistory).doMerge();
+        ret.cleanRedundant();
         return ret;
     }
 
@@ -261,26 +267,30 @@ public class PasswordDocumentHistory
         }
     }
 
-    public void fromString(String text) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+    public void fromStream(InputStream ins) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
     {
         HistoryEventFactory factory = new HistoryEventFactory();
-
         history = new ArrayList<>();
-        String[] parts = text.split("\n");
-        int sz = parts.length;
-        for (int i = 0; i < sz; i++)
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(ins));
+        String line = reader.readLine();
+        Integer count = Integer.parseInt(line);
+        sequenceCount = count;
+
+        line = reader.readLine();
+        while(line != null)
         {
-            if (i == 0)
-            {
-                Integer count = Integer.parseInt(parts[i]);
-                sequenceCount = count;
-            }
-            else
-            {
-                HistoryEvent evt = factory.fromString(parts[i]);
-                history.add(evt);
-            }
+            HistoryEvent evt = factory.fromString(line);
+            history.add(evt);
+            line = reader.readLine();
         }
+    }
+
+    public void fromString(String text) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+    {
+        ByteArrayInputStream bais = new ByteArrayInputStream(text.getBytes());
+        fromStream(bais);
+        bais.close();
     }
 
     public PasswordDocumentHistory clone()

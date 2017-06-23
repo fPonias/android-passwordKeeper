@@ -192,10 +192,7 @@ public class PasswordDocumentTest
         String histout = doc.deltasToString();
 
         HelperNoInst.PasswordDocumentImpl doc2 = new HelperNoInst.PasswordDocumentImpl();
-        StringReader strread = new StringReader(histout);
-        BufferedReader bufread = new BufferedReader(strread);
-        doc2.deltasFromString(bufread);
-        bufread.close();  strread.close();
+        doc2.deltasFromString(histout);
 
         assertTrue(doc.getHistory().equals(doc2.getHistory()));
         Assert.assertEquals(0, doc2.details.size());

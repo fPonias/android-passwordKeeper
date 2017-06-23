@@ -205,7 +205,7 @@ public class AES256Test
 
         synchronized (locker)
         {
-            try{locker.wait(20000);} catch(Exception e){}
+            try{locker.wait(2000);} catch(Exception e){}
         }
 
         assertTrue(status.wasCalled > 1);

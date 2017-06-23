@@ -1,6 +1,7 @@
 package com.munger.passwordkeeper.struct.documents;
 
 import android.os.AsyncTask;
+import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -28,7 +29,11 @@ import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -92,6 +97,29 @@ public class PasswordDocumentDrive extends PasswordDocument
         updateFromSource();
         Log.d("password", "syncing with remote");
         handleConnected();
+
+        sourceDoc.addListener(new DocumentEvents() {
+            @Override
+            public void initFailed(Exception e) {}
+
+            @Override
+            public void initted() {}
+
+            @Override
+            public void saved()
+            {
+                onSave();
+            }
+
+            @Override
+            public void loaded() {}
+
+            @Override
+            public void deleted() {}
+
+            @Override
+            public void closed() {}
+        });
     }
 
     protected void setupDriveApi()
@@ -270,25 +298,66 @@ public class PasswordDocumentDrive extends PasswordDocument
         }});
     }
 
+    private Object saveLock = new Object();
+    private boolean doSave = false;
+    private boolean isSaving = false;
+
     public void onSave()
     {
+        synchronized (saveLock)
+        {
+            if (isSaving)
+            {
+                doSave = true;
+                return;
+            }
+            else
+                isSaving = true;
+        }
+
         final long currentDt = System.currentTimeMillis();
 
         Thread t = new Thread(new Runnable() {public void run()
         {
+            Log.d("password", "waiting for additional save requests");
+            try {Thread.sleep(2500); } catch(InterruptedException e) {}
+
+            synchronized (saveLock)
+            {
+                doSave = false;
+            }
+
             Log.d("password", "updating remote document");
 
             try{targetLock.get();} catch(DriveRemoteLock.FailedToAttainLockException e){return;}
 
             Log.d("password", "fetching document metadata");
             DriveResource.MetadataResult metadata = targetFile.getMetadata(apiClient).await();
+            long sz = metadata.getMetadata().getFileSize();
             Date dt = metadata.getMetadata().getModifiedDate();
             long remoteDt = dt.getTime();
 
-            if (remoteDt != lastRemoteUpdate)
+            if (sz > 0 && remoteDt != lastRemoteUpdate)
                 doUpdate();
-            else
+            else if (sz > 0)
                 doSave();
+            else
+                doOverwrite();
+
+            boolean resave = false;
+            synchronized (saveLock)
+            {
+                isSaving = false;
+
+                if (doSave)
+                {
+                    resave = true;
+                    doSave = false;
+                }
+            }
+
+            if (resave)
+                onSave();
         }}, "save thread");
 
         t.start();
@@ -305,20 +374,62 @@ public class PasswordDocumentDrive extends PasswordDocument
         onSave();
     }
 
+    protected void doOverwrite()
+    {
+        PendingResult<DriveApi.DriveContentsResult> res = targetFile.open(apiClient, DriveFile.MODE_WRITE_ONLY, null);
+        DriveApi.DriveContentsResult result = res.await();
+
+        OutputStream fos = result.getDriveContents().getOutputStream();
+        DataOutputStream dos = new DataOutputStream(fos);
+
+        try
+        {
+            deltasToEncryptedString(dos);
+
+            dos.flush();
+            result.getDriveContents().commit(apiClient, null).setResultCallback(new ResolvingResultCallbacks<com.google.android.gms.common.api.Status>(MainState.getInstance().activity, FILE_SAVE_REQUEST) {
+                @Override
+                public void onSuccess(@NonNull com.google.android.gms.common.api.Status status)
+                {
+                    notifySaved();
+                    Log.v("password", "file overwrite succeeded");
+                    try{targetLock.release();} catch(DriveRemoteLock.FailedToReleaseLockException e){return;}
+                }
+
+                @Override
+                public void onUnresolvableFailure(@NonNull com.google.android.gms.common.api.Status status)
+                {
+                    try{targetLock.release();} catch(DriveRemoteLock.FailedToReleaseLockException e){return;}
+                }
+            });
+        }
+        catch(Exception e){
+            Log.v("password", "file overwrite failed");
+            try{targetLock.release();} catch(DriveRemoteLock.FailedToReleaseLockException e1){return;}
+        }
+        finally{
+            try
+            {
+                dos.close();
+            }
+            catch(Exception e){}
+        }
+    }
+
     protected void doSave()
     {
         PendingResult<DriveApi.DriveContentsResult> res = targetFile.open(apiClient, DriveFile.MODE_READ_WRITE, null);
         DriveApi.DriveContentsResult result = res.await();
 
-        InputStream str = result.getDriveContents().getInputStream();
-        DataInputStream dis = new DataInputStream(str);
-        DataOutputStream dos = null;
+        ParcelFileDescriptor pfd = result.getDriveContents().getParcelFileDescriptor();
+        FileDescriptor fd = pfd.getFileDescriptor();
+        InputStream ins = new FileInputStream(fd);
+        DataInputStream dis = new DataInputStream(ins);
+        OutputStream outs = new FileOutputStream(fd);
+        DataOutputStream dos = new DataOutputStream(outs);
 
         try
         {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            dos = new DataOutputStream(baos);
-
             updateEncryptedDeltas(dis, dos);
 
             dos.flush();

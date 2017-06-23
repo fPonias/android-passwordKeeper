@@ -60,16 +60,19 @@ public class HelperNoInst
         public PasswordDocumentImpl()
         {
             super(DEFAULT_NAME, DEFAULT_PASSWORD);
+            setHistoryLoaded();
         }
 
         public PasswordDocumentImpl(String pass)
         {
             super(pass);
+            setHistoryLoaded();
         }
 
         public PasswordDocumentImpl(String name, String pass)
         {
             super(name, pass);
+            setHistoryLoaded();
         }
 
         protected void onSave() throws Exception

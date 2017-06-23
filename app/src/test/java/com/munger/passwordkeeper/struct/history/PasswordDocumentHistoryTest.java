@@ -305,7 +305,6 @@ public class PasswordDocumentHistoryTest
         PasswordDocument doc1 = HelperNoInst.generateDocument(2, 2);
         PasswordDocument doc2 = new HelperNoInst.PasswordDocumentImpl();
         doc1.getHistory().playHistory(doc2);
-        int oldSz = doc1.getHistory().count();
 
         PasswordDetails det1 = doc1.getDetails(0);
         det1.setName("det value 1");
@@ -317,10 +316,11 @@ public class PasswordDocumentHistoryTest
         PasswordDetailsPair pair2 = det2.getPair(0);
         pair2.setValue("new value 2");
 
+        int oldSz = doc1.getHistory().count();
         //local changes take priority over remote changes
         PasswordDocumentHistory hist = doc1.getHistory().mergeHistory(doc2.getHistory());
         int newSz = hist.count();
-        assertEquals(newSz - 4, oldSz);
+        assertTrue(newSz <= oldSz);
         PasswordDocument doc3 = new HelperNoInst.PasswordDocumentImpl();
         hist.playHistory(doc3);
         PasswordDetails det3 = doc3.getDetails(0);

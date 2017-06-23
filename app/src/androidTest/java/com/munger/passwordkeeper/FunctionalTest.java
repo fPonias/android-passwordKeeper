@@ -28,6 +28,7 @@ import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.Settings;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
@@ -79,6 +80,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 import static android.support.test.InstrumentationRegistry.*;
@@ -713,20 +716,34 @@ public class FunctionalTest
         selectAccountIfNeeded();
 
         mainState.driveHelper.awaitConnection();
+        Thread.sleep(250);
 
-        Thread.sleep(100000);
+        assertNotNull(mainState.driveDocument);
     }
 
     @Test
-    public void remoteSyncWarn()
+    public void remoteSyncDisable() throws Exception
     {
+        mainState.mySettings.saveToCloud = true;
+        createAndOpenExistingFile();
 
-    }
+        if (mainState.mySettings.getRealSaveToCloud() != mainState.mySettings.saveToCloud)
+            mainState.mySettings.setSaveToCloud(true);
 
-    @Test
-    public void remoteSyncDisable()
-    {
+        selectAccountIfNeeded();
+        mainState.driveHelper.awaitConnection();
+        Thread.sleep(250);
 
+        assertNotNull(mainState.driveDocument);
+
+        onView(withId(R.id.action_settings)).perform(click());
+
+        mainState.mySettings.saveToCloud = false;
+        onView(withText(R.string.settings_cloud_title)).perform(click());
+
+        Thread.sleep(250);
+
+        assertNull(mainState.driveDocument);
     }
 
     private void allowPermissionsIfNeeded() throws Exception

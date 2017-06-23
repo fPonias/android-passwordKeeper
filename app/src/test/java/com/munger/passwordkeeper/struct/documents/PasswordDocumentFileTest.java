@@ -174,7 +174,7 @@ public class PasswordDocumentFileTest
 
         String newPassword = "newpass";
         PasswordDocumentFileOver doc = dosave();
-        doc.setPassword(newPassword);
+        doc.changePassword(newPassword);
 
         PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, newPassword);
         assertTrue(doc2.exists());

@@ -139,6 +139,17 @@ public class PasswordDocumentDriveTest
         }
 
         @Override
+        protected void doOverwrite()
+        {
+            Thread t = new Thread(new Runnable() {public void run()
+            {
+                try{Thread.sleep(100);}catch(Exception e){}
+                notifySaved();
+            }});
+            t.start();
+        }
+
+        @Override
         protected void doSave()
         {
             Thread t = new Thread(new Runnable() {public void run()
@@ -309,7 +320,7 @@ public class PasswordDocumentDriveTest
     {
         PendingResult<?> result = Mockito.mock(PendingResult.class);
         final DriveApi.MetadataBufferResult bresult = Mockito.mock(DriveApi.MetadataBufferResult.class);
-        MetadataBuffer mbuf = Mockito.mock(MetadataBuffer.class);
+        final MetadataBuffer mbuf = PowerMockito.mock(MetadataBuffer.class);
         Metadata metadata = Mockito.mock(Metadata.class);
         DriveId driveIdmock = Mockito.mock(DriveId.class);
 
@@ -405,9 +416,9 @@ public class PasswordDocumentDriveTest
     private void setupLockClaim(final MockedMetadata data, final String retValue)
     {
         final MetadataBundle b = PowerMockito.mock(MetadataBundle.class);
-        //when(b.zzbcz()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
+        when(b.zztq()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
         PowerMockito.mockStatic(MetadataBundle.class);
-        //when(MetadataBundle.zzbcy()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
+        when(MetadataBundle.zztp()).then(new Answer<MetadataBundle>() {public MetadataBundle answer(InvocationOnMock invocation) throws Throwable  { return b; }});
         MetadataChangeSet set = new MetadataChangeSet(b);
         doAnswer(new Answer<MetadataChangeSet.Builder>() {public MetadataChangeSet.Builder answer(InvocationOnMock invocation) throws Throwable
         {

@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import android.util.Log;
 
 import com.munger.passwordkeeper.struct.AES256;
+import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.history.HistoryEvent;
 import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
 import com.munger.passwordkeeper.struct.PasswordDetails;
@@ -207,11 +208,11 @@ public abstract class PasswordDocument
 		}
  	}
 
-	public void deltasFromString(BufferedReader reader) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public void deltasFromString(String str) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		history = new PasswordDocumentHistory();
 		historyLoaded = false;
-		history.fromString(reader.readLine());
+		history.fromString(str);
 		setHistoryLoaded();
 	}
 
@@ -431,6 +432,7 @@ public abstract class PasswordDocument
 		details = new ArrayList<>();
 		mostRecentHistoryEvent = null;
 		int count = -1;
+		PasswordDetails lastDets = null;
 
 		String line;
 		while((line = reader.readLine()) != null)
@@ -443,13 +445,24 @@ public abstract class PasswordDocument
 			}
 			else
 			{
-				PasswordDetails dets = new PasswordDetails();
-				dets.fromString(line);
-				dets.setHistory(new PasswordDocumentHistory());
+				if (line.startsWith("id:"))
+				{
+					if (lastDets != null)
+						try{addDetails(lastDets);}catch(Exception e){}
 
-				try{addDetails(dets);}catch(Exception e){}
+					lastDets = new PasswordDetails();
+					lastDets.fromToken(line);
+					lastDets.setHistory(new PasswordDocumentHistory());
+				}
+				else
+				{
+					lastDets.fromToken(line);
+				}
 			}
 		}
+
+		if (lastDets != null)
+			try{addDetails(lastDets);}catch(Exception e){}
 	}
 
 	public void detailsFromEncryptedString(DataInput dis) throws IOException

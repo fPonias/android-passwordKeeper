@@ -92,6 +92,10 @@ public class HistoryEventFactoryTest
         assertTrue(factory.equals(evt, target));
 
         target.sequenceId = 101;
+        assertTrue(factory.equals(evt, target));
+
+        target = factory.clone(evt);
+        target.id = "newID";
         assertFalse(factory.equals(evt, target));
 
         target = factory.clone(evt);

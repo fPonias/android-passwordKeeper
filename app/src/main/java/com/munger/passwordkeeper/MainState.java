@@ -164,7 +164,9 @@ public class MainState
 
     }
 
-    private PasswordDocumentDrive driveDocument;
+    public PasswordDocumentDrive driveDocument;
+
+    protected void  setupDriveDocument() { driveDocument = new PasswordDocumentDrive(document); }
 
     private Object setupLock = new Object();
     private boolean settingUp = false;
@@ -197,7 +199,7 @@ public class MainState
                 }
                 else
                 {
-                    driveDocument = new PasswordDocumentDrive(document);
+                    setupDriveDocument();
                     driveDocument.init();
                 }
             }

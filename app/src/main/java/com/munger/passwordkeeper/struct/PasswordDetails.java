@@ -294,39 +294,45 @@ public class PasswordDetails implements Parcelable
 		return builder.toString();
 	}
 
+	public PasswordDetailsPair curPair = null;
+
+	public void fromToken(String token)
+	{
+		if (token.startsWith("id: "))
+		{
+			id = token.substring(4);
+		}
+		else if (token.startsWith("name: "))
+		{
+			name = token.substring(6);
+		}
+		else if (token.startsWith("location: "))
+		{
+			location = token.substring(10);
+		}
+		else if (token.startsWith("\tpairid: "))
+		{
+			curPair = new PasswordDetailsPair(token.substring(9));
+		}
+		else if (token.startsWith("\tkey: "))
+		{
+			curPair.setKey(token.substring(6));
+		}
+		else if (token.startsWith("\tvalue: "))
+		{
+			curPair.setValue(token.substring(8));
+			details.add(curPair);
+		}
+	}
+
 	public void fromString(String source)
 	{
 		details = new ArrayList<PasswordDetailsPair>();
-		PasswordDetailsPair curPair = null;
 	    
 	    String[] parts = source.split("\n");
 	    for (String line : parts)
 	    {
-			if (line.startsWith("id: "))
-			{
-				id = line.substring(4);
-			}
-	        else if (line.startsWith("name: "))
-	        {
-	        	name = line.substring(6);
-	        }
-	        else if (line.startsWith("location: "))
-	        {
-	        	location = line.substring(10);
-	        }
-			else if (line.startsWith("\tpairid: "))
-			{
-				curPair = new PasswordDetailsPair(line.substring(9));
-			}
-	        else if (line.startsWith("\tkey: "))
-	        {
-	        	curPair.setKey(line.substring(6));
-	        }
-	        else if (line.startsWith("\tvalue: "))
-	        {
-	        	curPair.setValue(line.substring(8));
-	        	details.add(curPair);
-	        }
+			fromToken(line);
 	    }
 	}
 
