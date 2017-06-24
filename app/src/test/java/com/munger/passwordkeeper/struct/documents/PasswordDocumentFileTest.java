@@ -34,12 +34,12 @@ public class PasswordDocumentFileTest
             super(name, password);
         }
 
-        @Override
+        /*@Override
         protected void updateRootPath()
         {
             if (rootPath == null)
                 rootPath = tmp.getRoot().getAbsolutePath() + "/";
-        }
+        }*/
 
         public int updateCalled = 0;
         public int overwriteCalled = 0;

@@ -1,7 +1,5 @@
 package com.munger.passwordkeeper.struct.documents;
 
-import android.util.Log;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -12,31 +10,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
-import com.munger.passwordkeeper.MainActivity;
-import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.struct.AES256;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public class PasswordDocumentFile extends PasswordDocument 
 {
-	protected String rootPath;
+	protected String rootPath = ".";
 	
 	public PasswordDocumentFile(String name)
 	{
 		super(name);
-		updateRootPath();
-
-		if (name.indexOf("/") != -1)
-		{
-			int idx = name.lastIndexOf("/");
-
-			if (name.startsWith("/"))
-				rootPath = "";
-
-			rootPath += name.substring(0, idx + 1);
-			this.name = name.substring(idx + 1);
-		}
 	}
 	
 	public PasswordDocumentFile(String name, String password)
@@ -60,10 +44,20 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	}
 
-	protected void updateRootPath()
+	public void setRootPath(String value)
 	{
-		if (rootPath == null)
-			rootPath = MainState.getInstance().context.getFilesDir().getAbsolutePath() + "/";
+		rootPath = value;
+
+		if (name.indexOf("/") != -1)
+		{
+			int idx = name.lastIndexOf("/");
+
+			if (name.startsWith("/"))
+				rootPath = "";
+
+			rootPath += name.substring(0, idx + 1);
+			this.name = name.substring(idx + 1);
+		}
 	}
 
 	public void changePassword(String password) throws Exception
@@ -301,7 +295,6 @@ public class PasswordDocumentFile extends PasswordDocument
 			}
 		}
 		catch(IOException e){
-			Log.d("password", "Failed to open password file");
 		}
 		finally{
 			try

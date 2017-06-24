@@ -84,6 +84,9 @@ public class NavigationHelper
         FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
 
         PasswordDocumentFile document = (PasswordDocumentFile) MainState.getInstance().document;
+
+        String rootPath = MainState.getInstance().context.getFilesDir().getAbsolutePath() + "/";
+        document.setRootPath(rootPath);
         if (!document.exists())
         {
             createFileFragment = openCreateFileFragment(true);

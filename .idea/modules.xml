@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/android-passwordKeeper.iml" filepath="$PROJECT_DIR$/android-passwordKeeper.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libpasswordkeeper/libpasswordkeeper.iml" filepath="$PROJECT_DIR$/libpasswordkeeper/libpasswordkeeper.iml" />
     </modules>
   </component>
 </project>

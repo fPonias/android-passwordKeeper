@@ -8,6 +8,7 @@ public class AES256
 {
 	static
 	{
+		System.out.println("cwd: " + System.getProperty("user.dir"));
 		try
 		{
 			System.loadLibrary("aes256");
@@ -15,10 +16,10 @@ public class AES256
 		catch(UnsatisfiedLinkError e){
 			try
 			{
-				loadExternalLib("./app/src/main/cpp/libaes256.so");
+				loadExternalLib("./libpasswordkeeper/src/main/java/cpp/libaes256.so");
 			}
 			catch(UnsatisfiedLinkError e1){
-				loadExternalLib("./src/main/cpp/libaes256.so");
+				loadExternalLib("./src/main/java/cpp/libaes256.so");
 			}
 		}
 	}

@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import android.util.Log;
-
 import com.munger.passwordkeeper.struct.AES256;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.history.HistoryEvent;
@@ -167,7 +165,6 @@ public abstract class PasswordDocument
 			{
 				synchronized (historyLoadedLock)
 				{
-					Log.d("password", "history loaded, sending notify signal");
 					historyLoadedLock.notify();
 				}
 			}
@@ -187,9 +184,7 @@ public abstract class PasswordDocument
 						if (historyLoaded)
 							return;
 
-						Log.d("password", "awaiting history loaded signal");
 						historyLoadedLock.wait();
-						Log.d("password", "history loaded signal received");
 					}
 					catch(InterruptedException e){
 					}
