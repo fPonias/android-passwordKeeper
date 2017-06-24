@@ -9,18 +9,39 @@ public class AES256
 	static
 	{
 		System.out.println("cwd: " + System.getProperty("user.dir"));
-		try
+		String platform = System.getProperty("os.name");
+		String vendor = System.getProperty("java.vendor");
+		System.out.println("current platform: " + platform + " vendor: " + vendor);
+
+		if (platform.equals("Mac OS X"))
 		{
-			System.loadLibrary("aes256");
-		}
-		catch(UnsatisfiedLinkError e){
 			try
 			{
-				loadExternalLib("./libpasswordkeeper/src/main/java/cpp/libaes256.so");
+				System.loadLibrary("aes256-GNU-MacOSX");
 			}
-			catch(UnsatisfiedLinkError e1){
-				loadExternalLib("./src/main/java/cpp/libaes256.so");
+			catch(UnsatisfiedLinkError e){
+				loadExternalLib("./res/libaes256-GNU-MacOSX.dylib");
 			}
+		}
+		else if (platform.equals("Linux") && vendor.contains("Android"))
+		{
+			try
+			{
+				System.loadLibrary("aes256");
+			}
+			catch(UnsatisfiedLinkError e){
+				try
+				{
+					loadExternalLib("./libpasswordkeeper/src/main/java/cpp/libaes256.so");
+				}
+				catch(UnsatisfiedLinkError e2){
+					loadExternalLib("./src/main/java/cpp/libaes256.so");
+				}
+			}
+		}
+		else
+		{
+			throw new Error("Platform " + platform + " is not supported.");
 		}
 	}
 

@@ -5,7 +5,7 @@
  */
 package com.munger.passwordkeeper;
 
-import com.munger.passwordkeeper.view.OpenFile;
+import com.munger.passwordkeeper.view.*;
 import java.awt.Container;
 import javax.swing.JPanel;
 
@@ -13,16 +13,23 @@ import javax.swing.JPanel;
  *
  * @author hallmarklabs
  */
-public class Main extends javax.swing.JFrame {
-
+public class Main extends javax.swing.JFrame 
+{
+    public static Main instance;
+    
+    public MainState mainState;
     public JPanel currentView = null;
     
     /**
      * Creates new form Main
      */
-    public Main() {
+    public Main() 
+    {
+        instance = this;
+        mainState = new MainState();
+        
         initComponents();
-        setupInitialView();
+        loadInitialView();
     }
 
     private void changeView()
@@ -33,10 +40,19 @@ public class Main extends javax.swing.JFrame {
         root.invalidate();
     }
     
-    private void setupInitialView()
+    public void loadInitialView()
     {
-        currentView = new OpenFile();
+        if (mainState.document.exists())
+            currentView = new OpenFile();
+        else
+            currentView = new NewFile();
+        
         changeView();
+    }
+    
+    public void loadDocumentView()
+    {
+        
     }
     
     /**
@@ -50,6 +66,7 @@ public class Main extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(500, 700));
+        getContentPane().setLayout(new java.awt.BorderLayout());
 
         pack();
     }// </editor-fold>//GEN-END:initComponents

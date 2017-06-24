@@ -8,3 +8,6 @@
 /captures
 .externalNativeBuild
 /passwordKeeper-desktop/nbproject/private/
+/passwordKeeper-desktop/build/
+/passwordKeeper-desktop/libpassword/build/
+/passwordKeeper-desktop/libpassword/dist/
