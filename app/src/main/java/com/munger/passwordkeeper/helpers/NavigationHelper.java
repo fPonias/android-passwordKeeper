@@ -324,9 +324,7 @@ public class NavigationHelper
 
         if (MainState.getInstance().isActive)
         {
-            if (gettingPassword)
-                doExit();
-            else
+            if (!gettingPassword)
             {
                 Intent i = new Intent(MainState.getInstance().context, MainActivity.class);
                 i.putExtra("reset", true);

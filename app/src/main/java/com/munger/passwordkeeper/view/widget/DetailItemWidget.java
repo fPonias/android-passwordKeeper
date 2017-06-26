@@ -38,7 +38,6 @@ public class DetailItemWidget extends LinearLayout
 		valueLabel = (TextView) findViewById(R.id.detailitem_valuelabel);
 		valueInput = (EditText) findViewById(R.id.detailitem_valueinput);
 		deleteBtn = (Button) findViewById(R.id.detailitem_deletebtn);
-		
 
 		keyInput.addTextChangedListener(new TextWatcher() 
 		{
@@ -64,7 +63,8 @@ public class DetailItemWidget extends LinearLayout
 			
 			public void afterTextChanged(Editable s) 
 			{
-				valueLabel.setText(valueInput.getText());
+				String text = valueInput.getText().toString();
+				valueLabel.setText(text);
 			}
 		});
 		

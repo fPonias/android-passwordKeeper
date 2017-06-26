@@ -19,7 +19,7 @@
 	        android:paddingLeft="12dp"
 	        android:paddingTop="7dp"
 	        android:paddingBottom="7dp"
-	        android:textSize="18sp" >
+	        android:textSize="18sp">
 		</TextView>
 
 		<TextView
@@ -47,7 +47,11 @@
 		    android:layout_height="wrap_content"
 		    android:layout_weight=".5"
 		    android:hint="@string/detail_item_key_hint"
+			android:lines="1"
             android:maxLines="1"
+			android:inputType="text"
+			android:focusable="true"
+			android:focusableInTouchMode="true"
         />
         
         <EditText 
@@ -56,7 +60,11 @@
 		    android:layout_height="wrap_content"
 		    android:layout_weight=".5"
 		    android:hint="@string/detail_item_value_hint"
+			android:lines="1"
             android:maxLines="1"
+			android:inputType="text"
+			android:focusable="true"
+			android:focusableInTouchMode="true"
         />
         
 	    <Button

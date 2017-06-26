@@ -115,6 +115,11 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	public void onAttachFragment(Fragment frag)
 	{
+		if (MainState.getInstance() == null)
+			return;
+		if (MainState.getInstance().navigationHelper == null)
+			return;
+
 		MainState.getInstance().navigationHelper.fragmentAttached(frag);
 	}
 

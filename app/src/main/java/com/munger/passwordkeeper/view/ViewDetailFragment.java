@@ -29,15 +29,18 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ActionMode;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -121,32 +124,6 @@ public class ViewDetailFragment extends Fragment
 	{	
 		root = inflater.inflate(R.layout.fragment_viewdetail, container, false);
 
-		root.addOnLayoutChangeListener(new View.OnLayoutChangeListener()
-		{
-			public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom)
-			{
-				View newFocus = MainState.getInstance().activity.getCurrentFocus();
-				long newFocusStamp = System.currentTimeMillis();
-				long diff = newFocusStamp - lastFocusStamp;
-				Log.d("password", "last focus diff " + diff);
-
-				if (newFocus != lastFocus)
-				{
-					if (lastFocus != null && diff < 150 && keyboardOpened)
-					{
-						Log.d("password", "refocusing last focus");
-						lastFocus.requestFocus();
-					}
-					else if (diff > 150)
-					{
-						Log.d("password", "setting last focus");
-						lastFocus = newFocus;
-						lastFocusStamp = newFocusStamp;
-					}
-				}
-			}
-		});
-
 		copyMenuListener = new View.OnLongClickListener() {public boolean onLongClick(View v)
 		{
 			if (!(v instanceof TextView))
@@ -185,16 +162,47 @@ public class ViewDetailFragment extends Fragment
 
 		itemList.setFocusable(false);
 
+		nameLabel.getInput().setOnEditorActionListener(new TextView.OnEditorActionListener() { public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+		{
+			if (actionId == EditorInfo.IME_ACTION_NEXT)
+			{
+				locationLabel.requestFocus();
+				return true;
+			}
+			return false;
+		}});
+
 		nameLabel.getInput().setOnFocusChangeListener(new View.OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
 		{
 			if (!hasFocus)
+			{
 				details.setName(nameLabel.getText());
+			}
+		}});
+
+		locationLabel.getInput().setOnEditorActionListener(new TextView.OnEditorActionListener() { public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+		{
+			if (actionId == EditorInfo.IME_ACTION_NEXT)
+			{
+				View next = addButton;
+				if (itemList.getChildCount() > 0)
+				{
+					PairDetailItemWidget view = (PairDetailItemWidget) itemList.getChildAt(0);
+					next = view.findViewById(view.getKeyInputId());
+				}
+
+				next.requestFocus();
+				return true;
+			}
+			return false;
 		}});
 
 		locationLabel.getInput().setOnFocusChangeListener(new View.OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
 		{
 			if (!hasFocus)
+			{
 				details.setLocation(locationLabel.getText());
+			}
 
 		}});
 		
@@ -206,11 +214,68 @@ public class ViewDetailFragment extends Fragment
 			
 			addPair();
 		}});
-		
+
+		itemList.setOnHierarchyChangeListener(new ViewGroup.OnHierarchyChangeListener() {
+			@Override
+			public void onChildViewAdded(View parent, View child) {
+				updateFocusListeners();
+			}
+
+			@Override
+			public void onChildViewRemoved(View parent, View child) {
+				updateFocusListeners();
+			}
+		});
 		
 		setupEditable();
 		
 		return root;
+	}
+
+	private class ValueEditorListener implements TextView.OnEditorActionListener
+	{
+		public int position;
+		public EditText target;
+		public ValueEditorListener(EditText target, int position)
+		{
+			this.target = target;
+			this.position = position;
+		}
+
+		@Override
+		public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+		{
+			if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT)
+			{
+				int sz = itemList.getChildCount();
+				View target = null;
+				if (position < sz - 1)
+				{
+					PairDetailItemWidget tWidget = (PairDetailItemWidget) itemList.getChildAt(position + 1);
+					target = tWidget.findViewById(tWidget.getKeyInputId());
+				}
+				else
+				{
+					target = addButton;
+				}
+
+				target.requestFocus();
+				return true;
+			}
+
+			return false;
+		}
+	}
+
+	private void updateFocusListeners()
+	{
+		int sz = itemList.getChildCount();
+		for (int i = 0; i < sz; i++)
+		{
+			PairDetailItemWidget widget = (PairDetailItemWidget) itemList.getChildAt(i);
+			EditText target = (EditText) widget.findViewById(widget.getValueInputId());
+			target.setOnEditorActionListener(new ValueEditorListener(target, i));
+		}
 	}
 
 	private boolean useFiltered = false;
@@ -433,6 +498,8 @@ public class ViewDetailFragment extends Fragment
 				return true;
 			}});
 		}
+		else
+			callback.callback(true);
 	}
 	
 	private boolean goingBack = false;
@@ -486,10 +553,12 @@ public class ViewDetailFragment extends Fragment
 		frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "confirm_fragment");
 	}
 
-	private static class PairDetailItemWidget extends DetailItemWidget
+	private class PairDetailItemWidget extends DetailItemWidget
 	{
 		private PasswordDetailsPair pair;
 		private ViewDetailFragment parent;
+		private int keyId;
+		private int valueId;
 		
 		public PairDetailItemWidget(PasswordDetailsPair p, ViewDetailFragment par, Context context)
 		{
@@ -504,12 +573,30 @@ public class ViewDetailFragment extends Fragment
 
 			keyLabel.setOnLongClickListener(parent.copyMenuListener);
 			valueLabel.setOnLongClickListener(parent.copyMenuListener);
+
 			keyInput.setOnFocusChangeListener(new OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
 			{
 				if (!hasFocus)
 					pair.setKey(keyInput.getText().toString());
 			}});
 			keyInput.setOnLongClickListener(parent.copyMenuListener);
+			keyInput.setOnKeyListener(new OnKeyListener() {
+				@Override
+				public boolean onKey(View v, int keyCode, KeyEvent event) {
+					View target = findViewById(valueId);
+					target.requestFocus();
+					return false;
+				}
+			});
+			keyInput.setOnEditorActionListener(new TextView.OnEditorActionListener() { public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+			{
+				if (actionId == EditorInfo.IME_ACTION_NEXT || actionId == EditorInfo.IME_ACTION_DONE)
+				{
+					valueInput.requestFocus();
+					return true;
+				}
+				return false;
+			}});
 
 			valueInput.setOnFocusChangeListener(new OnFocusChangeListener() {public void onFocusChange(View v, boolean hasFocus)
 			{
@@ -522,6 +609,21 @@ public class ViewDetailFragment extends Fragment
 			{
 				parent.deletePair(pair);
 			}});
+
+			keyId = View.generateViewId();
+			valueId = View.generateViewId();
+			keyInput.setId(keyId);
+			valueInput.setId(valueId);
+		}
+
+		public int getKeyInputId()
+		{
+			return keyId;
+		}
+
+		public int getValueInputId()
+		{
+			return valueId;
 		}
 
 		public void setPair(PasswordDetailsPair pair)
@@ -547,7 +649,7 @@ public class ViewDetailFragment extends Fragment
 		}
 	}
 
-	private static class DetailArrayAdapter extends ArrayAdapter<PasswordDetailsPair>
+	private class DetailArrayAdapter extends ArrayAdapter<PasswordDetailsPair>
 	{
 		private ViewDetailFragment host;
 		
@@ -577,12 +679,6 @@ public class ViewDetailFragment extends Fragment
 			}
 
 			ret.setEditable(host.editable);
-
-			if (host.nextSelect == position)
-			{
-				ret.findViewById(R.id.detailitem_keyinput).requestFocus();
-				host.nextSelect = -1;
-			}
 
 			return ret;
 		}
