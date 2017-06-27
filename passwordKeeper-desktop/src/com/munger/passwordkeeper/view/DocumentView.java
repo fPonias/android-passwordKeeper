@@ -107,8 +107,13 @@ public class DocumentView extends JPanel
         addBtn.addActionListener((ActionEvent e) -> {
             PasswordDocument doc = Main.instance.mainState.document;
             PasswordDetails dets = new PasswordDetails();
-            try {doc.addDetails(dets);}catch(PasswordDocumentHistory.HistoryPlaybackException e2){}
-            update();
+            try 
+            {
+                doc.addDetails(dets);
+                doc.save();
+            }
+            catch(Exception e2)
+            {}
         });
        
         PasswordDocument doc = Main.instance.mainState.document;

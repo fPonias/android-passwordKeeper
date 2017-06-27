@@ -9,7 +9,9 @@ import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.*;
+import java.awt.Component;
 import java.awt.Container;
+import java.util.ArrayList;
 import javax.swing.JPanel;
 
 /**
@@ -35,26 +37,47 @@ public class Main extends javax.swing.JFrame
         loadInitialView();
     }
 
-    private void changeView()
+    private ArrayList<Component> backStack = new ArrayList<>();
+    
+    private void changeView(boolean pushStack)
     {
         Container root = getContentPane();
+        
+        if (pushStack && root.getComponentCount() > 0)
+        {
+            Component oldView = root.getComponent(0);
+            backStack.add(oldView);
+        }
+        
         root.removeAll();
         root.add(currentView, java.awt.BorderLayout.CENTER);
         root.revalidate();
         root.repaint();
     }
     
+    public void goBack()
+    {
+        int sz = backStack.size();
+        if (sz == 0)
+            return;
+        
+        currentView = (JPanel) backStack.get(sz - 1);
+        backStack.remove(sz - 1);
+        
+        changeView(false);
+    }
+    
     public void loadInitialView()
     {
         if (mainState.document.exists())
         {
-            mainState.document.setPassword("pass");
-            openFile();
+            PasswordDetails dets = new PasswordDetails();
+            loadDetailsView(dets);
         }
         else
             currentView = new NewFile();
         
-        changeView();
+        changeView(false);
     }
     
     private final Object locker = new Object();
@@ -113,13 +136,26 @@ public class Main extends javax.swing.JFrame
     
     public void loadDocumentView()
     {
+        backStack = new ArrayList<>();
         currentView = new DocumentView();
-        changeView();
+        changeView(false);
     }
     
     public void loadDetailsView(PasswordDetails dets)
     {
-//      currentView = new 
+        currentView = new DetailsView();
+
+        if (dets.getName().length() == 0)
+        {
+            ((DetailsView) currentView).setEditable(true);
+            
+            if (dets.count() == 0)
+                dets.addEmptyPair();
+        }
+        
+        ((DetailsView) currentView).setDetails(dets);
+
+        changeView(true);
     }
     
     /**
