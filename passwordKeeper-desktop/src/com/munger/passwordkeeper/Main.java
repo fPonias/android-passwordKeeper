@@ -5,6 +5,9 @@
  */
 package com.munger.passwordkeeper;
 
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.*;
 import java.awt.Container;
 import javax.swing.JPanel;
@@ -37,22 +40,86 @@ public class Main extends javax.swing.JFrame
         Container root = getContentPane();
         root.removeAll();
         root.add(currentView, java.awt.BorderLayout.CENTER);
-        root.invalidate();
+        root.revalidate();
+        root.repaint();
     }
     
     public void loadInitialView()
     {
         if (mainState.document.exists())
-            currentView = new OpenFile();
+        {
+            mainState.document.setPassword("pass");
+            openFile();
+        }
         else
             currentView = new NewFile();
         
         changeView();
     }
     
+    private final Object locker = new Object();
+    private boolean loaded = false;
+    
+    public void openFile()
+    {        
+        final PasswordDocument.ILoadEvents listener = new PasswordDocumentFile.ILoadEvents() {
+            @Override
+            public void detailsLoaded()
+            {
+                synchronized(locker)
+                {
+                    loaded = true;
+                    locker.notify();
+                }
+            }
+
+            @Override
+            public void historyLoaded()
+            {
+                mainState.setupDriveHelper();
+            }
+
+            @Override
+            public void historyProgress(float progress) {
+
+            }
+        };
+        mainState.document.addLoadEvents(listener);
+        
+        Thread loadTask = new Thread(new Runnable() {public void run() 
+        {
+            try
+            {
+                mainState.document.load(true);
+            }
+            catch(Exception e){
+                showAlert("Failed to open the document: " + mainState.document.name);
+            }
+        }});
+        loadTask.start();
+        
+        synchronized(locker)
+        {
+            if (!loaded)
+                try{locker.wait();} catch(InterruptedException e){}
+        }
+
+        mainState.document.removeLoadEvents(listener);
+        loadDocumentView();
+    }
+
+    public void showAlert(String alert)
+    {}
+    
     public void loadDocumentView()
     {
-        
+        currentView = new DocumentView();
+        changeView();
+    }
+    
+    public void loadDetailsView(PasswordDetails dets)
+    {
+//      currentView = new 
     }
     
     /**
@@ -66,7 +133,6 @@ public class Main extends javax.swing.JFrame
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(500, 700));
-        getContentPane().setLayout(new java.awt.BorderLayout());
 
         pack();
     }// </editor-fold>//GEN-END:initComponents

@@ -13,7 +13,7 @@ CND_BUILDDIR=build
 CND_DLIB_EXT=dylib
 NBTMPDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}/tmp-packaging
 TMPDIRNAME=tmp-packaging
-OUTPUT_PATH=../passwordKeeper-desktop/res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}
+OUTPUT_PATH=../res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}
 OUTPUT_BASENAME=libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}
 PACKAGE_TOP_DIR=liblibpassword.dylib/
 

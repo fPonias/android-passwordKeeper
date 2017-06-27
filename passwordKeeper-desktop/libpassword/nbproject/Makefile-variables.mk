@@ -16,9 +16,9 @@ CND_PACKAGE_NAME_Debug=liblibpassword.dylib.tar
 CND_PACKAGE_PATH_Debug=dist/Debug/GNU-MacOSX/package/liblibpassword.dylib.tar
 # Release configuration
 CND_PLATFORM_Release=GNU-MacOSX
-CND_ARTIFACT_DIR_Release=../passwordKeeper-desktop/res
+CND_ARTIFACT_DIR_Release=../res
 CND_ARTIFACT_NAME_Release=libaes256-GNU-MacOSX.dylib
-CND_ARTIFACT_PATH_Release=../passwordKeeper-desktop/res/libaes256-GNU-MacOSX.dylib
+CND_ARTIFACT_PATH_Release=../res/libaes256-GNU-MacOSX.dylib
 CND_PACKAGE_DIR_Release=dist/Release/GNU-MacOSX/package
 CND_PACKAGE_NAME_Release=liblibpassword.dylib.tar
 CND_PACKAGE_PATH_Release=dist/Release/GNU-MacOSX/package/liblibpassword.dylib.tar

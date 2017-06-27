@@ -41,7 +41,7 @@ public class NewFile extends javax.swing.JPanel {
         {
             PasswordDocument doc = Main.instance.mainState.document;
             doc.setPassword(new String(ps1));
-            doc.load(true);
+            doc.save();
         }
         catch(Exception e){
             return;
@@ -54,6 +54,9 @@ public class NewFile extends javax.swing.JPanel {
     {
         int sz = ps1.length;
         int sz2 = ps2.length;
+        
+        if (sz == 0)
+            return false;
         
         if (sz != sz2)
             return false;

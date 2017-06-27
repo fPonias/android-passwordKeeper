@@ -18,6 +18,9 @@ public class MainState
     public MainState()
     {
         document = new PasswordDocumentFile("password");
-        document.setRootPath("~");
+        document.setRootPath("/Users/hallmarklabs/pw-tmp/");
     }
+    
+    public void setupDriveHelper()
+    {}
 }

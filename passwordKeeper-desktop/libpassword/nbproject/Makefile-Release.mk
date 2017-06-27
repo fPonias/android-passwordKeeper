@@ -58,11 +58,11 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ../passwordKeeper-desktop/res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ../res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}
 
-../passwordKeeper-desktop/res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}: ${OBJECTFILES}
-	${MKDIR} -p ../passwordKeeper-desktop/res
-	${LINK.c} -o ../passwordKeeper-desktop/res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT} ${OBJECTFILES} ${LDLIBSOPTIONS} -dynamiclib -install_name libaes256-${CND_PLATFORM}.${CND_DLIB_EXT} -fPIC
+../res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}: ${OBJECTFILES}
+	${MKDIR} -p ../res
+	${LINK.c} -o ../res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT} ${OBJECTFILES} ${LDLIBSOPTIONS} -dynamiclib -install_name libaes256-${CND_PLATFORM}.${CND_DLIB_EXT} -fPIC
 
 ${OBJECTDIR}/_ext/2e406b84/MD5.o: ../../libpasswordkeeper/src/main/java/cpp/MD5.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/2e406b84

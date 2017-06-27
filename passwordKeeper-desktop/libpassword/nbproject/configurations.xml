@@ -111,7 +111,7 @@
           <developmentMode>5</developmentMode>
         </asmTool>
         <linkerTool>
-          <output>../passwordKeeper-desktop/res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}</output>
+          <output>../res/libaes256-${CND_PLATFORM}.${CND_DLIB_EXT}</output>
         </linkerTool>
       </compileType>
       <item path="../../libpasswordkeeper/src/main/java/cpp/MD5.c"
