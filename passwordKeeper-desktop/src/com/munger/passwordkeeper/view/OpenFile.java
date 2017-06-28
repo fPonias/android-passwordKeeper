@@ -6,14 +6,18 @@
 package com.munger.passwordkeeper.view;
 
 import com.munger.passwordkeeper.Main;
+import com.munger.passwordkeeper.view.helper.KeyTypedListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 /**
  *
  * @author hallmarklabs
  */
-public class OpenFile extends javax.swing.JPanel {
+public class OpenFile extends Page
+{
 
     /**
      * Creates new form OpenFile
@@ -21,9 +25,19 @@ public class OpenFile extends javax.swing.JPanel {
     public OpenFile() {
         initComponents();
         
-        submitBtn.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e) 
-        {
+        Main.instance.enableEditActions(false);
+        Main.instance.enableResetActions(false);
+        
+        submitBtn.addActionListener((ActionEvent e) -> {
             submit();
+        });
+        
+        passwordInput.addKeyListener(new KeyTypedListener() {public void keyTyped(KeyEvent e) 
+        {
+            if (e.getExtendedKeyCode() == KeyEvent.VK_ENTER)
+            {
+                submit();
+            }
         }});
     }
     

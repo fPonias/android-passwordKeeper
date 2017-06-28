@@ -36,7 +36,7 @@ import net.miginfocom.swing.MigLayout;
  *
  * @author hallmarklabs
  */
-public class DocumentView extends JPanel
+public class DocumentView extends Page
 {
     public DocumentView()
     {

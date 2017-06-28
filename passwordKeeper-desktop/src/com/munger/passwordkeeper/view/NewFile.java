@@ -13,7 +13,8 @@ import java.awt.event.ActionEvent;
  *
  * @author hallmarklabs
  */
-public class NewFile extends javax.swing.JPanel {
+public class NewFile extends Page 
+{
 
     /**
      * Creates new form NewFile
@@ -21,6 +22,10 @@ public class NewFile extends javax.swing.JPanel {
     public NewFile() 
     {
         initComponents();
+        
+        Main.instance.enableEditActions(false);
+        Main.instance.enableResetActions(false);
+        
         submitBtn.addActionListener((ActionEvent e) -> 
         {
             doSubmit();

@@ -6,6 +6,7 @@
  */
 package com.munger.passwordkeeper.view.widget;
 
+import com.munger.passwordkeeper.Main;
 import java.awt.Dimension;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;

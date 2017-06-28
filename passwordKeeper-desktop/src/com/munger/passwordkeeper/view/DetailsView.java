@@ -37,7 +37,7 @@ import net.miginfocom.swing.MigLayout;
  *
  * @author hallmarklabs
  */
-public class DetailsView extends JPanel
+public class DetailsView extends Page
 {
     public DetailsView()
     {
@@ -268,6 +268,12 @@ public class DetailsView extends JPanel
     
     private void update()
     {
+        if (details != null)
+        {
+            nameIpt.setText(details.getName());
+            locationIpt.setText(details.getLocation());
+        }
+        
         ArrayList<PasswordDetailsPair> list = (details != null) ? details.getList() : new ArrayList<>();
         int sz = list.size();
         int wsz = content.getComponentCount() - 1;
