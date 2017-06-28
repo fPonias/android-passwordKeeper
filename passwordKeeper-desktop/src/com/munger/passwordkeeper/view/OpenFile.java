@@ -27,6 +27,7 @@ public class OpenFile extends Page
         
         Main.instance.enableEditActions(false);
         Main.instance.enableResetActions(false);
+        Main.instance.enableDetailsActions(false);
         
         submitBtn.addActionListener((ActionEvent e) -> {
             submit();

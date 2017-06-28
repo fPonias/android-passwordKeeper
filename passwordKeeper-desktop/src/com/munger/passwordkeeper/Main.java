@@ -8,6 +8,7 @@ package com.munger.passwordkeeper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
 import com.munger.passwordkeeper.view.*;
 import java.awt.Component;
 import java.awt.Container;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.text.JTextComponent;
@@ -182,7 +184,31 @@ public class Main extends javax.swing.JFrame
     
     public void loadImportView()
     {
+        JFileChooser chooser = new JFileChooser();
+        int returnVal = chooser.showOpenDialog(this);
         
+        if (returnVal != JFileChooser.APPROVE_OPTION)
+            return;
+        
+        String path = chooser.getSelectedFile().getAbsolutePath();
+        PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
+        
+        try
+        {
+            fileImport.load(true);
+            
+            if (mainState.document.count() == 1)
+            {
+                PasswordDetails dets = mainState.document.getDetails(0);
+                if (dets.getName().length() == 0 && dets.getLocation().length() == 0)
+                    mainState.document.removeDetails(dets);
+            }
+            
+            mainState.document.playSubHistory(fileImport.getHistory());
+            mainState.document.save();
+        } catch(Exception e){
+            showAlert("Failed to import " + path);
+        }
     }
     
     public void loadExportView()
@@ -206,7 +232,7 @@ public class Main extends javax.swing.JFrame
         exportItem.setEnabled(enabled);
     }
     
-    public void enableImportActions(boolean enabled)
+    public void enableDetailsActions(boolean enabled)
     {
         generatePasswordItem.setEnabled(enabled);
     }

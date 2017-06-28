@@ -53,6 +53,10 @@ public class DocumentView extends Page
     
     private void init()
     {
+        Main.instance.enableEditActions(true);
+        Main.instance.enableResetActions(true);
+        Main.instance.enableDetailsActions(false);
+        
         MigLayout layout = new MigLayout("wrap 1,insets 0", "[grow,fill]");
         setLayout(layout);
         

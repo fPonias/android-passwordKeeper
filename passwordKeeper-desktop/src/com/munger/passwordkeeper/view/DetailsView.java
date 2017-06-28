@@ -83,6 +83,10 @@ public class DetailsView extends Page
     
     private void init()
     {
+        Main.instance.enableEditActions(false);
+        Main.instance.enableResetActions(true);
+        Main.instance.enableDetailsActions(true);
+        
         MigLayout layout = new MigLayout("wrap 1,insets 0", "[grow,fill]");
         setLayout(layout);
         
