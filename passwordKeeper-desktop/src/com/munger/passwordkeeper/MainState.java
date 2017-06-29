@@ -14,6 +14,7 @@ import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 public class MainState 
 {
     public PasswordDocumentFile document;
+    public QuitTimer quitTimer;
     
     public MainState()
     {
@@ -33,4 +34,25 @@ public class MainState
     
     public void setupDriveHelper()
     {}
+    
+    public void startQuitTimer()
+    {
+        quitTimer = new QuitTimer();
+        quitTimer.setQuitListener(() -> 
+        {
+            Main.instance.closeDocument();
+        });
+    }
+    
+    public void resetQuitTimer()
+    {
+        if (quitTimer != null)
+            quitTimer.reset();
+    }
+    
+    public void stopQuitTimer()
+    {
+        if (quitTimer != null)
+            quitTimer.stop();
+    }
 }

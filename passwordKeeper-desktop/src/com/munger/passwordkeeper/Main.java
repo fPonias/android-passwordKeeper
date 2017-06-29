@@ -10,6 +10,8 @@ import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
 import com.munger.passwordkeeper.view.*;
+import com.munger.passwordkeeper.view.helper.ClickListener;
+import com.munger.passwordkeeper.view.helper.KeyTypedListener;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.HeadlessException;
@@ -24,6 +26,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -32,6 +38,7 @@ import java.util.ArrayList;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.text.JTextComponent;
@@ -159,6 +166,7 @@ public class Main extends javax.swing.JFrame
         backStack = new ArrayList<>();
         currentView = new DocumentView();
         changeView(false);
+        mainState.startQuitTimer();
     }
     
     public void loadDetailsView(PasswordDetails dets)
@@ -180,8 +188,7 @@ public class Main extends javax.swing.JFrame
     
     public void loadAboutView()
     {
-        currentView = new AboutView();
-        changeView(true);
+        JOptionPane.showMessageDialog(this, new AboutView());
     }
     
     public void loadImportView()
@@ -262,6 +269,7 @@ public class Main extends javax.swing.JFrame
         }
         
         mainState.openDoc();
+        mainState.stopQuitTimer();
         
         backStack = new ArrayList<>();
         loadInitialView();
@@ -281,6 +289,11 @@ public class Main extends javax.swing.JFrame
     public void enableResetActions(boolean enabled)
     {
         closeItem.setEnabled(enabled);
+    }
+    
+    public void quit()
+    {
+        System.exit(0);
     }
     
     /**
@@ -462,6 +475,29 @@ public class Main extends javax.swing.JFrame
 
     private void setupListeners()
     {
+        getContentPane().addMouseListener(new ClickListener() {public void mouseClicked(MouseEvent e) 
+        {
+            mainState.resetQuitTimer();
+        }});
+        
+        getContentPane().addMouseMotionListener(new MouseMotionListener() 
+        {
+            public void mouseDragged(MouseEvent e) 
+            {
+                mainState.resetQuitTimer();
+            }
+
+            public void mouseMoved(MouseEvent e) 
+            {
+                mainState.resetQuitTimer();
+            }
+        });
+        
+        getContentPane().addKeyListener(new KeyTypedListener() {public void keyTyped(KeyEvent e) 
+        {
+            mainState.resetQuitTimer();
+        }});
+        
         importItem.addActionListener((ActionEvent e) ->
         {
             loadImportView();
@@ -489,7 +525,7 @@ public class Main extends javax.swing.JFrame
         
         quitItem.addActionListener((ActionEvent e) ->
         {
-            System.exit(0);
+            quit();
         });
         
         copyItem.addActionListener((ActionEvent e) ->

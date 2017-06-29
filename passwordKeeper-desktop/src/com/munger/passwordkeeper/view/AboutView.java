@@ -56,6 +56,7 @@ public class AboutView extends Page
         addSeperator();
         
         lbl = new JLabel("Source code at"); add(lbl, "wrap");
+        
         lbl = new JLabel("https://github.com/fPonias/android-passwordKeeper"); add(lbl, "wrap");
         
         addSeperator();
@@ -78,7 +79,7 @@ public class AboutView extends Page
     private void addSeperator()
     {
         JSeparator box = new JSeparator();
-        box.setPreferredSize(new Dimension(10000, 1));
+        box.setPreferredSize(new Dimension(450, 1));
         add(box, "wrap, span 100");
     }
 }
