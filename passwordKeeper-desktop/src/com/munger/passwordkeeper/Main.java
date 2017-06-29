@@ -26,6 +26,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.AbstractAction;
@@ -179,7 +180,8 @@ public class Main extends javax.swing.JFrame
     
     public void loadAboutView()
     {
-        
+        currentView = new AboutView();
+        changeView(true);
     }
     
     public void loadImportView()
@@ -213,7 +215,30 @@ public class Main extends javax.swing.JFrame
     
     public void loadExportView()
     {
+        JFileChooser chooser = new JFileChooser();
+        int returnVal = chooser.showOpenDialog(this);
         
+        if (returnVal != JFileChooser.APPROVE_OPTION)
+            return;
+        
+        File selectedFile = chooser.getSelectedFile();
+        String rootDir = selectedFile.getParentFile().getAbsolutePath();
+        String name = selectedFile.getName();
+        String oldRootDir = mainState.document.getRootPath();
+        String oldName = mainState.document.name;
+        
+        try
+        {
+            mainState.document.name = name;
+            mainState.document.setRootPath(rootDir + "/");
+            mainState.document.save();
+        }
+        catch(Exception e){
+            showAlert("Failed to export " + rootDir + "/" + name);
+        }
+        
+        mainState.document.name = oldName;
+        mainState.document.setRootPath(oldRootDir);
     }
     
     public void loadPreferencesView()
@@ -223,7 +248,23 @@ public class Main extends javax.swing.JFrame
     
     public void closeDocument()
     {
+        try
+        {
+            mainState.document.close();
+        }
+        catch(Exception e){
+            
+        }
         
+        synchronized(locker)
+        {
+            loaded = false;
+        }
+        
+        mainState.openDoc();
+        
+        backStack = new ArrayList<>();
+        loadInitialView();
     }
     
     public void enableEditActions(boolean enabled)

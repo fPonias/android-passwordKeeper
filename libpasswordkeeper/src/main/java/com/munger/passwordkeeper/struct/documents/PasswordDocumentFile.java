@@ -44,6 +44,11 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	}
 
+        public String getRootPath()
+        {
+            return rootPath;
+        }
+                
 	public void setRootPath(String value)
 	{
 		rootPath = value;

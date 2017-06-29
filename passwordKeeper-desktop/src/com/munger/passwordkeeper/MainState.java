@@ -17,6 +17,16 @@ public class MainState
     
     public MainState()
     {
+        openDoc();
+    }
+    
+    public void openDoc()
+    {
+        openDoc("password");
+    }
+    
+    public void openDoc(String name)
+    {
         document = new PasswordDocumentFile("password");
         document.setRootPath("/Users/hallmarklabs/pw-tmp/");
     }
