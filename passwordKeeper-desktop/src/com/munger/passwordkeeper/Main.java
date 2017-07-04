@@ -5,6 +5,7 @@
  */
 package com.munger.passwordkeeper;
 
+import com.munger.passwordkeeper.ctrl.MenuCtrl;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
@@ -52,6 +53,7 @@ public class Main extends javax.swing.JFrame
     public static Main instance;
     
     public MainState mainState;
+    public MenuCtrl menuCtrl;
     public Page currentView = null;
     
     /**
@@ -60,13 +62,28 @@ public class Main extends javax.swing.JFrame
     public Main() 
     {
         instance = this;
-        mainState = new MainState();
         
         initComponents();
+        
+        try
+        {
+            mainState = new MainState();
+            menuCtrl = new MenuCtrl(this);
+        }
+        catch(Exception e){
+            displayAlert("failed to initialize app");
+            quit();
+        }
+        
         setupListeners();
         loadInitialView();
     }
 
+    private void displayAlert(String message)
+    {
+        JOptionPane.showMessageDialog(this, message);
+    }
+    
     private ArrayList<Page> backStack = new ArrayList<>();
     
     private void changeView(boolean pushStack)
@@ -102,15 +119,77 @@ public class Main extends javax.swing.JFrame
         if (mainState.document.exists())
             currentView = new OpenFile();
         else
-            currentView = new NewFile();
+            currentView = new NewFile(false);
         
+        changeView(false);
+    }
+    
+    public void loadNewView()
+    {
+        currentView = new NewFile(true);
         changeView(false);
     }
     
     private final Object locker = new Object();
     private boolean loaded = false;
     
+    public void loadFile(File target)
+    {
+        mainState.prefs.setSavePath(target.getAbsolutePath());
+        currentView = new OpenFile();
+    }
+    
     public void openFile()
+    {
+        privateOpenFile(new openFileAction() 
+        {
+            @Override
+            public void loaded() 
+            {
+                loadDocumentView();
+            }
+
+            @Override
+            public void failed(Exception e) 
+            {
+                showAlert("Failed to open the document: " + mainState.document.name);
+            }
+        });
+    }
+    
+    private void updateRecents()
+    {
+        String path = mainState.prefs.getSavePath();
+        String[] recents = mainState.prefs.getRecentFiles();
+        int foundIdx = -1;
+        int sz = recents.length;
+        for (int i = 0; i < sz; i++)
+        {
+            if (recents[i].equals(path))
+            {
+                foundIdx = i;
+                break;
+            }
+        }
+
+        java.util.List<String> list = java.util.Arrays.asList(recents);
+
+        if (foundIdx > -1)
+            list.remove(foundIdx);
+
+        list.add(0, path);
+        
+        recents = (String[]) list.toArray();
+        mainState.prefs.setRecentFiles(recents);
+    }
+    
+    private interface openFileAction
+    {
+        public void loaded();
+        public void failed(Exception e);
+    }
+    
+    private void privateOpenFile(openFileAction action)
     {        
         final PasswordDocument.ILoadEvents listener = new PasswordDocumentFile.ILoadEvents() {
             @Override
@@ -143,7 +222,11 @@ public class Main extends javax.swing.JFrame
                 mainState.document.load(true);
             }
             catch(Exception e){
-                showAlert("Failed to open the document: " + mainState.document.name);
+                action.failed(e);
+                synchronized(locker)
+                {
+                    locker.notify();
+                }
             }
         }});
         loadTask.start();
@@ -155,7 +238,9 @@ public class Main extends javax.swing.JFrame
         }
 
         mainState.document.removeLoadEvents(listener);
-        loadDocumentView();
+        
+        if (loaded)
+            action.loaded();
     }
 
     public void showAlert(String alert)
@@ -220,40 +305,25 @@ public class Main extends javax.swing.JFrame
         }
     }
     
-    public void loadExportView()
-    {
-        JFileChooser chooser = new JFileChooser();
-        int returnVal = chooser.showOpenDialog(this);
-        
-        if (returnVal != JFileChooser.APPROVE_OPTION)
-            return;
-        
-        File selectedFile = chooser.getSelectedFile();
-        String rootDir = selectedFile.getParentFile().getAbsolutePath();
-        String name = selectedFile.getName();
-        String oldRootDir = mainState.document.getRootPath();
-        String oldName = mainState.document.name;
-        
-        try
-        {
-            mainState.document.name = name;
-            mainState.document.setRootPath(rootDir + "/");
-            mainState.document.save();
-        }
-        catch(Exception e){
-            showAlert("Failed to export " + rootDir + "/" + name);
-        }
-        
-        mainState.document.name = oldName;
-        mainState.document.setRootPath(oldRootDir);
-    }
-    
     public void loadPreferencesView()
     {
-        
+        currentView = new PreferencesView();
+        changeView(true);
     }
     
     public void closeDocument()
+    {
+        doClose();
+        loadInitialView();
+    }
+    
+    public void newDocument()
+    {
+        doClose();
+        loadNewView();
+    }
+    
+    private void doClose()
     {
         try
         {
@@ -272,13 +342,11 @@ public class Main extends javax.swing.JFrame
         mainState.stopQuitTimer();
         
         backStack = new ArrayList<>();
-        loadInitialView();
     }
     
     public void enableEditActions(boolean enabled)
     {
         importItem.setEnabled(enabled);
-        exportItem.setEnabled(enabled);
     }
     
     public void enableDetailsActions(boolean enabled)
@@ -308,9 +376,11 @@ public class Main extends javax.swing.JFrame
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
+        newItem = new javax.swing.JMenuItem();
+        openItem = new javax.swing.JMenuItem();
+        recentMenu = new javax.swing.JMenu();
         closeItem = new javax.swing.JMenuItem();
         importItem = new javax.swing.JMenuItem();
-        exportItem = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JPopupMenu.Separator();
         quitItem = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
@@ -332,15 +402,21 @@ public class Main extends javax.swing.JFrame
 
         jMenu1.setText("File");
 
+        newItem.setText("New ...");
+        jMenu1.add(newItem);
+
+        openItem.setText("Open ...");
+        jMenu1.add(openItem);
+
+        recentMenu.setText("Recent");
+        jMenu1.add(recentMenu);
+
         closeItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_W, java.awt.event.InputEvent.CTRL_MASK));
         closeItem.setText("Close");
         jMenu1.add(closeItem);
 
         importItem.setText("Import ...");
         jMenu1.add(importItem);
-
-        exportItem.setText("Export ...");
-        jMenu1.add(exportItem);
         jMenu1.add(jSeparator3);
 
         quitItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_MASK));
@@ -452,13 +528,12 @@ public class Main extends javax.swing.JFrame
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenuItem aboutItem;
-    private javax.swing.JMenuItem closeItem;
-    private javax.swing.JMenuItem copyItem;
-    private javax.swing.JMenuItem cutItem;
-    private javax.swing.JMenuItem exportItem;
-    private javax.swing.JMenuItem generatePasswordItem;
-    private javax.swing.JMenuItem importItem;
+    public javax.swing.JMenuItem aboutItem;
+    public javax.swing.JMenuItem closeItem;
+    public javax.swing.JMenuItem copyItem;
+    public javax.swing.JMenuItem cutItem;
+    public javax.swing.JMenuItem generatePasswordItem;
+    public javax.swing.JMenuItem importItem;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
@@ -467,10 +542,13 @@ public class Main extends javax.swing.JFrame
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
-    private javax.swing.JMenuItem pasteItem;
-    private javax.swing.JMenuItem prefsItem;
-    private javax.swing.JMenuItem quitItem;
-    private javax.swing.JMenuItem selectAllItem;
+    public javax.swing.JMenuItem newItem;
+    public javax.swing.JMenuItem openItem;
+    public javax.swing.JMenuItem pasteItem;
+    public javax.swing.JMenuItem prefsItem;
+    public javax.swing.JMenuItem quitItem;
+    public javax.swing.JMenu recentMenu;
+    public javax.swing.JMenuItem selectAllItem;
     // End of variables declaration//GEN-END:variables
 
     private void setupListeners()
@@ -496,147 +574,20 @@ public class Main extends javax.swing.JFrame
         getContentPane().addKeyListener(new KeyTypedListener() {public void keyTyped(KeyEvent e) 
         {
             mainState.resetQuitTimer();
-        }});
+        }});   
         
-        importItem.addActionListener((ActionEvent e) ->
+        mainState.prefs.addListener((Prefs.Types key) -> 
         {
-            loadImportView();
-        });
-        
-        exportItem.addActionListener((ActionEvent e) ->
-        {
-            loadExportView();
-        });
-        
-        prefsItem.addActionListener((ActionEvent e) ->
-        {
-            loadPreferencesView();
-        });
-        
-        aboutItem.addActionListener((ActionEvent e) -> 
-        {
-            loadAboutView();
-        });
-        
-        closeItem.addActionListener((ActionEvent e) ->
-        {
-            closeDocument();
-        });
-        
-        quitItem.addActionListener((ActionEvent e) ->
-        {
-            quit();
-        });
-        
-        copyItem.addActionListener((ActionEvent e) ->
-        {
-            Component c = getFocusOwner();
-            if (c instanceof JTextComponent)
+            if (key == Prefs.Types.savePath)
             {
-                ((JTextComponent) c).copy();
-            }
-            else if (lastFocused instanceof JTextComponent)
-            {
-                ((JTextComponent)  lastFocused).copy();
-            }
-            else
-            {
-                String copied = currentView.onCopy();
-                putInClipboard(copied);
+                Thread t = new Thread(() ->
+                {
+                    try { Thread.sleep(100); } catch (InterruptedException e) {}
+                    loadInitialView();                    
+                }, "reloadInitView");
+                t.start();
             }
         });
-        
-        cutItem.addActionListener((ActionEvent e) ->
-        {
-            Component c = getFocusOwner();
-            if (c instanceof JTextComponent)
-            {
-                ((JTextComponent) c).cut();
-            }
-            else if (lastFocused instanceof JTextComponent)
-            {
-                ((JTextComponent)  lastFocused).cut();
-            }
-            else
-            {
-                String cut = currentView.onCut();
-                putInClipboard(cut);
-            }
-        });
-        
-        pasteItem.addActionListener((ActionEvent e) ->
-        {
-            Component c = getFocusOwner();
-            if (c instanceof JTextComponent)
-            {
-                ((JTextComponent) c).paste();
-            }
-            else if (lastFocused instanceof JTextComponent)
-            {
-                ((JTextComponent) lastFocused).paste();
-            }
-            else
-            {
-                String paste = getFromClipboard();
-                currentView.onPaste(paste);
-            }
-        });
-        
-        selectAllItem.addActionListener((ActionEvent e) ->
-        {
-            Component c = getFocusOwner();
-            if (c instanceof JTextComponent)
-            {
-                ((JTextComponent) c).selectAll();
-            }
-            else if (lastFocused instanceof JTextComponent)
-            {
-                ((JTextComponent)  lastFocused).selectAll();
-            }
-            else
-            {
-                currentView.onSelectAll();
-            }
-        });
-        
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener((PropertyChangeEvent evt) -> 
-        {
-            Object old = evt.getOldValue();
-            Object neu = evt.getNewValue();
-            
-            if (neu == null && old != null)
-                lastFocused = old;
-            else if (neu instanceof JRootPane)
-            {}
-            else
-                lastFocused = null;
-        });
-                
     }
     
-    private Object lastFocused;
-    
-    private void putInClipboard(String val)
-    {
-        if (val == null)
-            return;
-        
-        StringSelection sel = new StringSelection(val);
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(sel, sel);
-    }
-    
-    private String getFromClipboard()
-    {      
-        try
-        {
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            Transferable t = clipboard.getContents(null);
-            String ret = (String) t.getTransferData(DataFlavor.stringFlavor);
-            return ret;
-        }
-        catch(HeadlessException | UnsupportedFlavorException | IOException e) {
-            return "";
-        }
-    }
 }

@@ -39,7 +39,7 @@ public class PasswordDocumentFile extends PasswordDocument
 
 		if (!target.exists() || target.length() == 0)
 		{
-			setHistoryLoaded();
+                    setHistoryLoaded();
 		}
 
 	}

@@ -5,7 +5,9 @@
  */
 package com.munger.passwordkeeper;
 
+import com.munger.passwordkeeper.ctrl.MenuCtrl;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
+import java.util.prefs.BackingStoreException;
 
 /**
  *
@@ -15,21 +17,72 @@ public class MainState
 {
     public PasswordDocumentFile document;
     public QuitTimer quitTimer;
+    public Prefs prefs;
     
-    public MainState()
+    public MenuCtrl menuCtrl;
+    
+    public MainState() throws BackingStoreException
     {
+        prefs = new Prefs();
+        prefs.addListener((Prefs.Types key) -> 
+        {
+            doUpdate(key);
+        });
+        
         openDoc();
+    }
+    
+    private void doUpdate(Prefs.Types key)
+    {
+        if (key == Prefs.Types.timeout)
+            updateTimer();
+        else if (key == Prefs.Types.savePath)
+            updateDoc();
+    }
+    
+    private void updateTimer()
+    {
+        long timeout = prefs.getTimeout();
+        if (timeout == -1)
+            stopQuitTimer();
+        else
+        {
+            if (quitTimer == null)
+                startQuitTimer();
+
+            quitTimer.setQuitCheckInterval(timeout);
+            quitTimer.reset();
+        }
+    }
+    
+    private void updateDoc()
+    {
+        try
+        {
+            if (document != null)
+                document.close();
+            
+            document = null;
+            
+            openDoc();
+        }
+        catch(Exception e){
+            Main.instance.showAlert("failed to reopen password file at " + document.getRootPath() + document.name);
+        }
     }
     
     public void openDoc()
     {
-        openDoc("password");
-    }
-    
-    public void openDoc(String name)
-    {
-        document = new PasswordDocumentFile("password");
-        document.setRootPath("/Users/hallmarklabs/pw-tmp/");
+        String path = prefs.getSavePath();
+        String[] parts = path.split("/");
+        String name = parts[parts.length - 1];
+        
+        path = "";
+        for (int i = 0; i > parts.length - 1; i++)
+            path += parts[i] + "/";
+        
+        document = new PasswordDocumentFile(name);
+        document.setRootPath(path);
     }
     
     public void setupDriveHelper()

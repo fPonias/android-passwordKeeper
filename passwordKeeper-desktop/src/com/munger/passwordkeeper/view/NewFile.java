@@ -7,21 +7,29 @@ package com.munger.passwordkeeper.view;
 
 import com.munger.passwordkeeper.Main;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author hallmarklabs
  */
 public class NewFile extends Page 
-{
-
+{    
+    private boolean settingName;
+    
     /**
      * Creates new form NewFile
      */
-    public NewFile() 
+    public NewFile(boolean settingName) 
     {
+        this.settingName = settingName;
+        
         initComponents();
+        nameIpt.setVisible(settingName);
+        nameLbl.setVisible(settingName);
         
         Main.instance.enableEditActions(false);
         Main.instance.enableResetActions(false);
@@ -35,29 +43,68 @@ public class NewFile extends Page
     
     private void doSubmit()
     {
-        char[] ps1 = password1ipt.getPassword();
+        String name = nameIpt.getText();
+        
+        char[] ps1 = passwordipt.getPassword();
         char[] ps2 = password2ipt.getPassword();
         
-        boolean valid = validate(ps1, ps2);
+        boolean valid = validate(name, ps1, ps2);
         
         if (!valid)
             return;
         
+        boolean passed = checkTargetFile(name);
+        
+        if (!passed)
+            return;
+        
+        PasswordDocumentFile doc = (PasswordDocumentFile) Main.instance.mainState.document;
+        
         try
         {
-            PasswordDocument doc = Main.instance.mainState.document;
+            if (settingName)
+                doc.name = name;
+            
             doc.setPassword(new String(ps1));
             doc.save();
         }
         catch(Exception e){
+            Main.instance.showAlert("Failed to save file " + doc.getDetailsFilePath() + "/" + doc.name);
             return;
         }
         
         Main.instance.loadDocumentView();
     }
     
-    private boolean validate(char[] ps1, char[] ps2)
+    private boolean checkTargetFile(String name)
     {
+         PasswordDocumentFile doc = (PasswordDocumentFile) Main.instance.mainState.document;
+        
+        if (settingName)
+        {
+            String path = doc.getDetailsFilePath() + "/" + name;
+            File targetFile = new File(path);
+            
+            if (targetFile.exists())
+            {
+                String message = "File " + path + " already exists.  Overwrite?";
+                int choice = JOptionPane.showConfirmDialog(this, message, "", JOptionPane.OK_CANCEL_OPTION);
+                
+                if (choice == JOptionPane.CANCEL_OPTION) 
+                    return false;
+                
+                targetFile.delete();
+            }
+        }
+        
+        return true;
+    }
+    
+    private boolean validate(String name, char[] ps1, char[] ps2)
+    {
+        if (settingName && name.length() == 0)
+            return false;
+        
         int sz = ps1.length;
         int sz2 = ps2.length;
         
@@ -86,33 +133,47 @@ public class NewFile extends Page
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        jLabel1 = new javax.swing.JLabel();
-        password1ipt = new javax.swing.JPasswordField();
+        nameLbl = new javax.swing.JLabel();
+        nameIpt = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        passwordipt = new javax.swing.JPasswordField();
         jLabel2 = new javax.swing.JLabel();
         password2ipt = new javax.swing.JPasswordField();
         submitBtn = new javax.swing.JButton();
 
         setLayout(new java.awt.GridBagLayout());
 
-        jLabel1.setText("Password");
+        nameLbl.setText("Name");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.ipadx = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        add(jLabel1, gridBagConstraints);
+        add(nameLbl, gridBagConstraints);
 
-        password1ipt.setMinimumSize(new java.awt.Dimension(100, 26));
-        password1ipt.setPreferredSize(new java.awt.Dimension(120, 26));
+        nameIpt.setPreferredSize(new java.awt.Dimension(120, 26));
+        add(nameIpt, new java.awt.GridBagConstraints());
+
+        jLabel4.setText("Password");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.ipadx = 10;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
+        add(jLabel4, gridBagConstraints);
+
+        passwordipt.setPreferredSize(new java.awt.Dimension(120, 26));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        add(password1ipt, gridBagConstraints);
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
+        add(passwordipt, gridBagConstraints);
 
         jLabel2.setText("Verify Password");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.ipadx = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
@@ -120,37 +181,30 @@ public class NewFile extends Page
         jLabel2.getAccessibleContext().setAccessibleDescription("");
 
         password2ipt.setPreferredSize(new java.awt.Dimension(120, 26));
-        password2ipt.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                password2iptActionPerformed(evt);
-            }
-        });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
         add(password2ipt, gridBagConstraints);
 
         submitBtn.setText("Create Password Repo");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTH;
         gridBagConstraints.insets = new java.awt.Insets(40, 0, 0, 0);
         add(submitBtn, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void password2iptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_password2iptActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_password2iptActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JPasswordField password1ipt;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JTextField nameIpt;
+    private javax.swing.JLabel nameLbl;
     private javax.swing.JPasswordField password2ipt;
+    private javax.swing.JPasswordField passwordipt;
     private javax.swing.JButton submitBtn;
     // End of variables declaration//GEN-END:variables
 }
