@@ -12,3 +12,7 @@
 /passwordKeeper-desktop/libpassword/build/
 /passwordKeeper-desktop/libpassword/dist/
 /passwordKeeper-desktop/dist/
+/passwordKeeper-desktop/libpasswordKeeper/nbproject/private/
+/passwordKeeper-desktop/libpasswordKeeper/dist/
+/passwordKeeper-desktop/libpasswordKeeper/build/
+/passwordKeeper-desktop/target/
