@@ -116,6 +116,15 @@ public class Main extends javax.swing.JFrame
     
     public void loadInitialView()
     {
+        try
+        {
+            PasswordDocumentDrive testDoc = new PasswordDocumentDrive();
+            testDoc.fileList();
+        }
+        catch(Exception e){
+            int i = 0; int j = i;
+        }
+        
         if (mainState.document.exists())
             currentView = new OpenFile();
         else

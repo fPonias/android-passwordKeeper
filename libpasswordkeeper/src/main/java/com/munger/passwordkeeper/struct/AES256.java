@@ -3,6 +3,10 @@ package com.munger.passwordkeeper.struct;
 import com.munger.passwordkeeper.helpers.ThreadedCallbackWaiter;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class AES256
 {
@@ -13,17 +17,7 @@ public class AES256
 		String vendor = System.getProperty("java.vendor");
 		System.out.println("current platform: " + platform + " vendor: " + vendor);
 
-		if (platform.equals("Mac OS X"))
-		{
-			try
-			{
-				System.loadLibrary("aes256-GNU-MacOSX");
-			}
-			catch(UnsatisfiedLinkError e){
-				loadExternalLib("./res/libaes256-GNU-MacOSX.dylib");
-			}
-		}
-		else if (platform.equals("Linux") && vendor.contains("Android"))
+		if (platform.equals("Linux") && vendor.contains("Android"))
 		{
 			try
 			{
@@ -41,7 +35,25 @@ public class AES256
 		}
 		else
 		{
-			throw new Error("Platform " + platform + " is not supported.");
+                    File libFile = new File(System.getProperty("user.home"), ".passwordKeeper/libaes256-GNU-MacOSX.dylib");
+                    
+                    if (!libFile.exists())
+                    {
+                        try
+                        {
+                            InputStream str = AES256.class.getResourceAsStream("/libaes256-GNU-MacOSX.dylib");
+                            byte[] buffer = new byte[str.available()];
+                            str.read(buffer);
+
+                            OutputStream outStream = new FileOutputStream(libFile);
+                            outStream.write(buffer);
+                        }
+                        catch(IOException e){
+                            System.out.println("Failed to load aes library");
+                        }
+                    }
+                        
+                    loadExternalLib(libFile.getAbsolutePath());
 		}
 	}
 
