@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -152,5 +153,18 @@ public class Prefs
             if (listener != null)
                 listener.updated(type);
         }
+    }
+    
+    public String getDeviceUID()
+    {
+        String ret = (preferences.get("uuid", null));
+        
+        if (ret == null)
+        {
+            ret = UUID.randomUUID().toString();
+            preferences.put("uuid", ret);
+        }
+        
+        return ret;
     }
 }

@@ -6,6 +6,7 @@
 package com.munger.passwordkeeper;
 
 import com.munger.passwordkeeper.ctrl.MenuCtrl;
+import com.munger.passwordkeeper.drive.DriveHelper;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import java.util.prefs.BackingStoreException;
 
@@ -18,6 +19,7 @@ public class MainState
     public PasswordDocumentFile document;
     public QuitTimer quitTimer;
     public Prefs prefs;
+    public DriveHelper driveHelper;
     
     public MenuCtrl menuCtrl;
     
@@ -28,6 +30,13 @@ public class MainState
         {
             doUpdate(key);
         });
+        
+        try
+        {
+            driveHelper = new DriveHelper();
+            driveHelper.init();
+        }
+        catch(Exception e){}
         
         openDoc();
     }
