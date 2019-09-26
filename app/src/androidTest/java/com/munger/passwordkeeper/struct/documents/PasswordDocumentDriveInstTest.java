@@ -1,22 +1,12 @@
 package com.munger.passwordkeeper.struct.documents;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.app.FragmentActivity;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResolvingResultCallbacks;
 import com.google.android.gms.drive.DriveApi;
-import com.google.android.gms.drive.DriveFile;
-import com.google.android.gms.drive.DriveFolder;
-import com.google.android.gms.drive.DriveId;
-import com.google.android.gms.drive.Metadata;
-import com.google.android.gms.drive.MetadataBuffer;
-import com.google.android.gms.drive.query.Query;
 import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.TestingMainActivity;
@@ -28,11 +18,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.model.InitializationError;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.rule.ActivityTestRule;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -126,16 +116,9 @@ public class PasswordDocumentDriveInstTest
     @Rule
     public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
 
-    @BeforeClass
-    public void beforeClass() throws InitializationError
-    {
-        AndroidJUnit4 runner = new AndroidJUnit4(PasswordDocumentDriveInstTest.class, null);
-    }
-
     @Before
     public void before()
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
@@ -195,7 +178,6 @@ public class PasswordDocumentDriveInstTest
     @Test
     public void connectsForReal() throws Exception
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDerRealDrive();
         MainState.setInstance(mainState);

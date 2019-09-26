@@ -1,9 +1,7 @@
 package com.munger.passwordkeeper.helpers;
 
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-
-import com.munger.passwordkeeper.struct.AES256;
+import androidx.test.filters.SmallTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import static org.junit.Assert.*;
 import org.junit.After;

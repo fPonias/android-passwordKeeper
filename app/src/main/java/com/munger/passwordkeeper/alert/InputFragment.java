@@ -4,16 +4,16 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.R;
 
-public class InputFragment extends DialogFragment 
+import androidx.fragment.app.DialogFragment;
+
+public class InputFragment extends DialogFragment
 {
 	protected String message;
 	protected String prompt;

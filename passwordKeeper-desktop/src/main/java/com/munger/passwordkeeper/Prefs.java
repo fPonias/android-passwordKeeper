@@ -5,6 +5,7 @@
  */
 package com.munger.passwordkeeper;
 
+import com.munger.passwordkeeper.drive.DriveHelper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -41,6 +42,7 @@ public class Prefs
     {
         savePath,
         syncToDrive,
+        syncFile,
         timeout,
         recents
     };
@@ -74,6 +76,48 @@ public class Prefs
     {
         preferences.putBoolean(Types.syncToDrive.toString(), value);
         notifyListeners(Types.syncToDrive);
+    }
+    
+    public DriveHelper.DriveFileStruct getSyncFile()
+    {
+        byte[] bytes = preferences.getByteArray(Types.syncFile.toString(), null);
+        if (bytes == null)
+            return null;
+        
+        ObjectInputStream ois = null;
+        DriveHelper.DriveFileStruct ret = null;
+        try
+        {
+            ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+            ret = (DriveHelper.DriveFileStruct) ois.readObject();
+        }
+        catch(Exception e){}
+        
+        if (ois != null)
+            try {ois.close();} catch(Exception e) {}
+        
+        return ret;
+    }
+    
+    public void setSyncFile(DriveHelper.DriveFileStruct value)
+    {
+        ObjectOutputStream ois = null;
+        
+        try
+        {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ois = new ObjectOutputStream(baos);
+            ois.writeObject(value);
+            ois.flush();
+            
+            preferences.putByteArray(Types.recents.toString(), baos.toByteArray());
+        }
+        catch(Exception e){}
+        
+        if (ois != null)
+            try{ois.close();} catch(Exception e){}
+        
+        notifyListeners(Types.syncFile);
     }
     
     public long getTimeout()

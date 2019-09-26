@@ -1,20 +1,8 @@
 package com.munger.passwordkeeper;
 
-import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Handler;
-import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.preference.PreferenceManager;
-import android.util.Log;
 
-import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
@@ -26,11 +14,8 @@ import com.munger.passwordkeeper.struct.Settings;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
-import com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
-import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
-import com.munger.passwordkeeper.view.SettingsFragment;
 
-import java.util.ArrayList;
+import androidx.fragment.app.FragmentActivity;
 
 /**
  * Created by codymunger on 11/25/16.

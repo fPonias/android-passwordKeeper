@@ -1,14 +1,8 @@
 package com.munger.passwordkeeper.view;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -19,16 +13,21 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
-import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.view.widget.TextWidget;
 
-public class ViewFileFragment extends Fragment 
+import java.util.ArrayList;
+import java.util.List;
+
+import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.Fragment;
+
+public class ViewFileFragment extends Fragment
 {
 	private View root;
 	

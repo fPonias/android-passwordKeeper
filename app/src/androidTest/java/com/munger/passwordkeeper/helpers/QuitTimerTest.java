@@ -1,15 +1,12 @@
 package com.munger.passwordkeeper.helpers;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.app.FragmentActivity;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.TestingMainActivity;
-import com.munger.passwordkeeper.alert.AlertFragmentTest;
 import com.munger.passwordkeeper.struct.Settings;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
@@ -18,6 +15,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.rule.ActivityTestRule;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -72,7 +72,6 @@ public class QuitTimerTest
     @Before
     public void before()
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDer();
         MainState.setInstance(mainState);

@@ -3,17 +3,16 @@ package com.munger.passwordkeeper.helpers;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.ErrorDialogFragment;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
 
 public class DriveHelper implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks
 {

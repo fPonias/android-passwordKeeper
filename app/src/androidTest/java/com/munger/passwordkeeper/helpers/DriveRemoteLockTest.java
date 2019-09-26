@@ -1,11 +1,9 @@
 package com.munger.passwordkeeper.helpers;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.app.FragmentActivity;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -15,7 +13,6 @@ import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.events.ChangeListener;
 import com.google.android.gms.drive.metadata.CustomPropertyKey;
-import com.google.android.gms.internal.zzc;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.struct.Settings;
@@ -32,9 +29,11 @@ import org.mockito.stubbing.Answer;
 import java.util.HashMap;
 import java.util.Map;
 
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.rule.ActivityTestRule;
+
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -94,7 +93,6 @@ public class DriveRemoteLockTest
     @Before
     public void before()
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
@@ -114,7 +112,10 @@ public class DriveRemoteLockTest
         Map<CustomPropertyKey, String> ret = new HashMap<>();
 
         if (value != null)
-            ret.put(target.key, value);
+        {
+            CustomPropertyKey key = new CustomPropertyKey(target.key, 0);
+            ret.put(key, value);
+        }
 
         doReturn(result).when(driveFileMock).getMetadata(apiClientMock);
         doAnswer(new Answer<DriveResource.MetadataResult>() {public DriveResource.MetadataResult answer(InvocationOnMock invocation) throws Throwable

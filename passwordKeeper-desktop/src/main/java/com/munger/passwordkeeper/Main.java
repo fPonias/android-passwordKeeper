@@ -5,6 +5,7 @@
  */
 package com.munger.passwordkeeper;
 
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.ctrl.MenuCtrl;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;

@@ -4,30 +4,20 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.preference.CheckBoxPreference;
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceFragmentCompat;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.ListView;
-import android.widget.SeekBar;
-import android.widget.TextView;
 
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
-import com.munger.passwordkeeper.alert.AlertFragment;
 import com.munger.passwordkeeper.alert.FileDialog;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
-import com.munger.passwordkeeper.struct.PasswordDetails;
 
 import java.io.File;
+
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 
 public class SettingsFragment extends PreferenceFragmentCompat
 {

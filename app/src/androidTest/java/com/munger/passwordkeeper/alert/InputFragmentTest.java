@@ -1,15 +1,10 @@
 package com.munger.passwordkeeper.alert;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.NoMatchingViewException;
-import android.support.test.espresso.ViewInteraction;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.app.FragmentActivity;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.TestingMainActivity;
@@ -22,14 +17,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.clearText;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.typeText;
-import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
-import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.espresso.NoMatchingViewException;
+import androidx.test.rule.ActivityTestRule;
+
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.clearText;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.typeText;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -37,8 +36,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -86,7 +83,6 @@ public class InputFragmentTest
     @Before
     public void before()
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDer();
         MainState.setInstance(mainState);

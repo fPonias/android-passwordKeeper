@@ -16,10 +16,7 @@
 
 package com.munger.passwordkeeper.view;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,16 +24,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
-import com.munger.passwordkeeper.alert.AlertFragment;
-import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
-import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
-import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
-import java.util.ArrayList;
+import androidx.fragment.app.Fragment;
 
 public class CreateFileFragment extends Fragment
 {
@@ -81,13 +73,13 @@ public class CreateFileFragment extends Fragment
 		if (!isCreating)
 		{
 			oldpassIn.setVisibility(View.VISIBLE);
-			titleLbl.setText("Welcome to Password Crypt.  Please set your master password.");
+			titleLbl.setText("Changing current password");
 			subtitleLbl.setVisibility(View.VISIBLE);
 		}
 		else
 		{
 			oldpassIn.setVisibility(View.GONE);
-			titleLbl.setText("Changing current password");
+			titleLbl.setText("Welcome to Password Crypt.  Please set your master password.");
 			subtitleLbl.setVisibility(View.GONE);
 		}
 	}

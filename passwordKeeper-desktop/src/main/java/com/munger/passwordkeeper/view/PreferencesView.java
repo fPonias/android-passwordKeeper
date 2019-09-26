@@ -5,8 +5,11 @@
  */
 package com.munger.passwordkeeper.view;
 
+import com.google.api.services.drive.model.User;
 import com.munger.passwordkeeper.Main;
+import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.Prefs;
+import com.munger.passwordkeeper.drive.DriveHelper;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -35,21 +38,32 @@ public class PreferencesView extends Page
         Populate();
     }
     
+    public JLabel googlePlayUserLbl;
     public JCheckBox googlePlayCheckbox;
+    public JLabel remoteFilePrefLbl;
+    public JLabel remoteFilePathLbl;
+    public JCheckBox remoteFileBtn;
     public JButton changePasswordBtn;
     public JButton deleteLocalDataBtn;
     public JComboBox<TimeoutPair> timeoutList;
-    public JLabel filePathLbl;
-    public JButton filePathBtn;
     
     private void InitializeView()
     {
         setLayout(new MigLayout());
         
-        JLabel lbl = new JLabel("Sync with google play");
+        JLabel lbl = new JLabel("Google Play authorization");
         add(lbl);
+        googlePlayUserLbl = new JLabel();
+        add(googlePlayUserLbl);
         googlePlayCheckbox = new JCheckBox();
         add(googlePlayCheckbox, "wrap");
+        
+        remoteFilePrefLbl = new JLabel("Sync remote file");
+        add(remoteFilePrefLbl);
+        remoteFilePathLbl = new JLabel();
+        add(remoteFilePathLbl);
+        remoteFileBtn = new JCheckBox();
+        add(remoteFileBtn, "wrap");
         
         lbl = new JLabel("Auto-close");
         add(lbl);
@@ -74,6 +88,14 @@ public class PreferencesView extends Page
         {
             changePassword();
         });
+        
+        remoteFileBtn.addActionListener((ActionEvent e) ->
+        {
+            if (remoteFileBtn.isSelected())
+                disableRemoteSync();
+            else
+                enableRemoteSync();
+        });
     }
     
     private class TimeoutPair
@@ -92,7 +114,33 @@ public class PreferencesView extends Page
    
     private void Populate()
     {
-        filePathLbl.setText(Main.instance.mainState.prefs.getSavePath());
+        if (!Main.instance.mainState.driveHelper.isAuthorized())
+        {
+            googlePlayUserLbl.setText("");
+            googlePlayCheckbox.setSelected(false);
+            
+            remoteFilePrefLbl.setEnabled(false);
+            remoteFilePathLbl.setEnabled(false);
+            remoteFilePathLbl.setText("");
+            remoteFileBtn.setEnabled(false);
+            remoteFileBtn.setSelected(false);
+        }
+        else
+        {
+            User user = Main.instance.mainState.driveHelper.getUser();
+            String userTxt = user.getDisplayName() + " (" + user.getEmailAddress() + ")";
+            googlePlayUserLbl.setText(userTxt);
+            googlePlayCheckbox.setSelected(true);
+            
+            boolean remoteSync = Main.instance.mainState.prefs.getSyncToDrive();
+            remoteFileBtn.setSelected(remoteSync);
+
+            DriveHelper.DriveFileStruct remoteFile = Main.instance.mainState.prefs.getSyncFile();
+            if (remoteFile != null)
+                remoteFilePathLbl.setText(remoteFile.name);
+            else
+                remoteFilePathLbl.setText("");
+        }
         
         TimeoutPair[] valueList = new TimeoutPair[]
         {
@@ -106,6 +154,34 @@ public class PreferencesView extends Page
     }
     
     private void changePassword()
+    {
+        
+    }
+    
+    private void enableRemoteSync()
+    {
+        try
+        {
+            DriveHelper.DriveFileStruct str = Main.instance.mainState.prefs.getSyncFile();
+            if (str == null)
+                str = Main.instance.mainState.driveHelper.openFileChooser();
+            
+            if (str == null)
+                remoteFileBtn.setSelected(false);
+            
+            if (str.id == DriveHelper.NEW_ID)
+            {
+                remoteFileBtn.setSelected(false);
+                return;
+            }
+            
+            //Main.instance.mainState.driveHelper.download(str)
+        }
+        catch(Exception e)
+        {}
+    }
+    
+    private void disableRemoteSync()
     {
         
     }

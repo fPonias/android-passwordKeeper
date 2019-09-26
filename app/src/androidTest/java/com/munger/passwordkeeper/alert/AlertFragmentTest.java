@@ -1,11 +1,10 @@
 package com.munger.passwordkeeper.alert;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.app.FragmentActivity;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
@@ -13,22 +12,26 @@ import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
-import com.munger.passwordkeeper.view.CreateFileFragment;
-import com.munger.passwordkeeper.view.CreateFileFragmentTest;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.rule.ActivityTestRule;
+
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
-import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
-import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static android.support.test.espresso.action.ViewActions.*;
 /**
  * Created by codymunger on 12/4/16.
  */
@@ -74,7 +77,6 @@ public class AlertFragmentTest
     @Before
     public void before()
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
@@ -102,6 +104,7 @@ public class AlertFragmentTest
                 lock.notify();
             }
         }});
+
 
         onView(withText("alert!")).check(matches(isDisplayed()));
         onView(allOf(withClassName(containsString("Button")), withText(R.string.alert_okay))).perform(click());

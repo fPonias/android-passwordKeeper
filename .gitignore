@@ -16,3 +16,8 @@
 /passwordKeeper-desktop/libpasswordKeeper/dist/
 /passwordKeeper-desktop/libpasswordKeeper/build/
 /passwordKeeper-desktop/target/
+/passwordKeeper-desktop/sudokuSolver/build/
+/passwordKeeper-desktop/sudokuSolver/dist/
+/passwordKeeper-desktop/sudokuSolver-java/nbproject/private/
+/passwordKeeper-desktop/sudokuSolver-java/build/
+/passwordKeeper-desktop/sudokuSolver-java/dist/

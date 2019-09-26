@@ -20,9 +20,10 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 
 import com.munger.passwordkeeper.R;
+
+import androidx.fragment.app.DialogFragment;
 
 /**
  * Popup fragment that contains an alert message and an okay button.

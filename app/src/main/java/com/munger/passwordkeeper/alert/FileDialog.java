@@ -4,22 +4,16 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.util.Log;
-
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import androidx.appcompat.app.AlertDialog;
 
 public class FileDialog
 {

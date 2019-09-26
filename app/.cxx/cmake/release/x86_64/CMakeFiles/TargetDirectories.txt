@@ -1,0 +1,3 @@
+/Users/ygg474/spirit/android-passwordKeeper/app/.cxx/cmake/release/x86_64/CMakeFiles/edit_cache.dir
+/Users/ygg474/spirit/android-passwordKeeper/app/.cxx/cmake/release/x86_64/CMakeFiles/rebuild_cache.dir
+/Users/ygg474/spirit/android-passwordKeeper/app/.cxx/cmake/release/x86_64/CMakeFiles/aes256.dir

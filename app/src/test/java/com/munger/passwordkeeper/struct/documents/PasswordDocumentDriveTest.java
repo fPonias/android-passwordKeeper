@@ -1,7 +1,7 @@
 package com.munger.passwordkeeper.struct.documents;
 
 import android.content.Context;
-import android.support.v4.app.FragmentActivity;
+import androidx.core.app.FragmentActivity;
 import android.test.mock.MockContext;
 import android.util.Log;
 
@@ -18,7 +18,6 @@ import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.events.ChangeEvent;
 import com.google.android.gms.drive.events.ChangeListener;
 import com.google.android.gms.drive.metadata.CustomPropertyKey;
 import com.google.android.gms.drive.metadata.SearchableMetadataField;

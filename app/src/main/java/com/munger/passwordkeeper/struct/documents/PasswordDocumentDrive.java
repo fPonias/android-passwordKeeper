@@ -2,7 +2,6 @@ package com.munger.passwordkeeper.struct.documents;
 
 import android.os.AsyncTask;
 import android.os.ParcelFileDescriptor;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,6 +35,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
+
+import androidx.annotation.NonNull;
 
 /**
  * Created by codymunger on 11/18/16.

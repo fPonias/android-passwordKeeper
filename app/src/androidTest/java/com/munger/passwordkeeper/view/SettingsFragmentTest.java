@@ -3,18 +3,14 @@ package com.munger.passwordkeeper.view;
 /**
  * Created by codymunger on 11/27/16.
  */
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.NoMatchingViewException;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.app.FragmentActivity;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.munger.passwordkeeper.Helper;
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
@@ -37,19 +33,34 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static org.hamcrest.Matchers.*;
-import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static android.support.test.espresso.action.ViewActions.*;
-import android.support.test.espresso.contrib.DrawerMatchers;
-import android.support.test.espresso.contrib.RecyclerViewActions;
-import android.support.v7.widget.RecyclerView;
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.espresso.NoMatchingViewException;
+import androidx.test.espresso.contrib.RecyclerViewActions;
+import androidx.test.rule.ActivityTestRule;
 
-import static com.munger.passwordkeeper.CustomMatchers.*;
-import static org.junit.Assert.*;
+import static androidx.test.espresso.Espresso.onData;
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
+import static androidx.test.espresso.matcher.ViewMatchers.withParent;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static com.munger.passwordkeeper.CustomMatchers.withIndex;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
@@ -127,7 +138,6 @@ public class SettingsFragmentTest
     @Before
     public void before() throws Exception
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new SettingsFragmentTest.MainStateDer();
         MainState.setInstance(mainState);

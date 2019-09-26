@@ -1,26 +1,17 @@
 package com.munger.passwordkeeper.view;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.assertion.ViewAssertions;
-import android.support.test.espresso.matcher.ViewMatchers;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.app.FragmentActivity;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.munger.passwordkeeper.Helper;
-import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
-import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
-
-import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static org.junit.Assert.*;
 
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -33,14 +24,15 @@ import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 
-import static android.support.test.espresso.Espresso.onData;
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.typeText;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.espresso.assertion.ViewAssertions;
+import androidx.test.rule.ActivityTestRule;
+
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.typeText;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.anyString;
@@ -122,7 +114,6 @@ public class CreateFileFragmentTest
     @Before
     public void before()
     {
-        Context context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDer();
         MainState.setInstance(mainState);

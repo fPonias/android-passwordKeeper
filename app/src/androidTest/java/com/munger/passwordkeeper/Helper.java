@@ -1,21 +1,8 @@
 package com.munger.passwordkeeper;
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
-
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 
 import java.util.Random;
 

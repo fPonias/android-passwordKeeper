@@ -1,14 +1,13 @@
 package com.munger.passwordkeeper.struct;
 
 import android.content.SharedPreferences;
-import android.support.v7.preference.CheckBoxPreference;
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.PreferenceManager;
 
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.view.SettingsFragment;
 
 import java.util.UUID;
+
+import androidx.preference.PreferenceManager;
 
 /**
  * Created by codymunger on 12/5/16.

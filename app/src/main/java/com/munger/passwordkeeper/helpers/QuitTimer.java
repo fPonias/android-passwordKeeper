@@ -1,11 +1,8 @@
 package com.munger.passwordkeeper.helpers;
 
-import android.content.SharedPreferences;
-import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import com.munger.passwordkeeper.MainState;
-import com.munger.passwordkeeper.view.SettingsFragment;
 
 /**
  * Created by codymunger on 11/26/16.

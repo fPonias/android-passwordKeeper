@@ -1,7 +1,6 @@
 package com.munger.passwordkeeper.struct;
 
 import android.content.res.AssetManager;
-import android.support.v4.app.FragmentActivity;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -11,6 +10,8 @@ import com.munger.passwordkeeper.MainState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
+import androidx.fragment.app.FragmentActivity;
 
 public class ConfigFactory
 {

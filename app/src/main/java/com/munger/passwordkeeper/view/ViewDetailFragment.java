@@ -16,17 +16,10 @@
 
 package com.munger.passwordkeeper.view;
 
-import java.util.ArrayList;
-
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.widget.SearchView;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.KeyEvent;
@@ -36,7 +29,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -44,8 +36,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.android.internal.util.Predicate;
-import com.munger.passwordkeeper.MainActivity;
+import com.google.android.gms.common.util.Predicate;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
@@ -57,7 +48,13 @@ import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 import com.munger.passwordkeeper.view.widget.TextInputWidget;
 
-public class ViewDetailFragment extends Fragment 
+import java.util.ArrayList;
+
+import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.Fragment;
+
+public class ViewDetailFragment extends Fragment
 {
 	private View root = null;
 	

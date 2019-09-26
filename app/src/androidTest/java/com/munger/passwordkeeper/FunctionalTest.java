@@ -1,40 +1,26 @@
 package com.munger.passwordkeeper;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Environment;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.DataInteraction;
-import android.support.test.espresso.assertion.ViewAssertions;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
-import com.munger.passwordkeeper.helpers.KeyboardListenerTest;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
-import com.munger.passwordkeeper.helpers.QuitTimer;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.Settings;
-import com.munger.passwordkeeper.struct.documents.PasswordDocument;
-import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
-import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import com.munger.passwordkeeper.view.AboutFragment;
 import com.munger.passwordkeeper.view.CreateFileFragment;
 import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
-import com.munger.passwordkeeper.view.ViewDetailFragmentTest;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 import com.munger.passwordkeeper.view.widget.TextInputWidget;
@@ -43,36 +29,40 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
 import java.util.Random;
 
-import static android.support.test.espresso.Espresso.onData;
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.Espresso.pressBack;
-import static android.support.test.espresso.action.ViewActions.clearText;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.scrollTo;
-import static android.support.test.espresso.action.ViewActions.typeText;
-import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
-import static android.support.test.espresso.matcher.ViewMatchers.isAssignableFrom;
-import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
-import static android.support.test.espresso.matcher.ViewMatchers.isDescendantOfA;
-import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
-import static android.support.test.espresso.matcher.ViewMatchers.withParent;
-import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.espresso.DataInteraction;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.espresso.Espresso.onData;
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.Espresso.pressBack;
+import static androidx.test.espresso.action.ViewActions.clearText;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.typeText;
+import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom;
+import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
+import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.containsString;
@@ -83,8 +73,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
-import static android.support.test.InstrumentationRegistry.*;
 
 
 /**
@@ -96,7 +84,6 @@ import static android.support.test.InstrumentationRegistry.*;
 public class FunctionalTest
 {
     private MainStateDer mainState;
-    private Context context;
 
     public class SettingsDer extends Settings
     {
@@ -167,7 +154,6 @@ public class FunctionalTest
     @Before
     public void before() throws Exception
     {
-        context = InstrumentationRegistry.getContext();
         FragmentActivity activity = activityRule.getActivity();
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
@@ -455,6 +441,7 @@ public class FunctionalTest
         //password view
         activityRule.getActivity().superInit();
 
+        Log.d("password keeper", "debug password1ipt " + R.id.createfile_password1ipt);
         onView(withId(R.id.createfile_password1ipt)).perform(clearText()).perform(typeText("pass"));
         onView(withId(R.id.createfile_password2ipt)).perform(clearText()).perform(typeText("pass"));
         onView(withId(R.id.createfile_okaybtn)).perform(click());
