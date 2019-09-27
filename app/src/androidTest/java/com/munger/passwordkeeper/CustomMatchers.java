@@ -35,7 +35,13 @@ public class CustomMatchers
             @Override
             public boolean matchesSafely(View view)
             {
-                return matcher.matches(view) && currentIndex++ == index;
+                if (!matcher.matches(view))
+                    return false;
+
+                boolean match = (index == currentIndex);
+
+                currentIndex++;
+                return match;
             }
         };
     }

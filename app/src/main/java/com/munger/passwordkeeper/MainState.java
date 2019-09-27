@@ -104,6 +104,10 @@ public class MainState
     protected PasswordDocument createDocument()
     {
         PasswordDocument doc = new PasswordDocumentFile(config.localDataFilePath);
+
+        if (config.localDataFilePath.startsWith("./"))
+            ((PasswordDocumentFile) doc).setRootPath(NavigationHelper.getRootPath());
+
         return doc;
     }
 

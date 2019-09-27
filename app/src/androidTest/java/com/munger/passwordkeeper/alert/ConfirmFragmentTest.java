@@ -124,7 +124,7 @@ public class ConfirmFragmentTest
     }
 
     @Test
-    public void okay()
+    public void okay() throws InterruptedException
     {
         String message = "alert!";
         ConfirmListener listener = new ConfirmListener();
@@ -132,6 +132,7 @@ public class ConfirmFragmentTest
         frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
 
         onView(withText(message)).check(matches(isDisplayed()));
+        Thread.sleep(100);
         onView(allOf(withClassName(containsString("Button")), withText(R.string.confirm_okay))).perform(click());
         synchronized (listener.lock)
         {
@@ -142,7 +143,7 @@ public class ConfirmFragmentTest
     }
 
     @Test
-    public void cancelled()
+    public void cancelled() throws InterruptedException
     {
         String message = "alert!";
         ConfirmListener listener = new ConfirmListener();
@@ -150,6 +151,7 @@ public class ConfirmFragmentTest
         frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
 
         onView(withText(message)).check(matches(isDisplayed()));
+        Thread.sleep(100);
         onView(allOf(withClassName(containsString("Button")), withText(R.string.confirm_cancel))).perform(click());
         synchronized (listener.lock)
         {
@@ -160,7 +162,7 @@ public class ConfirmFragmentTest
     }
 
     @Test
-    public void discarded()
+    public void discarded() throws InterruptedException
     {
         String message = "alert!";
         ConfirmListener listener = new ConfirmListener();
@@ -168,6 +170,7 @@ public class ConfirmFragmentTest
         frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
 
         onView(withText(message)).check(matches(isDisplayed()));
+        Thread.sleep(100);
         onView(allOf(withClassName(containsString("Button")), withText(R.string.confirm_discard))).perform(click());
         synchronized (listener.lock)
         {

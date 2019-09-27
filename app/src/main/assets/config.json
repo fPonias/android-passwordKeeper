@@ -1,4 +1,4 @@
 {
-  "localDataFilePath": "passwords",
+  "localDataFilePath": "./passwords",
   "enableImportOption": true
 }

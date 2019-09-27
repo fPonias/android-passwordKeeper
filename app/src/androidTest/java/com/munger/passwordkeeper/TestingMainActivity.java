@@ -18,6 +18,8 @@ public class TestingMainActivity extends MainActivity
     public void superInit()
     {
         super.init();
+        try {Thread.sleep(50);} catch(InterruptedException e){}
+
     }
 
     private int backTriggeredCount;

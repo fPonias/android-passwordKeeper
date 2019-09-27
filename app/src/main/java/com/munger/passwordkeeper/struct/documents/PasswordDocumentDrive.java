@@ -4,23 +4,6 @@ import android.os.AsyncTask;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResolvingResultCallbacks;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.drive.Drive;
-import com.google.android.gms.drive.DriveApi;
-import com.google.android.gms.drive.DriveFile;
-import com.google.android.gms.drive.DriveFolder;
-import com.google.android.gms.drive.DriveResource;
-import com.google.android.gms.drive.Metadata;
-import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.events.ChangeEvent;
-import com.google.android.gms.drive.events.ChangeListener;
-import com.google.android.gms.drive.query.Filter;
-import com.google.android.gms.drive.query.Filters;
-import com.google.android.gms.drive.query.Query;
-import com.google.android.gms.drive.query.SearchableField;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.helpers.DriveRemoteLock;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
@@ -44,6 +27,41 @@ import androidx.annotation.NonNull;
 
 public class PasswordDocumentDrive extends PasswordDocument
 {
+    public PasswordDocumentDrive(PasswordDocument document)
+    {
+
+    }
+
+    public void init()
+    {
+
+    }
+
+    @Override
+    protected void onSave() throws Exception {
+
+    }
+
+    @Override
+    protected void onLoad(boolean force) throws Exception {
+
+    }
+
+    @Override
+    protected void onClose() throws Exception {
+
+    }
+
+    @Override
+    protected void onDelete() throws Exception {
+
+    }
+
+    @Override
+    public boolean testPassword() {
+        return false;
+    }
+    /*
     public static final String version = "0.1";
     private static final int LIST_CHILDREN_REQUEST = 1000;
     private static final int FILE_EXISTS_REQUEST = 1001;
@@ -178,10 +196,13 @@ public class PasswordDocumentDrive extends PasswordDocument
     @Override
     protected void notifyInitted()
     {
-        Log.d("password", "fetching document metadata");
-        DriveResource.MetadataResult metadata = targetFile.getMetadata(apiClient).await();
-        Date dt = metadata.getMetadata().getModifiedDate();
-        lastRemoteUpdate = dt.getTime();
+        Thread t = new Thread(new Runnable() {public void run() {
+            Log.d("password", "fetching document metadata");
+            DriveResource.MetadataResult metadata = targetFile.getMetadata(apiClient).await();
+            Date dt = metadata.getMetadata().getModifiedDate();
+            lastRemoteUpdate = dt.getTime();
+        }});
+        t.start();
 
         super.notifyInitted();
     }
@@ -555,5 +576,5 @@ public class PasswordDocumentDrive extends PasswordDocument
         details = new ArrayList<>();
         playHistory();
         try{save();}catch(Exception e){}
-    }
+    } */
 }

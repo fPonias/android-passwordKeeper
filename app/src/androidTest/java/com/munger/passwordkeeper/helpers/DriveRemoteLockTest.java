@@ -1,18 +1,5 @@
 package com.munger.passwordkeeper.helpers;
 
-import android.content.Context;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.filters.SmallTest;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.drive.DriveFile;
-import com.google.android.gms.drive.DriveResource;
-import com.google.android.gms.drive.Metadata;
-import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.events.ChangeListener;
-import com.google.android.gms.drive.metadata.CustomPropertyKey;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.TestingMainActivity;
 import com.munger.passwordkeeper.struct.Settings;
@@ -30,9 +17,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import androidx.fragment.app.FragmentActivity;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -83,9 +74,7 @@ public class DriveRemoteLockTest
     private PasswordDocument documentMock;
     private NavigationHelper navigationMock;
     private Settings settingsMock;
-    private GoogleApiClient apiClientMock;
-    private DriveFile driveFileMock;
-
+/*
     @Rule
     public ActivityTestRule<TestingMainActivity> activityRule = new ActivityTestRule<>(TestingMainActivity.class);
 
@@ -473,5 +462,5 @@ public class DriveRemoteLockTest
 
         assertFalse(target.hasRemoteLock);
         assertEquals("", lastValue);
-    }
+    }*/
 }

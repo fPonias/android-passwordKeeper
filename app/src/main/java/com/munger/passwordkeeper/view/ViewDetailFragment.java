@@ -36,7 +36,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.android.gms.common.util.Predicate;
+import com.google.common.base.Predicate;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
@@ -580,8 +580,6 @@ public class ViewDetailFragment extends Fragment
 			keyInput.setOnKeyListener(new OnKeyListener() {
 				@Override
 				public boolean onKey(View v, int keyCode, KeyEvent event) {
-					View target = findViewById(valueId);
-					target.requestFocus();
 					return false;
 				}
 			});

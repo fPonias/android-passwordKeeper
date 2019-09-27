@@ -16,7 +16,7 @@ import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public class PasswordDocumentFile extends PasswordDocument 
 {
-	protected String rootPath = ".";
+	protected String rootPath = "./";
 	
 	public PasswordDocumentFile(String name)
 	{
@@ -52,6 +52,9 @@ public class PasswordDocumentFile extends PasswordDocument
 	public void setRootPath(String value)
 	{
 		rootPath = value;
+
+		if (!rootPath.endsWith("/"))
+			rootPath += "/";
 
 		if (name.indexOf("/") != -1)
 		{
@@ -324,5 +327,8 @@ public class PasswordDocumentFile extends PasswordDocument
 		path = getHistoryFilePath();
 		target = new File(path);
 		target.delete();
+
+		history = new PasswordDocumentHistory();
+		setHistoryLoaded();
 	}
 }

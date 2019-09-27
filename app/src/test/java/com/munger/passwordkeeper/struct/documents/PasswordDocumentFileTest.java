@@ -75,7 +75,9 @@ public class PasswordDocumentFileTest
     @Test
     public void constructors() throws IOException
     {
+        File tmpFolder = tmp.getRoot();
         PasswordDocumentFileOver doc = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
+        doc.setRootPath(tmpFolder.getAbsolutePath());
     }
 
     @Test
@@ -91,13 +93,16 @@ public class PasswordDocumentFileTest
 
     private PasswordDocumentFileOver dosave(int sz) throws Exception
     {
+        File tmpFolder = tmp.getRoot();
         PasswordDocumentFileOver doc = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
+        doc.setRootPath(tmpFolder.getAbsolutePath());
+
         assertFalse(doc.exists());
+        doc.load(false);
         HelperNoInst.fillDocument(doc, sz, sz);
         doc.save();
 
 
-        File tmpFolder = tmp.getRoot();
         File[] subFiles = tmpFolder.listFiles();
 
         int count = 0;
@@ -139,7 +144,9 @@ public class PasswordDocumentFileTest
     {
         PasswordDocumentFileOver doc = dosave();
 
+        File tmpFolder = tmp.getRoot();
         PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
+        doc2.setRootPath(tmpFolder.getAbsolutePath());
         assertTrue(doc2.exists());
         assertTrue(doc2.testPassword());
         doc2.load(true);
@@ -176,7 +183,10 @@ public class PasswordDocumentFileTest
         PasswordDocumentFileOver doc = dosave();
         doc.changePassword(newPassword);
 
+        File tmpFolder = tmp.getRoot();
         PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, newPassword);
+        doc2.setRootPath(tmpFolder.getAbsolutePath());
+
         assertTrue(doc2.exists());
         assertTrue(doc2.testPassword());
         doc2.load(true);

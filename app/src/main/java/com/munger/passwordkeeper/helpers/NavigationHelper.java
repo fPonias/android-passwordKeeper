@@ -79,14 +79,17 @@ public class NavigationHelper
         return frag;
     }
 
+    public static String getRootPath()
+    {
+        return MainState.getInstance().context.getFilesDir().getAbsolutePath() + "/";
+    }
+
     public void openInitialView()
     {
         FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
 
         PasswordDocumentFile document = (PasswordDocumentFile) MainState.getInstance().document;
-
-        String rootPath = MainState.getInstance().context.getFilesDir().getAbsolutePath() + "/";
-        document.setRootPath(rootPath);
+        document.setRootPath(getRootPath());
         if (!document.exists())
         {
             createFileFragment = openCreateFileFragment(true);

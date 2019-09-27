@@ -89,7 +89,7 @@ public class AlertFragmentTest
     }
 
     @Test
-    public void works()
+    public void works() throws InterruptedException
     {
         final State state = new State();
         final Object lock = new Object();
@@ -107,6 +107,7 @@ public class AlertFragmentTest
 
 
         onView(withText("alert!")).check(matches(isDisplayed()));
+        Thread.sleep(100);
         onView(allOf(withClassName(containsString("Button")), withText(R.string.alert_okay))).perform(click());
         synchronized (lock)
         {
