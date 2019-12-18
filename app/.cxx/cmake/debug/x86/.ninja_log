@@ -1,5 +1,0 @@
-# ninja log v5
-0	162	0	CMakeFiles/aes256.dir/src/main/java/cpp/aes256.c.o	637027b8f7d633eb
-2	636	0	CMakeFiles/aes256.dir/src/main/java/cpp/MD5.c.o	d45b04edd4dd2790
-3	663	0	CMakeFiles/aes256.dir/src/main/java/cpp/com_munger_passwordkeeper_struct_AES256.c.o	7acf43990a63fb82
-663	715	0	/Users/ygg474/spirit/android-passwordKeeper/app/build/intermediates/cmake/debug/obj/x86/libaes256.so	d13c2bf2edfba35b
