@@ -43,4 +43,14 @@
     <string name="settings_import_title">Import old data &#8230;</string>
     <string name="settings_delete_title">Delete all data &#8230;</string>
     <string name="settings_about_title">About Password Crypt &#8230;</string>
+
+    <string name="nav_mismatched_remote_pw_message">Remote data does not have a matching password.  What would you like to do?</string>
+    <string name="nav_mismatched_remote_pw_change_local">Change local password</string>
+    <string name="nav_mismatched_remote_pw_overwrite">Overwrite remote data</string>
+    <string name="nav_mismatched_remote_pw_disable">Disable remote sync</string>
+
+    <string name="nav_trashed_remote_message">Remote data was trashed.  What would you like to do?</string>
+    <string name="nav_trashed_remote_disable">Disable remote sync</string>
+    <string name="nav_trashed_remote_untrash">Untrash remote data</string>
+
 </resources>

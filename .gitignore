@@ -1,12 +1,15 @@
 *.iml
 .gradle
 /local.properties
-/.idea/workspace.xml
-/.idea/libraries
+/.idea
 .DS_Store
 /build
 /captures
 .externalNativeBuild
+/app/.cxx
+Test Results*
+/app/test*
+tmp/
 /passwordKeeper-desktop/nbproject/private/
 /passwordKeeper-desktop/build/
 /passwordKeeper-desktop/libpassword/build/

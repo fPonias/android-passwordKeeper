@@ -25,7 +25,7 @@
 	        android:layout_toLeftOf="@+id/widget_ti_deleteBtn"
 	        android:text="Label"
 			android:maxLines="1"
-			android:inputType="text"/>
+			android:inputType="textFilter"/>
 
 	    <Button
 	        android:id="@+id/widget_ti_deleteBtn"

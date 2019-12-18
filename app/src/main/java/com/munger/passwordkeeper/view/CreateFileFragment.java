@@ -34,7 +34,7 @@ public class CreateFileFragment extends Fragment
 {
 	public CreateFileFragment()
 	{
-
+		super();
 	}
 
 	public static String getName()
@@ -103,6 +103,9 @@ public class CreateFileFragment extends Fragment
 
 		setIsCreating(isCreating);
 
+		oldpassIn.requestFocus();
+		MainState.getInstance().keyboardListener.forceOpenKeyboard(oldpassIn);
+
 		return root;
 	}
 
@@ -164,24 +167,16 @@ public class CreateFileFragment extends Fragment
 		MainState state = MainState.getInstance();
 		state.setupDocument();
 
-		try
-		{
-			state.document.setPassword(oldPass);
-		}
-		catch(Exception e)
-		{
-			showError("incorrect current password");
-			return false;
-		}
-
-		boolean testResult = state.document.testPassword();
-		state.document = oldDoc;
+		boolean testResult = state.document.testPassword(oldPass);
 
 		if (!testResult)
 		{
 			showError("incorrect current password");
 			return false;
 		}
+
+		state.document = oldDoc;
+
 
 		return true;
 	}

@@ -46,7 +46,7 @@ public class PasswordDocumentTest
     }
 
     @Test
-    public void historyUpdatesFromEmptyCorrectly() throws PasswordDocumentHistory.HistoryPlaybackException
+    public void historyUpdatesFromEmptyCorrectly() throws PasswordDocumentHistory.HistoryPlaybackException, PasswordDocumentHistory.PlaybackException
     {
         HelperNoInst.PasswordDocumentImpl doc = new HelperNoInst.PasswordDocumentImpl();
         PasswordDetails dets = new PasswordDetails();
@@ -111,7 +111,7 @@ public class PasswordDocumentTest
     }
 
     @Test
-    public void historyUpdatesFromReplacementCorrectly() throws PasswordDocumentHistory.HistoryPlaybackException
+    public void historyUpdatesFromReplacementCorrectly() throws PasswordDocumentHistory.HistoryPlaybackException, PasswordDocumentHistory.PlaybackException
     {
         HelperNoInst.PasswordDocumentImpl doc = new HelperNoInst.PasswordDocumentImpl();
         PasswordDetails dets = new PasswordDetails();

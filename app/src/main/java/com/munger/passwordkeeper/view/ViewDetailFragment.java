@@ -20,6 +20,9 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.KeyEvent;
@@ -29,6 +32,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -77,7 +81,21 @@ public class ViewDetailFragment extends Fragment
 	public void onSaveInstanceState(Bundle outState) 
 	{
 	};
-	
+
+	private boolean initialEditable;
+
+	public ViewDetailFragment()
+	{
+		super();
+		initialEditable = false;
+	}
+
+	public ViewDetailFragment(boolean initialEditable)
+	{
+		super();
+		this.initialEditable = initialEditable;
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
 	{
@@ -129,9 +147,12 @@ public class ViewDetailFragment extends Fragment
 			if (actionSelected != null)
 				selectText(actionSelected, false);
 
-			actionSelected = (TextView) v;
+			if (editable)
+				actionSelected = (EditText) v;
+			else
+				actionSelected = (TextView) v;
 			actionSelected.requestFocus();
-			selectText(actionSelected, true);
+			//selectText(actionSelected, true);
 
 			if (actionMode == null)
 			{
@@ -223,7 +244,8 @@ public class ViewDetailFragment extends Fragment
 				updateFocusListeners();
 			}
 		});
-		
+
+		editable = initialEditable;
 		setupEditable();
 		
 		return root;
@@ -491,12 +513,19 @@ public class ViewDetailFragment extends Fragment
 			goingBack = true;
 			saveDetails(new Predicate<Boolean>() {public boolean apply(Boolean aBoolean)
 			{
+				if (initialEditable == false)
+					MainState.getInstance().navigationHelper.setEditable(false);
+
 				callback.callback(aBoolean);
 				return true;
 			}});
 		}
 		else
+		{
 			callback.callback(true);
+			if (initialEditable == false)
+				MainState.getInstance().navigationHelper.setEditable(false);
+		}
 	}
 	
 	private boolean goingBack = false;
@@ -518,7 +547,8 @@ public class ViewDetailFragment extends Fragment
 			{
 				MainState.getInstance().navigationHelper.saveDetail(details, new NavigationHelper.Callback() {public void callback(Object o)
 				{
-					setDetails(details);
+					PasswordDetails dets = (PasswordDetails) o;
+					setDetails(dets);
 
 					if (!goingBack)
 						onResume();
@@ -700,9 +730,6 @@ public class ViewDetailFragment extends Fragment
 		public void onDestroyActionMode(ActionMode arg0) 
 		{
 			parent.actionMode = null;
-
-			parent.selectText(parent.actionSelected, false);
-
 			parent.actionSelected = null;
 		}
 
@@ -724,7 +751,7 @@ public class ViewDetailFragment extends Fragment
 		{
 			int id = item.getItemId();
 			
-			ClipboardManager clipboard = (ClipboardManager) MainState.getInstance().context.getSystemService(Context.CLIPBOARD_SERVICE);
+			final ClipboardManager clipboard = (ClipboardManager) MainState.getInstance().context.getSystemService(Context.CLIPBOARD_SERVICE);
 			
 			if (id == R.id.action_detail_copy)
 			{
@@ -752,8 +779,10 @@ public class ViewDetailFragment extends Fragment
 			{
 				String pw = parent.generateRandomPassword(8);
 				parent.actionSelected.setText(pw);
+
 				ClipData clip = ClipData.newPlainText("password-keeper", pw);
 				clipboard.setPrimaryClip(clip);
+
 				mode.finish();
 				return true;
 			}
@@ -851,7 +880,8 @@ public class ViewDetailFragment extends Fragment
 				item.setEditable(editable);
 		}
 
-		MainState.getInstance().keyboardListener.forceOpenKeyboard(editable);
+		if (editable)
+			MainState.getInstance().keyboardListener.forceOpenKeyboard(nameLabel.getInput());
 
 		root.invalidate();
 	}

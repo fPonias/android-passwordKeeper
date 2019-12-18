@@ -95,10 +95,12 @@ public class HelperNoInst
 
         }
 
-        public boolean testPassword()
+        @Override
+        public boolean testPassword(String password)
         {
             return true;
         }
+
     }
 
     public static final String DEFAULT_NAME = "name";
@@ -119,6 +121,10 @@ public class HelperNoInst
             dets.setName("name" + i);
             dets.setLocation("loc" + i);
 
+            try {
+                doc.addDetails(dets);
+            } catch(Exception e){}
+
             for (int j = 0; j < pairSz; j++)
             {
                 PasswordDetailsPair pair = new PasswordDetailsPair("pairid" + i + "-" + j);
@@ -127,9 +133,6 @@ public class HelperNoInst
                 pair.setValue("val" + i + j);
             }
 
-            try {
-                doc.addDetails(dets);
-            } catch(Exception e){}
         }
     }
 }

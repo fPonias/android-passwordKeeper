@@ -195,12 +195,6 @@ public class SettingsFragmentTest
         fragment.setDetaultDirectory(rootmock);
     }
 
-    @After
-    public void after() throws Exception
-    {
-        activityRule.getActivity().setFragment(null);
-    }
-
     private ArrayList<String> prefKeys;
     private ArrayList<String> prefTitles;
 
@@ -228,7 +222,18 @@ public class SettingsFragmentTest
                         if (attrName.equals("key"))
                             prefKeys.add(xrp.getAttributeValue(i));
                         else if (attrName.equals("title"))
-                            prefTitles.add(xrp.getAttributeValue(i));
+                        {
+                            String val = xrp.getAttributeValue(i);
+
+                            if (val.startsWith("@"))
+                            {
+                                val = val.substring(1);
+                                int id = Integer.parseInt(val);
+                                val = res.getString(id);
+                            }
+
+                            prefTitles.add(val);
+                        }
                     }
                 }
             }

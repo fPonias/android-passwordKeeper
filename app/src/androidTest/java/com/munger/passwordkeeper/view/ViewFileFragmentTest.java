@@ -112,12 +112,6 @@ public class ViewFileFragmentTest
         mainState.setContext(activity, activity);
     }
 
-    @After
-    public void after()
-    {
-        activityRule.getActivity().setFragment(null);
-    }
-
     @Test
     public void emptyFileView()
     {
@@ -156,7 +150,11 @@ public class ViewFileFragmentTest
         for (int i = 0; i < sz; i++)
         {
             PasswordDetails dets = documentMock.getDetails(i);
-            onData(is(instanceOf(PasswordDetails.class))).atPosition(i).check(matches(hasDescendant(withText(dets.getName()))));
+            String txt = dets.getName();
+            if (txt.length() == 0)
+                txt = "<new entry>";
+
+            onData(is(instanceOf(PasswordDetails.class))).atPosition(i).check(matches(hasDescendant(withText(txt))));
         }
 
         boolean thrown = false;

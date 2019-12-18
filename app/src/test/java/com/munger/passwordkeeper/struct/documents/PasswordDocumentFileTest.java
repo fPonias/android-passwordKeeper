@@ -148,7 +148,7 @@ public class PasswordDocumentFileTest
         PasswordDocumentFileOver doc2 = new PasswordDocumentFileOver(HelperNoInst.DEFAULT_NAME, HelperNoInst.DEFAULT_PASSWORD);
         doc2.setRootPath(tmpFolder.getAbsolutePath());
         assertTrue(doc2.exists());
-        assertTrue(doc2.testPassword());
+        assertTrue(doc2.testPassword(HelperNoInst.DEFAULT_PASSWORD));
         doc2.load(true);
 
         assertTrue(doc2.equals(doc));
@@ -188,7 +188,7 @@ public class PasswordDocumentFileTest
         doc2.setRootPath(tmpFolder.getAbsolutePath());
 
         assertTrue(doc2.exists());
-        assertTrue(doc2.testPassword());
+        assertTrue(doc2.testPassword(newPassword));
         doc2.load(true);
 
         assertTrue(doc2.equals(doc));

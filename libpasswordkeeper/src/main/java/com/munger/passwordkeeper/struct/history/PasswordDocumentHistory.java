@@ -22,6 +22,17 @@ public class PasswordDocumentHistory
     public static class HistoryPlaybackException extends Exception
     {}
 
+    public static class PlaybackException extends Exception
+    {
+        public HistoryPlaybackException originalException;
+
+        public PlaybackException(HistoryPlaybackException orig, String message)
+        {
+            super(message);
+            originalException = orig;
+        }
+    }
+
     public interface HistoryEventListener
     {
         void occurred(HistoryEvent event);
@@ -67,7 +78,7 @@ public class PasswordDocumentHistory
         return history.get(index);
     }
 
-    public void playHistory(PasswordDocument document) throws HistoryPlaybackException
+    public void playHistory(PasswordDocument document) throws PlaybackException
     {
         if (history.size() == 0)
             return;
@@ -82,7 +93,14 @@ public class PasswordDocumentHistory
         for (int i = startIdx; i < sz; i++)
         {
             HistoryEvent evt = history.get(i);
-            evt.apply(document);
+
+            try
+            {
+                evt.apply(document);
+            }
+            catch(HistoryPlaybackException e){
+                throw new PlaybackException(e, "history playback failed on index " + i + " with " + evt.toString());
+            }
 
             PasswordDocumentHistory docHist = document.getHistory();
             int dsz = docHist.count();
@@ -314,8 +332,8 @@ public class PasswordDocumentHistory
         if (hist.history.size() != sz)
             return false;
 
-        if (hist.getSequenceCount() != getSequenceCount())
-            return false;
+        //if (hist.getSequenceCount() != getSequenceCount())
+        //    return false;
 
         for (int i = 0; i < sz; i++)
         {

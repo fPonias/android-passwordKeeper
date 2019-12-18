@@ -53,6 +53,10 @@ public class HistoryMerger
         appendRemote();
         appendLocal();
 
+        long localSeq = local.getSequenceCount();
+        long remoteSeq = remote.getSequenceCount();
+        ret.setSequenceCount(Math.max(localSeq, remoteSeq));
+
         return ret;
     }
 

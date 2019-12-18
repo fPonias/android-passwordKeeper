@@ -69,10 +69,9 @@ public class MainState
         setupNavigation();
         setupPreferences();
         setupConfig();
+        setupDriveHelper();
         setupDocument();
         setupQuitTimer();
-
-        setupDriveHelper();
     }
 
     protected void setupNavigation()
@@ -87,6 +86,9 @@ public class MainState
 
     protected void setupConfig()
     {
+        if (config != null)
+            return;
+
         try
         {
             config = new ConfigFactory().load();
@@ -98,7 +100,17 @@ public class MainState
 
     public void setupDocument()
     {
-        document = createDocument();
+        if (document == null)
+            document = createDocument();
+
+        try
+        {
+            boolean enable = settings.getSaveToCloud();
+            if (enable)
+                setupDriveDocument();
+        }
+        catch(Exception e){
+        }
     }
 
     protected PasswordDocument createDocument()
@@ -128,8 +140,10 @@ public class MainState
 
     public void setupQuitTimer()
     {
-        quitTimer = new QuitTimer();
-
+        if (quitTimer == null)
+            quitTimer = new QuitTimer();
+        else
+            quitTimer.reset();
     }
 
     public MainState()
@@ -155,10 +169,24 @@ public class MainState
 
     public PasswordDocumentDrive driveDocument;
 
-    protected void  setupDriveDocument() { driveDocument = new PasswordDocumentDrive(document); }
+    protected void  setupDriveDocument() throws Exception
+    {
+        if (driveHelper.isConnected() == null)
+            driveHelper.awaitConnection();
+
+        if (driveDocument != null)
+            return;
+
+        driveDocument = new PasswordDocumentDrive(document, MainState.getInstance().config.remoteDataFilePath);
+    }
 
     private Object setupLock = new Object();
     private boolean settingUp = false;
+
+    protected DriveHelper createDriveHelper()
+    {
+        return new DriveHelper();
+    }
 
     public void setupDriveHelper()
     {
@@ -173,10 +201,10 @@ public class MainState
         Thread t = new Thread(new Runnable() {public void run()
         {
             if (driveHelper == null)
-                driveHelper = new DriveHelper();
+                driveHelper = createDriveHelper();
 
             boolean enable = settings.getSaveToCloud();
-            if (enable && driveDocument == null)
+            if (enable && driveDocument == null && document != null)
             {
                 driveHelper.connect();
                 driveHelper.awaitConnection();
@@ -188,8 +216,17 @@ public class MainState
                 }
                 else
                 {
-                    setupDriveDocument();
-                    driveDocument.init();
+                    try
+                    {
+                        setupDriveDocument();
+                    }
+                    catch(Exception e){
+                        driveDocument = null;
+                        driveHelper.cleanUp();
+                    }
+
+                    if (driveDocument != null)
+                        driveDocument.init();
                 }
             }
             else if (!enable && driveDocument != null)
@@ -204,5 +241,15 @@ public class MainState
             }
         }});
         t.start();
+    }
+
+    public void cleanUpDriveHelper()
+    {
+        if (driveHelper == null || driveDocument == null)
+            return;
+
+        driveHelper.cleanUp();
+        driveDocument.cleanUp();
+        driveDocument = null;
     }
 }

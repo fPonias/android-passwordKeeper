@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.munger.passwordkeeper.CustomMatchers;
 import com.munger.passwordkeeper.Helper;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
@@ -30,6 +31,7 @@ import androidx.test.rule.ActivityTestRule;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -37,6 +39,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -44,6 +47,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
  * Created by codymunger on 11/25/16.
@@ -68,7 +72,7 @@ public class CreateFileFragmentTest
             else
             {
                 documentMock2 = mock(PasswordDocumentFile.class);
-                doReturn(mock2PasswordTest).when(documentMock2).testPassword();
+                doReturn(mock2PasswordTest).when(documentMock2).testPassword(anyString());
                 return documentMock2;
             }
         }
@@ -112,9 +116,10 @@ public class CreateFileFragmentTest
     private CreateFileFragment.ISubmittedListener submittedListener;
 
     @Before
-    public void before()
+    public void before() throws InterruptedException
     {
         FragmentActivity activity = activityRule.getActivity();
+
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
         mainState.setContext(activity, activity);
@@ -122,22 +127,19 @@ public class CreateFileFragmentTest
         fragment = new CreateFileFragment();
         fragmentSpy = spy(fragment);
         activityRule.getActivity().setFragment(fragmentSpy);
+        doCallRealMethod().when(fragmentSpy).validate();
+        doCallRealMethod().when(fragmentSpy).validateOldPassword();
 
         submittedListener = mock(CreateFileFragment.ISubmittedListener.class);
 
         fragmentSpy.submittedListener = submittedListener;
     }
 
-    @After
-    public void after()
-    {
-        activityRule.getActivity().setFragment(null);
-    }
-
     private void testValidPassword(String input) throws Exception
     {
+        CustomMatchers.assertDoesExist(onView(withId(R.id.createfile_password1ipt)));
         onView(withId(R.id.createfile_password1ipt)).perform(typeText(input));
-        onView(withId(R.id.createfile_password2ipt)).perform(typeText(input));
+        onView(withId(R.id.createfile_password2ipt)).perform(typeText(input), closeSoftKeyboard());
         onView(withId(R.id.createfile_okaybtn)).perform(click());
 
         verify(documentMock).setPassword(input);
@@ -170,12 +172,12 @@ public class CreateFileFragmentTest
     private void testInputError(String input1, String input2) throws Exception
     {
         onView(withId(R.id.createfile_password1ipt)).perform(typeText(input1));
-        onView(withId(R.id.createfile_password2ipt)).perform(typeText(input2));
+        onView(withId(R.id.createfile_password2ipt)).perform(typeText(input2), closeSoftKeyboard());
         onView(withId(R.id.createfile_okaybtn)).perform(click());
 
         verify(documentMock, never()).setPassword(anyString());
         verify(documentMock, never()).save();
-        verify(submittedListener).submitted();
+        verify(submittedListener, never()).submitted();
 
         verify(fragmentSpy).showError(anyString());
     }
@@ -205,12 +207,12 @@ public class CreateFileFragmentTest
         doThrow(new IOException("fail!")).when(documentMock).save();
 
         onView(withId(R.id.createfile_password1ipt)).perform(typeText(Helper.DEFAULT_PASSWORD));
-        onView(withId(R.id.createfile_password2ipt)).perform(typeText(Helper.DEFAULT_PASSWORD));
+        onView(withId(R.id.createfile_password2ipt)).perform(typeText(Helper.DEFAULT_PASSWORD), closeSoftKeyboard());
         onView(withId(R.id.createfile_okaybtn)).perform(click());
 
         verify(documentMock).setPassword(Helper.DEFAULT_PASSWORD);
         verify(documentMock).save();
-        verify(submittedListener).submitted();
+        verify(submittedListener, never()).submitted();
         verify(fragmentSpy).showError(anyString());
     }
 
@@ -239,15 +241,6 @@ public class CreateFileFragmentTest
     }
 
     @Test
-    public void isCreatingToggle() throws Exception
-    {
-        onView(withId(R.id.createfile_oldpasswordipt)).check(ViewAssertions.matches(Matchers.not(isDisplayed())));
-
-        setIsCreating(true);
-        setIsCreating(false);
-    }
-
-    @Test
     public void currentPasswordMatch() throws Exception
     {
         String oldPass = "oldPass";
@@ -258,11 +251,11 @@ public class CreateFileFragmentTest
 
         setIsCreating(false);
 
-        mainState.mock2PasswordTest = true;
+        doReturn(true).when(documentMock).testPassword(oldPass);
 
         onView(withId(R.id.createfile_oldpasswordipt)).perform(typeText(oldPass));
         onView(withId(R.id.createfile_password1ipt)).perform(typeText(newPass));
-        onView(withId(R.id.createfile_password2ipt)).perform(typeText(newPass));
+        onView(withId(R.id.createfile_password2ipt)).perform(typeText(newPass), closeSoftKeyboard());
         onView(withId(R.id.createfile_okaybtn)).perform(click());
 
         verify(documentMock).setPassword(matches(newPass));
@@ -285,7 +278,7 @@ public class CreateFileFragmentTest
 
         onView(withId(R.id.createfile_oldpasswordipt)).perform(typeText("not the right password"));
         onView(withId(R.id.createfile_password1ipt)).perform(typeText(newPass));
-        onView(withId(R.id.createfile_password2ipt)).perform(typeText(newPass));
+        onView(withId(R.id.createfile_password2ipt)).perform(typeText(newPass), closeSoftKeyboard());
         onView(withId(R.id.createfile_okaybtn)).perform(click());
 
         verify(documentMock, never()).setPassword(matches(newPass));

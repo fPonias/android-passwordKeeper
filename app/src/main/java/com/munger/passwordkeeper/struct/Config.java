@@ -8,4 +8,5 @@ public class Config
 {
     public String localDataFilePath;
     public boolean enableImportOption;
+    public String remoteDataFilePath;
 }

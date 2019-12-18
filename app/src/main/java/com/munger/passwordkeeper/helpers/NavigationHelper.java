@@ -1,11 +1,13 @@
 package com.munger.passwordkeeper.helpers;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
@@ -15,6 +17,7 @@ import com.munger.passwordkeeper.alert.InputFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
@@ -24,16 +27,21 @@ import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 
+import org.mortbay.jetty.Main;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.preference.PreferenceManager;
 
 /**
  * Created by codymunger on 11/26/16.
@@ -107,13 +115,20 @@ public class NavigationHelper
         }
     }
 
-    public void changePassword()
+    public void changePassword(CreateFileFragment.ISubmittedListener listener)
     {
         CreateFileFragment frag = openCreateFileFragment(false);
-        frag.submittedListener = new CreateFileFragment.ISubmittedListener() {public void submitted()
+        frag.submittedListener = listener;
+    }
+
+    public void changePassword()
+    {
+        CreateFileFragment.ISubmittedListener listener = new CreateFileFragment.ISubmittedListener() {public void submitted()
         {
             ((MainActivity) MainState.getInstance().activity).realOnBackPressed();
         }};
+
+        changePassword(listener);
     }
 
     protected boolean gettingPassword = false;
@@ -140,8 +155,7 @@ public class NavigationHelper
 
                 try
                 {
-                    document.setPassword(password);
-                    passed = document.testPassword();
+                    passed = document.testPassword(password);
                 }
                 catch(Exception e){
                     passed = false;
@@ -163,6 +177,7 @@ public class NavigationHelper
                 else
                 {
                     gettingPassword = false;
+                    document.setPassword(password);
                     MainState.getInstance().password = password;
                     openFile();
                     return true;
@@ -192,6 +207,9 @@ public class NavigationHelper
             viewFileFragment.setEditable(editable);
         if (viewDetailFragment != null)
             viewDetailFragment.setEditable(editable);
+
+        if (!editable)
+            MainState.getInstance().keyboardListener.forceCloseKeyboard();
     }
 
     public boolean onOptionsItemSelected(MenuItem item)
@@ -227,9 +245,8 @@ public class NavigationHelper
         MainState.getInstance().details = detail;
         FragmentTransaction trans = MainState.getInstance().activity.getSupportFragmentManager().beginTransaction();
 
-        viewDetailFragment = new ViewDetailFragment();
+        viewDetailFragment = new ViewDetailFragment(editable);
         viewDetailFragment.setDetails(detail);
-        viewDetailFragment.setEditable(editable);
 
         trans.replace(R.id.container, viewDetailFragment, ViewDetailFragment.getName());
         trans.addToBackStack(ViewDetailFragment.getName());
@@ -357,6 +374,80 @@ public class NavigationHelper
         loadingDialog.setMessage("Decrypting password data");
         loadingDialog.show();
 
+        final DialogInterface.OnClickListener pwListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                if (which == -1) //password change
+                {
+                    CreateFileFragment frag = openCreateFileFragment(false);
+                    frag.submittedListener = new CreateFileFragment.ISubmittedListener() {public void submitted()
+                    {
+                        onBackPressed(new Callback() {public void callback(Object result)
+                        {
+                            openFile2();
+                        }});
+                    }};
+                }
+                else if (which == -2) //remote overwrite
+                {
+                    AsyncTask t = new AsyncTask()
+                    {
+                        protected Object doInBackground(Object[] params)
+                        {
+                            try
+                            {
+                                MainState.getInstance().driveDocument.overwrite();
+                            }
+                            catch(Exception e){}
+
+                            return null;
+                        }
+
+                        protected void onPostExecute(Object o)
+                        {
+                            openFile2();
+                        }
+                    };
+
+                    t.execute(new Object[]{});
+
+                }
+                else // which == -3 . turn off remote sync
+                {
+                    PreferenceManager mgr = new PreferenceManager(MainState.getInstance().context);
+                    mgr.getSharedPreferences().edit().putBoolean(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD, false).apply();
+                    MainState.getInstance().cleanUpDriveHelper();
+
+                    openFile2();
+                }
+            }
+        };
+
+        final DialogInterface.OnClickListener trashedListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                if (which == -1) //untrash
+                {
+                    try
+                    {
+                        MainState.getInstance().driveDocument.undelete();
+                        openFile2();
+                    }
+                    catch(Exception e){}
+                }
+                else //disable
+                {
+                    PreferenceManager mgr = new PreferenceManager(MainState.getInstance().context);
+                    mgr.getSharedPreferences().edit().putBoolean(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD, false).apply();
+                    MainState.getInstance().cleanUpDriveHelper();
+
+                    openFile2();
+                }
+            }
+        };
+
         final PasswordDocument.ILoadEvents listener = new PasswordDocumentFile.ILoadEvents() {
             @Override
             public void detailsLoaded()
@@ -366,7 +457,46 @@ public class NavigationHelper
                     if (loadingDialog.isShowing())
                         loadingDialog.dismiss();
 
-                    openFile2();
+                    MainState mainState = MainState.getInstance();
+                    Boolean isConn = mainState.driveHelper.isConnected();
+                    if (isConn == null || isConn == false)
+                    {
+                        openFile2();
+                        return;
+                    }
+
+                    Exception e = mainState.driveDocument.getInitException();
+                    if (e == null)
+                    {
+                        openFile2();
+                        return;
+                    }
+
+                    if (e instanceof PasswordDocument.IncorrectPasswordException)
+                    {
+                        final AlertDialog remotePasswordDialog = new AlertDialog.Builder(MainState.getInstance().context)
+                            .setMessage(R.string.nav_mismatched_remote_pw_message)
+                            .setPositiveButton(R.string.nav_mismatched_remote_pw_change_local, pwListener)
+                            .setNegativeButton(R.string.nav_mismatched_remote_pw_overwrite, pwListener)
+                            .setNeutralButton(R.string.nav_mismatched_remote_pw_disable, pwListener)
+                            .create();
+
+                        remotePasswordDialog.show();
+                    }
+                    else if (e instanceof PasswordDocumentDrive.TrashedFileException)
+                    {
+                        final AlertDialog remotePasswordDialog = new AlertDialog.Builder(MainState.getInstance().context)
+                                .setMessage(R.string.nav_trashed_remote_message)
+                                .setPositiveButton(R.string.nav_trashed_remote_untrash, trashedListener)
+                                .setNegativeButton(R.string.nav_trashed_remote_disable, trashedListener)
+                                .create();
+
+                        remotePasswordDialog.show();
+                    }
+                    else
+                    {
+                        openFile2();
+                    }
                 }});
             }
 
@@ -522,36 +652,35 @@ public class NavigationHelper
         void callback(Object result);
     }
 
+    protected ProgressDialog loadingDialog;
+
     public void saveDetail(final PasswordDetails detail, final Callback callback)
     {
-        final ProgressDialog loadingDialog = new ProgressDialog(MainState.getInstance().context);
+        final PasswordDetails dets = detail.copy();
+        loadingDialog = new ProgressDialog(MainState.getInstance().context);
         loadingDialog.setMessage("Saving password data");
         loadingDialog.show();
 
-        AsyncTask t = new AsyncTask() {
-            protected Object doInBackground(Object[] params)
+        Thread t = new Thread(new Runnable() { public void run()
+        {
+            try
             {
-                try
-                {
-                    MainState.getInstance().document.replaceDetails(detail);
-                    MainState.getInstance().document.save();
-                    detail.setHistory(new PasswordDocumentHistory());
-                }
-                catch(Exception e){
-                    Log.e("password", "failed to update password file");
-                }
-
-                return null;
+                MainState.getInstance().document.replaceDetails(dets);
+                MainState.getInstance().document.save();
+                dets.setHistory(new PasswordDocumentHistory());
+            }
+            catch(Exception e){
+                Log.e("password", "failed to update password file");
             }
 
-            @Override
-            protected void onPostExecute(Object o)
+            MainState.getInstance().activity.runOnUiThread(new Runnable() {public void run()
             {
                 loadingDialog.dismiss();
-                callback.callback(null);
-            }
-        };
-        t.execute(new Object(){});
+                callback.callback(dets);
+            }});
+        }});
+
+        t.start();
     }
 
     public boolean hasPermission(String permission)

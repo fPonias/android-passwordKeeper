@@ -81,6 +81,9 @@ public class KeyboardListenerTest
         mainState = new MainStateDer();
         MainState.setInstance(mainState);
         mainState.setContext(activity, activity);
+
+        InputFragment frag = new InputFragment("message", "prompt", null);
+        frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
     }
 
     private class Status
@@ -93,9 +96,6 @@ public class KeyboardListenerTest
     @Test
     public void testKeyboard() throws InterruptedException
     {
-        InputFragment frag = new InputFragment("message", "prompt", null);
-        frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
-
         final Status status = new Status();
         KeyboardListener listener = MainState.getInstance().keyboardListener;
         listener.addKeyboardChangedListener(new KeyboardListener.OnKeyboardChangedListener()
@@ -148,9 +148,6 @@ public class KeyboardListenerTest
     @Test
     public void testForceOpen() throws InterruptedException
     {
-        InputFragment frag = new InputFragment("message", "prompt", null);
-        frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
-
         final Status status = new Status();
         KeyboardListener listener = MainState.getInstance().keyboardListener;
         listener.addKeyboardChangedListener(new KeyboardListener.OnKeyboardChangedListener()

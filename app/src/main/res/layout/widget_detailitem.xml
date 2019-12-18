@@ -49,7 +49,7 @@
 		    android:hint="@string/detail_item_key_hint"
 			android:lines="1"
             android:maxLines="1"
-			android:inputType="text"
+			android:inputType="textFilter"
 			android:focusable="true"
 			android:focusableInTouchMode="true"
         />
@@ -62,7 +62,7 @@
 		    android:hint="@string/detail_item_value_hint"
 			android:lines="1"
             android:maxLines="1"
-			android:inputType="text"
+			android:inputType="textFilter"
 			android:focusable="true"
 			android:focusableInTouchMode="true"
         />

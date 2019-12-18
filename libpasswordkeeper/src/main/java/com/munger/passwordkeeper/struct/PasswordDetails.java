@@ -132,10 +132,10 @@ public class PasswordDetails
 
 	private void notifyListeners(HistoryEvent evt)
 	{
+		history.addEvent(evt);
+
 		for(PasswordDocumentHistory.HistoryEventListener listener : listeners)
 			listener.occurred(evt);
-
-		history.addEvent(evt);
 	}
 
 	public void setHistory(PasswordDocumentHistory history)

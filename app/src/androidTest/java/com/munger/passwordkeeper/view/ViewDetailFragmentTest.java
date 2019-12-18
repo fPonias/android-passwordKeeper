@@ -3,6 +3,10 @@ package com.munger.passwordkeeper.view;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+
+import androidx.test.espresso.ViewInteraction;
+import androidx.test.espresso.contrib.RecyclerViewActions;
+import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -19,6 +23,7 @@ import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 
+import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -51,11 +56,16 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withChild;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
+import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withParent;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasToString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyString;
@@ -99,7 +109,8 @@ public class ViewDetailFragmentTest
         @Override
         public void saveDetail(PasswordDetails detail, Callback callback)
         {
-            callback.callback(successOnSaveDetails);
+            final PasswordDetails dets = detail.copy();
+            callback.callback(dets);
         }
 
         public boolean lastBackResult;
@@ -436,7 +447,7 @@ public class ViewDetailFragmentTest
         toggleEditable();
 
         PasswordDetailsPair toDelete = fragment.getDetails().getPair(1);
-        onData(anything()).atPosition(1).onChildView(withClassName(containsString("Button"))).perform(click());
+        pairInteraction(0).onChildView(withClassName(containsString("Button"))).perform(click());
 
         assertEquals(4, fragment.getDetails().count());
         assertNull(fragment.getDetails().getPair(toDelete.getId()));
@@ -446,7 +457,7 @@ public class ViewDetailFragmentTest
         toggleEditable();
 
         toDelete = fragment.getDetails().getPair(3);
-        onData(anything()).atPosition(3).onChildView(withClassName(containsString("Button"))).perform(click());
+        pairInteraction(3).onChildView(withClassName(containsString("Button"))).perform(click());
 
         assertEquals(3, fragment.getDetails().count());
         assertNull(fragment.getDetails().getPair(toDelete.getId()));
@@ -480,9 +491,9 @@ public class ViewDetailFragmentTest
         populateDetails("name", "location", 1);
         toggleEditable();
 
-        onData(anything()).atPosition(0).onChildView(withChild(withId(R.id.detailitem_valueinput))).perform(longClick());
+        pairValueInteration(0).perform(longClick());
         onView(withId(R.id.action_detail_random)).perform(click());
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).check(matches(withText(not(isEmptyString()))));
+        pairValueInteration(0).check(matches(withText(not(isEmptyString()))));
 
         toggleEditableAndSave();
         assertNotEquals(0, fragment.getDetails().getPair(0).getValue().length());
@@ -636,13 +647,13 @@ public class ViewDetailFragmentTest
         verifyEditMenuClosed();
         verifyClipboard("location");
 
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(longClick());
+        onView(CustomMatchers.withIndex(0, ViewMatchers.withHint("Key"))).perform(longClick());
         verifyEditMenuAllVisible();
         onView(withId(R.id.action_detail_copy)).perform(click());
         verifyEditMenuClosed();
         verifyClipboard(fragment.getDetails().getPair(0).getKey());
 
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(longClick());
+        onView(CustomMatchers.withIndex(0, ViewMatchers.withHint("Value"))).perform(longClick());
         verifyEditMenuAllVisible();
         onView(withId(R.id.action_detail_copy)).perform(click());
         verifyEditMenuClosed();
@@ -692,13 +703,13 @@ public class ViewDetailFragmentTest
         verifyEditMenuClosed();
         verifyClipboard(targetText);
 
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(longClick());
+        pairKeyInteration(0).perform(longClick());
         verifyEditMenuAllVisible();
         onView(withId(R.id.action_detail_paste)).perform(click());
         verifyEditMenuClosed();
         verifyClipboard(targetText);
 
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(longClick());
+        pairValueInteration(0).perform(longClick());
         verifyEditMenuAllVisible();
         onView(withId(R.id.action_detail_paste)).perform(click());
         verifyEditMenuClosed();
@@ -728,12 +739,12 @@ public class ViewDetailFragmentTest
         onView(withId(R.id.action_detail_random)).perform(click());
         verifyEditMenuClosed();
 
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(longClick());
+        pairKeyInteration(0).perform(longClick());
         verifyEditMenuAllVisible();
         onView(withId(R.id.action_detail_random)).perform(click());
         verifyEditMenuClosed();
 
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(longClick());
+        pairValueInteration(0).perform(longClick());
         verifyEditMenuAllVisible();
         onView(withId(R.id.action_detail_random)).perform(click());
         verifyEditMenuClosed();
@@ -743,24 +754,69 @@ public class ViewDetailFragmentTest
         assertTrue(copy.diff(fragment.getDetails()));
     }
 
-    private void doInteractions()
+    private class PairKeyMatcher extends BaseMatcher<Object>
+    {
+        private String key;
+
+        public PairKeyMatcher(String key)
+        {
+            this.key = key;
+        }
+
+        @Override
+        public boolean matches(Object item)
+        {
+            if (!(item instanceof PasswordDetailsPair))
+                return false;
+
+            String itemKey = ((PasswordDetailsPair) item).getKey();
+            return key.equalsIgnoreCase(itemKey);
+        }
+
+        @Override
+        public void describeTo(Description description)
+        {
+            description.appendText("PasswordDetailsPair with key of " + key);
+        }
+    }
+
+    private DataInteraction pairInteraction(int index)
+    {
+        return onData(allOf(is(instanceOf(PasswordDetailsPair.class)))).atPosition(index).inAdapterView(withId(R.id.viewdetail_itemlist));
+    }
+
+    private DataInteraction pairKeyInteration(int index)
+    {
+        return pairInteraction(index).onChildView(withHint("Key"));
+    }
+
+    private DataInteraction pairValueInteration(int index)
+    {
+        return pairInteraction(index).onChildView(withHint("Value"));
+    }
+
+    private void doInteractions() throws CustomMatchers.DoesNotExistException
     {
         fragment.getDetails().setHistory(new PasswordDocumentHistory());
+        PasswordDetailsPair emptyPair = new PasswordDetailsPair();
+        String emptyPairString = emptyPair.toString();
 
         toggleEditable();
 
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_keyinput)).perform(clearText(), typeText("value3"));
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_valueinput)).perform(clearText(), typeText("value4"));
+        CustomMatchers.assertDoesExist(pairKeyInteration(0));
+        pairKeyInteration(0).perform(clearText(), typeText("value3"));
+        pairValueInteration(0).perform(clearText(), typeText("value4"));
         onView(withId(R.id.viewdetail_addbtn)).perform(click());
-        onData(anything()).atPosition(1).onChildView(withId(R.id.detailitem_keyinput)).perform(clearText(), typeText("value5"));
-        onData(anything()).atPosition(1).onChildView(withId(R.id.detailitem_valueinput)).perform(clearText(), typeText("value6"));
-        onData(anything()).atPosition(0).onChildView(withId(R.id.detailitem_deletebtn)).perform(click());
+        CustomMatchers.assertDoesExist(pairKeyInteration(1));
+        pairKeyInteration(1).perform(clearText(), typeText("value5"));
+        pairValueInteration(1).perform(clearText(), typeText("value6"));
+        pairInteraction(0).onChildView(withId(R.id.detailitem_deletebtn)).perform(click());
         onView(allOf(isDescendantOfA(withId(R.id.viewdetail_namelbl)),withClassName(containsString("EditText")))).perform(clearText(), typeText("value1"));
         onView(allOf(isDescendantOfA(withId(R.id.viewdetail_locationlbl)),withClassName(containsString("EditText")))).perform(clearText(), typeText("value2"));
     }
 
     @Test
-    public void save()
+    public void save() throws Exception
     {
         populateDetails("name", "location", 1);
         PasswordDetails copy = fragment.getDetails().copy();
@@ -781,7 +837,7 @@ public class ViewDetailFragmentTest
     }
 
     @Test
-    public void saveOnBack()
+    public void saveOnBack() throws Exception
     {
         populateDetails("name", "location", 1);
         PasswordDetails copy = fragment.getDetails().copy();
@@ -806,7 +862,7 @@ public class ViewDetailFragmentTest
     }
 
     @Test
-    public void cancel()
+    public void cancel() throws Exception
     {
         populateDetails("name", "location", 1);
         PasswordDetails copy = fragment.getDetails().copy();
@@ -823,7 +879,7 @@ public class ViewDetailFragmentTest
     }
 
     @Test
-    public void cancelOnBack()
+    public void cancelOnBack() throws Exception
     {
         populateDetails("name", "location", 1);
         PasswordDetails copy = fragment.getDetails().copy();
@@ -843,7 +899,7 @@ public class ViewDetailFragmentTest
     }
 
     @Test
-    public void discard()
+    public void discard() throws Exception
     {
         populateDetails("name", "location", 1);
         PasswordDetails copy = fragment.getDetails().copy();
@@ -860,7 +916,7 @@ public class ViewDetailFragmentTest
     }
 
     @Test
-    public void discardOnBack()
+    public void discardOnBack() throws Exception
     {
         populateDetails("name", "location", 1);
         PasswordDetails copy = fragment.getDetails().copy();

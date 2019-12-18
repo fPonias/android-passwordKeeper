@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.NavigableSet;
+import java.util.Queue;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.munger.passwordkeeper.struct.AES256;
@@ -26,7 +29,7 @@ public abstract class PasswordDocument
 	protected ArrayList<PasswordDetails> details;
 	protected HashMap<String, PasswordDocumentHistory.HistoryEventListener> detailsListeners;
 	public String name;
-	protected ConcurrentSkipListSet<ILoadEvents> loadEvents = new ConcurrentSkipListSet<>();
+	protected TreeSet<ILoadEvents> loadEvents = new TreeSet<>();
 
 
 	protected PasswordDocumentHistory history;
@@ -318,7 +321,7 @@ public abstract class PasswordDocument
 		}
 	}
 
-	public void deltasFromEncryptedString(DataInput inArr, long maxSz) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public void deltasFromEncryptedString(DataInput inArr, long maxSz) throws PasswordDocument.IncorrectPasswordException, IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		long total = 0;
 		historyLoaded = false;
@@ -326,13 +329,14 @@ public abstract class PasswordDocument
 
 		String line = readLine(inArr);
 		if (!line.equals(testString))
-			throw new IOException("incorrect password");
+			throw new IncorrectPasswordException();
 
 		total += line.length() + 1;
 		long idx = inArr.readLong();
 		history.setSequenceCount(idx);
 		total += 8;
 
+		int count = 0;
 		int i = 0;
 		while (true)
 		{
@@ -361,6 +365,8 @@ public abstract class PasswordDocument
 				String batchLine = readLine(inArr, sz);
 				history.partFromString(batchLine);
 			}
+
+			count++;
 		}
 
 		setHistoryUpdate(1.0f);
@@ -487,7 +493,7 @@ public abstract class PasswordDocument
 		}
 	}
 
-	public void playHistory() throws PasswordDocumentHistory.HistoryPlaybackException
+	public void playHistory() throws PasswordDocumentHistory.PlaybackException
 	{
 		awaitHistoryLoaded();
 		history.playHistory(this);
@@ -584,28 +590,31 @@ public abstract class PasswordDocument
 			listeners.get(i).closed();
 	}
 
+	public static class IncorrectPasswordException extends Exception
+	{}
+
 	abstract protected void onSave() throws Exception;
-	abstract protected void onLoad(boolean force) throws Exception;
+	abstract protected void onLoad(boolean force) throws IncorrectPasswordException, Exception;
 	abstract protected void onClose() throws Exception;
 	abstract protected void onDelete() throws Exception;
-	abstract public boolean testPassword();
+	abstract public boolean testPassword(String password);
 
 	public void save() throws Exception
 	{
-		notifySaved();
 		onSave();
+		notifySaved();
 	}
 
 	public void load(boolean force) throws Exception
 	{
-		notifyLoaded();
 		onLoad(force);
+		notifyLoaded();
 	}
 
 	public void delete() throws Exception
 	{
-		notifyDeleted();
 		onDelete();
+		notifyDeleted();
 	}
 
 	public void close() throws Exception
@@ -616,7 +625,7 @@ public abstract class PasswordDocument
 		lastLoad = 0;
 
 		details = new ArrayList<>();
-		loadEvents = new ConcurrentSkipListSet<>();
+		loadEvents = new TreeSet<>();
 
 		history = new PasswordDocumentHistory();
 		mostRecentHistoryEvent = null;
@@ -639,10 +648,9 @@ public abstract class PasswordDocument
 		return history;
 	}
 
-	public void playSubHistory(PasswordDocumentHistory subHistory) throws PasswordDocumentHistory.HistoryPlaybackException
+	public void playSubHistory(PasswordDocumentHistory subHistory) throws PasswordDocumentHistory.PlaybackException
 	{
 		awaitHistoryLoaded();
-		subHistory.clean();
 
 		subHistory.playHistory(this);
 
@@ -695,7 +703,7 @@ public abstract class PasswordDocument
 		history.addEvent(event);
 	}
 
-	public void replaceDetails(PasswordDetails dets) throws PasswordDocumentHistory.HistoryPlaybackException
+	public void replaceDetails(PasswordDetails dets) throws PasswordDocumentHistory.HistoryPlaybackException, PasswordDocumentHistory.PlaybackException
 	{
 		awaitHistoryLoaded();
 		String detid = dets.getId();

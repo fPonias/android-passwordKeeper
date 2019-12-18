@@ -15,9 +15,6 @@ import androidx.fragment.app.FragmentTransaction;
 
 public class MainActivity extends AppCompatActivity
 {
-	public KeyboardListener keyboardListener;
-
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{

@@ -17,8 +17,18 @@
 package com.munger.passwordkeeper.alert;
 
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.View;
+
+import com.munger.passwordkeeper.MainState;
+
+import org.mortbay.jetty.Main;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 /**
  * This is the same as the input alert.
@@ -40,7 +50,9 @@ public class PasswordFragment extends InputFragment
 		Dialog ret = super.onCreateDialog(savedInstanceState);
 		
 		inputView.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-		
+		inputView.requestFocus();
+		MainState.getInstance().keyboardListener.forceOpenKeyboard(inputView);
+
 		return ret;
 	}
 }

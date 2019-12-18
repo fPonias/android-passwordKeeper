@@ -89,6 +89,10 @@ public class AES256
 				synchronized (lock)
 				{
 					doCallback();
+
+					float progress = getDecodeProgress();
+					if (progress >= 1.0f)
+						runPoller = false;
 				}
 			}
 		}}, "progress poller");
@@ -107,6 +111,11 @@ public class AES256
 			progressPoller.join();
 			progressPoller = null;
 		}
+	}
+
+	public boolean equals(AES256 encoder)
+	{
+		return password.equals(encoder.password);
 	}
 
 	public String encode(String target)
@@ -147,9 +156,9 @@ public class AES256
 
 	public void doCallback()
 	{
+		float progress = getDecodeProgress();
 		if (decodeCallbackWaiter != null)
 		{
-			float progress = getDecodeProgress();
 			decodeCallbackWaiter.doDecodeCallback(progress);
 
 			if (progress >= 1.0f)

@@ -2,13 +2,16 @@ package com.munger.passwordkeeper.helpers;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.LinearLayout;
 
 import com.munger.passwordkeeper.MainActivity;
+import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 
 import java.util.ArrayList;
@@ -88,22 +91,51 @@ public class KeyboardListener
             keyboardChangedListeners.remove(listener);
     }
 
-    public void forceOpenKeyboard(boolean open)
+    public void forceOpenKeyboard(final View currentFocus)
     {
-        InputMethodManager imm = (InputMethodManager) parent.getSystemService(Context.INPUT_METHOD_SERVICE);
+        forceOpenKeyboardR(0, currentFocus);
+    }
 
-        if (open)
+    private void forceOpenKeyboardR(final int attempt, final View currentFocus)
+    {
+        if (attempt == 3 || isOpen)
+            return;
+
+        Thread t = new Thread(new Runnable() {public void run()
         {
-            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
-        }
-        else
+            if (attempt == 0)
+                try {Thread.sleep(500);} catch(InterruptedException e) {}
+
+            MainState.getInstance().handler.post(new Runnable() {public void run()
+            {
+                InputMethodManager imm = (InputMethodManager) parent.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(currentFocus, InputMethodManager.SHOW_FORCED);
+            }});
+
+            try {Thread.sleep(500);} catch(InterruptedException e) {}
+            if (!isOpen)
+                forceOpenKeyboardR(attempt + 1, currentFocus);
+        }});
+        t.start();
+    }
+
+    public void forceCloseKeyboard()
+    {
+        Thread t = new Thread(new Runnable() {public void run()
         {
-            View focus = parent.getCurrentFocus();
+            try {Thread.sleep(500);} catch(InterruptedException e) {}
 
-            if (focus == null)
-                return;
+            MainState.getInstance().handler.post(new Runnable() {public void run()
+            {
+                InputMethodManager imm = (InputMethodManager) parent.getSystemService(Context.INPUT_METHOD_SERVICE);
+                IBinder token = MainState.getInstance().activity.getWindow().getDecorView().getRootView().getWindowToken();
+                imm.hideSoftInputFromWindow(token, 0);
+            }});
 
-            imm.hideSoftInputFromWindow(focus.getWindowToken(), 0);
-        }
+            try {Thread.sleep(500);} catch(InterruptedException e) {}
+            if (isOpen)
+                forceCloseKeyboard();
+        }});
+        t.start();
     }
 }

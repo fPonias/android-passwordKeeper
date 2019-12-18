@@ -1,4 +1,5 @@
 {
   "localDataFilePath": "./passwords",
+  "remoteDataFilePath": "passwords.pwc",
   "enableImportOption": true
 }

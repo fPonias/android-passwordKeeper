@@ -137,4 +137,20 @@ public class PasswordDetailsPair
 
         return builder.toString();
     }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        String cmp = "";
+        if (o instanceof PasswordDetailsPair)
+            cmp = ((PasswordDetailsPair)o).toString();
+        else if (o instanceof String)
+            cmp = (String) o;
+        else
+            return false;
+
+        String rep = toString();
+        boolean ret = rep.equals(cmp);
+        return ret;
+    }
 }

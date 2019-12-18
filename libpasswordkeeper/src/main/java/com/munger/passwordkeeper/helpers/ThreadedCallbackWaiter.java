@@ -29,6 +29,8 @@ public class ThreadedCallbackWaiter
 
             try{lock.wait();}catch(InterruptedException e){return;}
         }
+
+        System.out.println("threaded callback waiter started");
     }
 
     public void CleanUp()
@@ -56,6 +58,8 @@ public class ThreadedCallbackWaiter
             lock.notify();
         }
 
+        System.out.println("threaded callback waiter routine started");
+
         while (kill == false)
         {
             synchronized(lock)
@@ -68,17 +72,17 @@ public class ThreadedCallbackWaiter
                     return;
                 }
 
-                if (kill == true)
-                    return;
-
                 if (_callback != null)
                     _callback.callback(progress);
             }
         }
+
+        System.out.println("threaded callback waiter routine ended");
     }};
 
     public void doDecodeCallback(float progress)
     {
+        System.out.println("threaded callback waiter progress " + progress);
         this.progress = progress;
         synchronized (lock)
         {

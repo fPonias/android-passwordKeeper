@@ -2,6 +2,7 @@ package com.munger.passwordkeeper.struct;
 
 import android.content.SharedPreferences;
 
+import com.google.api.client.util.DateTime;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.view.SettingsFragment;
 
@@ -18,6 +19,11 @@ public class Settings
     private SharedPreferences preferences;
 
     public Settings()
+    {
+        setPreferences();
+    }
+
+    public void setPreferences()
     {
         preferences = PreferenceManager.getDefaultSharedPreferences(MainState.getInstance().activity);
     }
@@ -57,5 +63,18 @@ public class Settings
             throw new RuntimeException("unable to create unique program id");
 
         return ret;
+    }
+
+    public DateTime getLastCloudUpdate()
+    {
+        long val = preferences.getLong("lastCloudUpdate", 0);
+        DateTime ret = new DateTime(val);
+        return ret;
+    }
+
+    public void setLastCloudUpdate(DateTime value)
+    {
+        long val2 = value.getValue();
+        preferences.edit().putLong("lastCloudUpdate", val2).commit();
     }
 }

@@ -22,7 +22,7 @@ public class PasswordDocumentStream extends PasswordDocument
 
     }
 
-    public void onLoad(boolean force) throws Exception
+    public void onLoad(boolean force) throws PasswordDocument.IncorrectPasswordException, Exception
     {
         deltasFromEncryptedString(stream, size);
     }
@@ -37,7 +37,7 @@ public class PasswordDocumentStream extends PasswordDocument
 
     }
 
-    public boolean testPassword()
+    public boolean testPassword(String password)
     {
         return true;
     }

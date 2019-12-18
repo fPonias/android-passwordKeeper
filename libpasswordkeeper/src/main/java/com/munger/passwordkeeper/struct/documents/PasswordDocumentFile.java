@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.munger.passwordkeeper.struct.AES256;
 import com.munger.passwordkeeper.struct.PasswordDetails;
@@ -34,17 +35,43 @@ public class PasswordDocumentFile extends PasswordDocument
 	{
 		super.setPassword(password);
 
-		String path = getDetailsFilePath();
+		String path = getHistoryFilePath();
 		File target = new File(path);
 
-		if (!target.exists() || target.length() == 0)
-		{
-                    setHistoryLoaded();
-		}
+		if (target.length() == 0 || testPassword(password))
+			return;
 
+		deleteFiles();
 	}
 
-        public String getRootPath()
+	public void deleteFiles()
+	{
+		String path = getHistoryFilePath();
+		File target = new File(path);
+
+		if (target.exists())
+			target.delete();
+
+		path = getDetailsFilePath();
+		target = new File(path);
+
+		if (target.exists())
+			target.delete();
+
+		path = getDetailsTmpFilePath();
+		target = new File(path);
+
+		if (target.exists())
+			target.delete();
+
+		path = getHistoryTmpFilePath();
+		target = new File(path);
+
+		if (target.exists())
+			target.delete();
+	}
+
+	public String getRootPath()
         {
             return rootPath;
         }
@@ -71,6 +98,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	public void changePassword(String password) throws Exception
 	{
 		PasswordDocumentFile tmp = new PasswordDocumentFile("tmp", password);
+		tmp.setHistoryLoaded();
 		tmp.playSubHistory(getHistory());
 		tmp.save();
 
@@ -113,6 +141,7 @@ public class PasswordDocumentFile extends PasswordDocument
 	{
 		return rootPath + name + "-history-tmp";
 	}
+
 
 	public void onSave() throws IOException
 	{
@@ -222,7 +251,7 @@ public class PasswordDocumentFile extends PasswordDocument
 		tmpTarget.delete();
 	}
 
-	public void onLoad(boolean force) throws IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public void onLoad(boolean force) throws IncorrectPasswordException, IOException, PasswordDocumentHistory.HistoryPlaybackException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		String path = getDetailsFilePath();
 		File target = new File(path);
@@ -251,19 +280,21 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	private void loadDetails() throws IOException
 	{
-		String path = getDetailsFilePath();
-		File target = new File(path);
-		FileInputStream fis = new FileInputStream(target);
-		DataInputStream dis = new DataInputStream(fis);
-
 		details = new ArrayList<PasswordDetails>();
-		detailsFromEncryptedString(dis);
-
-		dis.close();
-		fis.close();
+		detailsIndex = new HashMap<>();
+		try
+		{
+			PasswordDocumentHistory oldHistory = history;
+			history = new PasswordDocumentHistory();
+			oldHistory.playHistory(this);
+			history = oldHistory;
+		}
+		catch(PasswordDocumentHistory.PlaybackException e){
+			throw new IOException("failed to playback history into details");
+		}
 	}
 
-	private void loadHistory() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+	private void loadHistory() throws IncorrectPasswordException, IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		historyLoaded = false;
 		String path = getHistoryFilePath();
@@ -279,9 +310,10 @@ public class PasswordDocumentFile extends PasswordDocument
 		fis.close();
 	}
 	
-	public boolean testPassword()
+	public boolean testPassword(String password)
 	{
-		String path = getDetailsFilePath();
+		AES256 enc = new AES256(password);
+		String path = getHistoryFilePath();
 		File target = new File(path);
 		FileInputStream fis = null;
 		DataInputStream dis = null;
@@ -295,7 +327,7 @@ public class PasswordDocumentFile extends PasswordDocument
 			int sz = dis.readInt();
 			byte[] lineEnc = new byte[sz];
 			dis.read(lineEnc);
-			String line = encoder.decodeFromByteArray(lineEnc);
+			String line = enc.decodeFromByteArray(lineEnc);
 
 			if (line.equals("test string"))
 			{
@@ -314,7 +346,8 @@ public class PasswordDocumentFile extends PasswordDocument
 			}
 			catch(Exception e){}
 		}
-		
+
+		try {enc.cleanUp();}catch(InterruptedException e){}
 		return ret;
 	}
 
@@ -328,6 +361,8 @@ public class PasswordDocumentFile extends PasswordDocument
 		target = new File(path);
 		target.delete();
 
+		details = new ArrayList<>();
+		detailsIndex = new HashMap<>();
 		history = new PasswordDocumentHistory();
 		setHistoryLoaded();
 	}

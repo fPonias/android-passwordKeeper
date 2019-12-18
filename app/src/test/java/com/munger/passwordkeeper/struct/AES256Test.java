@@ -180,9 +180,9 @@ public class AES256Test
         }
 
         final Status status = new Status();
-
-        ThreadedCallbackWaiter waiter = new ThreadedCallbackWaiter(new ThreadedCallbackWaiter.Callback() {public void callback(float progress)
+        final ThreadedCallbackWaiter waiter = new ThreadedCallbackWaiter(new ThreadedCallbackWaiter.Callback() {public void callback(float progress)
         {
+            System.out.println("decode progress " + progress + " called");
             assertTrue(progress > status.lastProgress);
             assertTrue(progress >= 0 && progress <= 1.0f);
             status.lastProgress = progress;
@@ -192,6 +192,8 @@ public class AES256Test
             if (progress >= 1.0f)
             {
                 status.wasCompleted = true;
+
+                System.out.println("decode progress was called " + status.wasCalled + " times and was completed " + status.wasCompleted);
                 synchronized (locker)
                 {
                     locker.notify();
@@ -199,16 +201,23 @@ public class AES256Test
             }
         }});
 
-        String longStr = HelperNoInst.longString();
-        byte[] cipher = encoder.encodeToBytes(longStr);
-        String plain = encoder.decodeFromByteArray(cipher, waiter);
+        Thread decodeThread = new Thread(new Runnable() { public void run()
+        {
+            String longStr = HelperNoInst.longString();
+            byte[] cipher = encoder.encodeToBytes(longStr);
+            System.out.println("aes256test decrypting");
+            String plain = encoder.decodeFromByteArray(cipher, waiter);
+        }});
+        decodeThread.start();
 
+        System.out.println("aes256test waiting");
         synchronized (locker)
         {
             try{locker.wait(2000);} catch(Exception e){}
         }
 
-        assertTrue(status.wasCalled > 1);
+        System.out.println("aes256test done");
+        assertTrue(status.wasCalled >= 1);
         assertTrue(status.wasCompleted);
     }
 }

@@ -13,6 +13,7 @@ public class QuitTimer
     private Thread thread;
     private long CHECK_PERIOD = 1000;
     private long time;
+    private long delay;
     private Object lock = new Object();
     private boolean checkerRunning;
 
@@ -44,13 +45,15 @@ public class QuitTimer
                 if (thread == null)
                     doStart = true;
 
-                time = System.currentTimeMillis() + (int)(value * 60000);
+                delay = (int)(value * 60000);
+                time = System.currentTimeMillis() + delay;
             }
             else if (value == -1)
             {
                 if (thread != null)
                     doStop = true;
 
+                delay = Integer.MAX_VALUE;
                 time = Long.MAX_VALUE;
             }
         }
@@ -88,7 +91,7 @@ public class QuitTimer
                         {
                             MainState.getInstance().handler.post(new Runnable() {public void run()
                             {
-                                Log.d("password", "Timeout reached.  Quitting");
+                                Log.d("password", "Timeout of " + delay + " reached.  Quitting");
                                 checkerRunning = false;
                                 thread = null;
 

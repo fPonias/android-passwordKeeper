@@ -60,16 +60,19 @@ public class Helper
         public PasswordDocumentImpl()
         {
             super(DEFAULT_NAME, DEFAULT_PASSWORD);
+            historyLoaded = true;
         }
 
         public PasswordDocumentImpl(String pass)
         {
             super(pass);
+            historyLoaded = true;
         }
 
         public PasswordDocumentImpl(String name, String pass) throws Exception
         {
             super(name, pass);
+            historyLoaded = true;
         }
 
         public void onSave() throws Exception
@@ -92,7 +95,7 @@ public class Helper
 
         }
 
-        public boolean testPassword()
+        public boolean testPassword(String password)
         {
             return true;
         }
