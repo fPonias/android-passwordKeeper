@@ -10,6 +10,7 @@
 Test Results*
 /app/test*
 tmp/
+/app/release
 /passwordKeeper-desktop/nbproject/private/
 /passwordKeeper-desktop/build/
 /passwordKeeper-desktop/libpassword/build/
