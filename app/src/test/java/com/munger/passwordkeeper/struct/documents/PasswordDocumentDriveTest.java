@@ -9,6 +9,7 @@ import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.Settings;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -86,6 +87,51 @@ public class PasswordDocumentDriveTest
         protected void setupPreferences()
         {
             settings = new SettingsDer();
+        }
+
+        public PasswordDocumentDriveDer driveDocDer;
+
+        @Override
+        protected PasswordDocumentDrive createDriveDocument()
+        {
+            driveDocDer = new PasswordDocumentDriveDer(document, config.remoteDataFilePath);
+            return driveDocDer;
+        }
+    }
+
+    public class PasswordDocumentDriveDer extends PasswordDocumentDrive
+    {
+
+        public PasswordDocumentDriveDer(String name) {
+            super(name);
+        }
+
+        public PasswordDocumentDriveDer(PasswordDocument source, String name) {
+            super(source, name);
+        }
+
+        public PasswordDocumentDriveDer(PasswordDocument source, String name, String password) {
+            super(source, name, password);
+        }
+
+        public int updateCalled = 0;
+
+        @Override
+        public void remoteUpdate() throws Exception
+        {
+            super.remoteUpdate();
+        }
+
+        @Override
+        public void remoteUpdate(boolean force) throws Exception
+        {
+            updateCalled++;
+
+            synchronized (docLock) { docLock.notify(); }
+
+            super.remoteUpdate(force);
+
+            synchronized (docLock) { docLock.notify(); }
         }
     }
 
@@ -297,7 +343,7 @@ public class PasswordDocumentDriveTest
         local.save();
 
         Thread.sleep(100);
-        target = new PasswordDocumentDrive(local, "test");
+        target = new PasswordDocumentDriveDer(local, "test");
         local.load(false);
 
         //load function triggers an async load function in the drive document
@@ -440,8 +486,19 @@ public class PasswordDocumentDriveTest
     public void localAndRemoteUpdate() throws Exception
     {
         load();
+
+        waitForCondition(new Condition() {
+            @Override
+            public boolean satisfied() {
+                return ((PasswordDocumentDriveDer) target).updateCalled > 0 && !target.getIsUpdating();
+            }
+        });
+
         doUpdate(driveHelper.doc, 0);
         driveHelper.doc.save();
+
+        PasswordDocumentHistory remoteOrig = driveHelper.doc.history.clone();
+
         driveHelper.lastModified = new DateTime(System.currentTimeMillis());
         Thread.sleep(100);
 
@@ -451,6 +508,7 @@ public class PasswordDocumentDriveTest
         driveHelper.updateRemoteCalled = 0;
 
         doUpdate(local, 1);
+        Thread.sleep(10);
         local.save();
 
         Thread.sleep(250);
@@ -458,6 +516,10 @@ public class PasswordDocumentDriveTest
         assertTrue(local.saveCalled > 0);
         assertTrue(driveHelper.updateRemoteCalled > 0);
         assertTrue(local.history.equals(driveHelper.doc.history));
+
+        int origSz = remoteOrig.count();
+        int idx = remoteOrig.findClosestIndex(driveHelper.doc.history);
+        assertTrue(origSz == idx);
     }
 
     @Test

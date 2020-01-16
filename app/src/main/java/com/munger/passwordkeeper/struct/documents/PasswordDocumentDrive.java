@@ -210,6 +210,11 @@ public class PasswordDocumentDrive
     private boolean isUpdating = false;
     private final Object updateLock = new Object();
 
+    public boolean getIsUpdating()
+    {
+        return isUpdating;
+    }
+
     public void remoteUpdate() throws Exception
     {
         remoteUpdate(false);
@@ -262,7 +267,10 @@ public class PasswordDocumentDrive
                 {
                     Log.d("password", "remote password data doesn't match");
                     System.out.println("remote password data doesn't match");
-                    sourceDoc.playSubHistory(remoteDoc.history);
+
+                    PasswordDocumentHistory tmpHist = sourceDoc.history.mergeHistory(remoteDoc.history);
+                    sourceDoc.delete();
+                    sourceDoc.playSubHistory(tmpHist);
                     sourceDoc.save();
                 }
                 else
@@ -318,6 +326,9 @@ public class PasswordDocumentDrive
 
     public void overwrite() throws Exception
     {
+        if (isOverwriting)
+            return;
+
         isOverwriting = true;
 
         try

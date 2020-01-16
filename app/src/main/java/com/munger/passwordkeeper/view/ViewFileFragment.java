@@ -337,7 +337,7 @@ public class ViewFileFragment extends Fragment
 	private void deleteClicked(final PasswordDetails dets)
 	{
 		final ViewFileFragment that = this;
-		ConfirmFragment frag = new ConfirmFragment("Delete \"" + dets.getName() + "\"?", new ConfirmFragment.Listener()
+		ConfirmFragment frag = new ConfirmFragment("Delete \"" + dets.getName() + "\"?", ConfirmFragment.POSITIVE | ConfirmFragment.NEUTRAL , new ConfirmFragment.Listener()
 		{
 			public void okay() 
 			{
@@ -365,9 +365,6 @@ public class ViewFileFragment extends Fragment
 			public void cancel() 
 			{	
 			}
-
-			public void discard()
-			{}
 		});
 		frag.show(MainState.getInstance().activity.getSupportFragmentManager(), "confirm_fragment");
 	}

@@ -120,12 +120,12 @@ public class PasswordDocumentHistory
     public PasswordDocumentHistory mergeHistory(PasswordDocumentHistory mergeHistory)
     {
         PasswordDocumentHistory ret = new HistoryMerger(this, mergeHistory).doMerge();
-        ret.cleanRedundant();
+        //ret.cleanRedundant();
         return ret;
     }
 
     //friend function
-    int findClosestIndex(PasswordDocumentHistory mergeHistory)
+    public int findClosestIndex(PasswordDocumentHistory mergeHistory)
     {
         if (history.size() == 0)
             return -1;
@@ -164,6 +164,8 @@ public class PasswordDocumentHistory
         }
 
         if (m == msz)
+            return m;
+        else if (l == lsz)
             return l;
         else
             return -1;

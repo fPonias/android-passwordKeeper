@@ -11,7 +11,7 @@ import com.munger.passwordkeeper.MainState;
 public class QuitTimer
 {
     private Thread thread;
-    private long CHECK_PERIOD = 1000;
+    private long CHECK_PERIOD = 3;
     private long time;
     private long delay;
     private Object lock = new Object();

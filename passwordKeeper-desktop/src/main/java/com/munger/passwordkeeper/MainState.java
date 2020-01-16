@@ -87,7 +87,7 @@ public class MainState
         String name = parts[parts.length - 1];
         
         path = "";
-        for (int i = 0; i > parts.length - 1; i++)
+        for (int i = 0; i < parts.length - 1; i++)
             path += parts[i] + "/";
         
         document = new PasswordDocumentFile(name);

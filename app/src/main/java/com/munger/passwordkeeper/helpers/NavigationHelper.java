@@ -311,6 +311,13 @@ public class NavigationHelper
                         cb.callback(result);
                 }});
             }
+            else if (f instanceof ViewFileFragment)
+            {
+                if (cb != null)
+                    cb.callback(true);
+
+                reset();
+            }
             else if (!(f instanceof ViewFileFragment))
             {
                 if (cb != null)

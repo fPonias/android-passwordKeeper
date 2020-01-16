@@ -177,7 +177,12 @@ public class MainState
         if (driveDocument != null)
             return;
 
-        driveDocument = new PasswordDocumentDrive(document, MainState.getInstance().config.remoteDataFilePath);
+        driveDocument = createDriveDocument();
+    }
+
+    protected PasswordDocumentDrive createDriveDocument()
+    {
+        return new PasswordDocumentDrive(document, MainState.getInstance().config.remoteDataFilePath);
     }
 
     private Object setupLock = new Object();
