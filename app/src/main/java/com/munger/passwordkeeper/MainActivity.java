@@ -162,4 +162,7 @@ public class MainActivity extends AppCompatActivity
         String tag = fragmentManager.getBackStackEntryAt(sz - 1).getName();
         return fragmentManager.findFragmentByTag(tag);
     }
+
+    public static class PlaceholderFragment extends Fragment
+	{}
 }

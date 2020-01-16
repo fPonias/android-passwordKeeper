@@ -42,6 +42,10 @@ public class Settings
     public float getTimeout()
     {
         String valueStr = preferences.getString(SettingsFragment.PREF_NAME_TIMEOUT_LIST, "5");
+
+        if (valueStr == null)
+            return 5;
+
         return Float.parseFloat(valueStr);
     }
 
@@ -55,7 +59,7 @@ public class Settings
         if (!preferences.contains("UUID"))
         {
             UUID newid = UUID.randomUUID();
-            preferences.edit().putString("UUID", newid.toString()).commit();
+            preferences.edit().putString("UUID", newid.toString()).apply();
         }
 
         String ret = preferences.getString("UUID", null);
@@ -75,6 +79,6 @@ public class Settings
     public void setLastCloudUpdate(DateTime value)
     {
         long val2 = value.getValue();
-        preferences.edit().putLong("lastCloudUpdate", val2).commit();
+        preferences.edit().putLong("lastCloudUpdate", val2).apply();
     }
 }

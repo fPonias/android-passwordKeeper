@@ -37,6 +37,10 @@ android {
     testOptions {
         unitTests.returnDefaultValues = true
     }
+    lintOptions {
+        checkReleaseBuilds true
+        abortOnError false
+    }
     externalNativeBuild {
         cmake {
             path '../libpasswordkeeper/CMakeLists.txt'
