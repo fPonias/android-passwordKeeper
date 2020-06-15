@@ -5,6 +5,7 @@
  */
 package com.munger.passwordkeeper;
 
+import com.google.api.client.util.DateTime;
 import com.munger.passwordkeeper.drive.DriveHelper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -44,7 +45,8 @@ public class Prefs
         syncToDrive,
         syncFile,
         timeout,
-        recents
+        recents,
+        lastCloudUpdate
     };
     
     public String getSavePath()
@@ -118,6 +120,20 @@ public class Prefs
             try{ois.close();} catch(Exception e){}
         
         notifyListeners(Types.syncFile);
+    }
+    
+    public DateTime getLastCloudUpdate()
+    {
+        long value = preferences.getLong(Types.lastCloudUpdate.toString(), 0);
+        DateTime ret = new DateTime(value);
+        return ret;
+    }
+    
+    public void setLastCloudUpdate(DateTime update)
+    {
+        long value = update.getValue();
+        preferences.putLong(Types.lastCloudUpdate.toString(), value);
+        notifyListeners(Types.lastCloudUpdate);
     }
     
     public long getTimeout()

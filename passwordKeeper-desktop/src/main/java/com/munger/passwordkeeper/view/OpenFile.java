@@ -45,10 +45,11 @@ public class OpenFile extends Page
     private void submit()
     {
         char[] pw = passwordInput.getPassword();
-        Main.instance.mainState.document.setPassword(new String(pw));
+        String pwStr = new String(pw);
         
-        if (Main.instance.mainState.document.testPassword())
+        if (Main.instance.mainState.document.testPassword(pwStr))
         {
+            Main.instance.mainState.document.setPassword(pwStr);
             Main.instance.openFile();
         }
     }

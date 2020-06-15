@@ -54,6 +54,8 @@ import com.munger.passwordkeeper.view.widget.TextInputWidget;
 
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
@@ -126,6 +128,7 @@ public class ViewDetailFragment extends Fragment
 
 		actionCallback = new EditActionCallback(this);
 	};
+
 
 	protected View lastFocus;
 	protected long lastFocusStamp = 0;
@@ -328,6 +331,7 @@ public class ViewDetailFragment extends Fragment
 		
 		MenuItem searchItem = menu.findItem(R.id.action_search);
 	    SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+	    searchView.setQuery("", false);
 	    
 	    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() 
 	    {
@@ -338,6 +342,9 @@ public class ViewDetailFragment extends Fragment
 
 			public boolean onQueryTextChange(String arg0) 
 			{
+				if (filterAdapter == null)
+					return false;
+
 				if (arg0.isEmpty())
 				{
 					if (useFiltered == true)

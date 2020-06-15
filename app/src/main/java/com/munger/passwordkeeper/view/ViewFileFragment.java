@@ -200,6 +200,7 @@ public class ViewFileFragment extends Fragment
 	private ArrayList<PasswordDetails> filtered = new ArrayList<PasswordDetails>();
 	private boolean useFiltered = false;
 	private DetailListAdapter filterAdapter;
+	private SearchView searchView = null;
 
 
 	@Override
@@ -208,7 +209,7 @@ public class ViewFileFragment extends Fragment
 		inflater.inflate(R.menu.main, menu);
 		
 		MenuItem searchItem = menu.findItem(R.id.action_search);
-	    SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+	    searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
 	    
 	    
 	    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() 
@@ -329,8 +330,15 @@ public class ViewFileFragment extends Fragment
 		addButton.setVisibility((editable) ? View.VISIBLE : View.GONE);
 	}
 
+	private CharSequence oldQuery = null;
+
 	private void openDetail(final PasswordDetails dets)
 	{
+		if (searchView != null)
+		{
+			oldQuery = searchView.getQuery().toString();
+		}
+
 		MainState.getInstance().navigationHelper.openDetail(dets);
 	}
 

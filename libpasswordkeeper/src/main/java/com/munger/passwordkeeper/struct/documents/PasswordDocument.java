@@ -151,6 +151,11 @@ public abstract class PasswordDocument
 		}
 	}
 
+        public boolean isHistoryLoaded()
+        {
+            return historyLoaded;
+        }
+        
 	protected void awaitHistoryLoaded()
 	{
 		synchronized (historyLoadedLock)
@@ -296,6 +301,7 @@ public abstract class PasswordDocument
 
 		for (int i = 0; i < maxIdx; i += HISTORY_BATCH_SIZE)
 		{
+			System.out.println("writing batch " + i + " to password history");
 			writeBatch(i, dos);
 		}
 	}

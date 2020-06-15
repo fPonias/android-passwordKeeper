@@ -73,10 +73,23 @@ public class DriveHelper
     
     private Credential credential = null;
     private User user = null;
+    private Boolean isConnected = null;
+    private Object connectLock = new Object();
 
     public DriveHelper() throws Exception
     {
-        init();
+        try
+        {
+            init();
+            this.isConnected = true;
+            
+            synchronized(connectLock) {connectLock.notifyAll();}
+        }
+        catch(Exception e){
+            this.isConnected = false;
+            synchronized(connectLock) {connectLock.notifyAll();}
+            throw(e);
+        }
     }
     
     public boolean isAuthorized()
@@ -113,6 +126,22 @@ public class DriveHelper
         user = aboot.getUser();
     }
     
+    public Boolean isConnected()
+    {
+        return this.isConnected;
+    }
+    
+    public void awaitConnection()
+    {
+        synchronized (connectLock)
+        {
+            if (isConnected != null)
+                return;
+            
+            try {connectLock.wait();} catch(InterruptedException e) {}
+        }
+    }
+    
     public static String NEW_ID = "<new>" + System.currentTimeMillis();
         
     public class DriveFileStruct implements Serializable
@@ -126,6 +155,11 @@ public class DriveHelper
         {
             return name;
         }
+    }
+    
+    public DriveFileStruct getOrCreateFile(String name) throws IOException
+    {
+        
     }
     
     public DriveFileStruct createNewFile(String name) throws Exception
