@@ -39,7 +39,7 @@ extern "C" {
     void aes256_done(aes256_context *);
     void aes256_encrypt_ecb(aes256_context *, uint8_t * /* plaintext */);
     void aes256_decrypt_ecb(aes256_context *, uint8_t * /* cipertext */);
-    void aes256_initFromPassword(aes256_context* ctx, const char* password);
+    void aes256_initFromPassword(aes256_context* ctx, const char* password, int type);
     void aes256_encryptString(aes256_context* ctx, const char* input, char* output);
     void aes256_decryptString(aes256_context* ctx, const char* input, char* output, int n, void (*callback) (float));
     void aes256_cleanUp(aes256_context* ctx);

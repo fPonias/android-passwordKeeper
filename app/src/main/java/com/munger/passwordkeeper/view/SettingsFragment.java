@@ -7,17 +7,18 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 
-import com.munger.passwordkeeper.MainState;
-import com.munger.passwordkeeper.R;
-import com.munger.passwordkeeper.alert.FileDialog;
-import com.munger.passwordkeeper.helpers.NavigationHelper;
-
-import java.io.File;
-
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+
+import com.munger.passwordkeeper.MainState;
+import com.munger.passwordkeeper.R;
+import com.munger.passwordkeeper.alert.FileDialog;
+import com.munger.passwordkeeper.helpers.NavigationHelper;
+import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+
+import java.io.File;
 
 public class SettingsFragment extends PreferenceFragmentCompat
 {
@@ -26,15 +27,19 @@ public class SettingsFragment extends PreferenceFragmentCompat
     ListPreference timeoutList;
     Preference changePasswordBtn;
     Preference importFileBtn;
+    Preference exportFileBtn;
     Preference deleteBtn;
     Preference aboutBtn;
+    Preference testBtn;
 
     public static final String PREF_NAME_SAVE_TO_CLOUD = "settings_saveToCloud";
     public static final String PREF_NAME_TIMEOUT_LIST = "settings_timeout";
     public static final String PREF_CHANGE_PASSWORD = "settings_changePassword";
     public static final String PREF_IMPORT_FILE = "settings_importFile";
+    public static final String PREF_EXPORT_FILE = "settings_exportFile";
     public static final String PREF_DELETE_FILE = "settings_deleteFile";
     public static final String PREF_ABOUT = "settings_about";
+    public static final String PREF_TEST = "settings_test";
 
     public static final int PREFERENCES_RESOURCE = R.xml.fragment_settings;
 
@@ -69,14 +74,24 @@ public class SettingsFragment extends PreferenceFragmentCompat
         timeoutList = (ListPreference) findPreference(PREF_NAME_TIMEOUT_LIST);
         changePasswordBtn = findPreference(PREF_CHANGE_PASSWORD);
         importFileBtn = findPreference(PREF_IMPORT_FILE);
+        exportFileBtn = findPreference(PREF_EXPORT_FILE);
         deleteBtn = findPreference(PREF_DELETE_FILE);
         aboutBtn = findPreference(PREF_ABOUT);
+        testBtn = findPreference(PREF_TEST);
 
         importFileBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {public boolean onPreferenceClick(Preference preference)
         {
             doImport();
             return false;
         }});
+
+        exportFileBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+            doExport();
+            return false;
+            }
+        });
 
         deleteBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {public boolean onPreferenceClick(Preference preference)
         {
@@ -109,6 +124,16 @@ public class SettingsFragment extends PreferenceFragmentCompat
             return true;
         }});
 
+        testBtn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                runTest();
+                return false;
+            }
+        });
+
+        testBtn.setVisible(false);
+
         loadSettings();
     }
 
@@ -116,6 +141,11 @@ public class SettingsFragment extends PreferenceFragmentCompat
     {
         File mPath = new File(Environment.getExternalStorageDirectory() + "//DIR//");
         return mPath;
+    }
+
+    private void doExport()
+    {
+        MainState.getInstance().navigationHelper.exportFile("passwordCrypt-backup");
     }
 
     private void doImport()
@@ -175,5 +205,19 @@ public class SettingsFragment extends PreferenceFragmentCompat
             importFileBtn.setVisible(true);
         else
             importFileBtn.setVisible(false);
+    }
+
+    private void runTest()
+    {
+        try
+        {
+            MainState.getInstance().driveDocument.remoteUpdate(true);
+        }
+        catch (PasswordDocument.IncorrectPasswordException e) {
+            e.printStackTrace();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

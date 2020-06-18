@@ -54,6 +54,7 @@ typedef struct {
 void MD5Init ();
 void MD5Update ();
 void MD5Final ();
+void MD5PasswordToHash(const char* password, char* key);
 void MD5Hash(const char* source, char* hash);
 
 #endif

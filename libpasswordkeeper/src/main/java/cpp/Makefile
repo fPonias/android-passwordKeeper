@@ -15,5 +15,8 @@ aes256.o: aes256.c aes256.h
 MD5.o: MD5.c MD5.h
 	gcc -g -c -fPIC MD5.c
 
+sha256.o: sha256.c sha256.h
+	gcc -g -c -fPIC sha256.c
+
 com_munger_passwordkeeper_struct_AES256.o: com_munger_passwordkeeper_struct_AES256.c com_munger_passwordkeeper_struct_AES256.h
 	gcc -g -I"/Applications/Android Studio.app/Contents/jre/jdk/Contents/Home/include" -I"/Applications/Android Studio.app/Contents/jre/jdk/Contents/Home/include/darwin" -c -fPIC com_munger_passwordkeeper_struct_AES256.c	

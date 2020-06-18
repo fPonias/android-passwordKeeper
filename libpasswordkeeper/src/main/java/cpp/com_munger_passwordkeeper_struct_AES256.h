@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_init
-  (JNIEnv *, jobject, jstring);
+  (JNIEnv *, jobject, jstring, jint);
 
 JNIEXPORT void JNICALL Java_com_munger_passwordkeeper_struct_AES256_destroy
         (JNIEnv*, jobject, jbyteArray);
@@ -32,7 +32,6 @@ JNIEXPORT jboolean JNICALL Java_com_munger_passwordkeeper_struct_AES256_getDecod
 
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_decodeFromBytes
         (JNIEnv *, jobject, jbyteArray, jbyteArray);
-
 
 JNIEXPORT jstring JNICALL Java_com_munger_passwordkeeper_struct_AES256_md5Hash
         (JNIEnv*, jobject, jstring);

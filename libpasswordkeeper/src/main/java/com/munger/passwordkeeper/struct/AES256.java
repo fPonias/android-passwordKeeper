@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class AES256
+public class AES256 implements IEncoder
 {
 	static
 	{
@@ -71,11 +71,19 @@ public class AES256
 	private Thread progressPoller;
 	private Object lock;
 	private boolean runPoller;
+	private HashType hashType;
 
-	public AES256(String password)
+	public enum HashType
 	{
+		MD5,
+		SHA
+	};
+
+	public AES256(String password, HashType hashType)
+	{
+		this.hashType = hashType;
 		this.password = password;
-		context = init(password);
+		context = init(password, (hashType == HashType.MD5) ? 0 : 1);
 
 		runPoller = true;
 		lock = new Object();
@@ -99,6 +107,22 @@ public class AES256
 		progressPoller.start();
 	}
 
+	public String hash(String target)
+	{
+		if (hashType == HashType.SHA)
+			return shaHash(target);
+		else
+			return md5Hash(target);
+	}
+
+	public int hashSize()
+	{
+		if (hashType == HashType.SHA)
+			return 64;
+		else
+			return 32;
+	}
+
 	public void cleanUp() throws InterruptedException
 	{
 		if (progressPoller == null || runPoller == false)
@@ -113,9 +137,12 @@ public class AES256
 		}
 	}
 
-	public boolean equals(AES256 encoder)
+	public boolean equals(IEncoder encoder)
 	{
-		return password.equals(encoder.password);
+		if (!(encoder instanceof AES256))
+			return false;
+
+		return password.equals(((AES256)encoder).password);
 	}
 
 	public String encode(String target)
@@ -169,12 +196,13 @@ public class AES256
 		}
 	}
 
-	private native byte[] init(String password);
+	private native byte[] init(String password, int hashType);
 	private native void destroy(byte[] context);
 	private native String encode(byte[] context, String target);
 	private native String decode(byte[] context, String target);
 	private native byte[] encodeToBytes(byte[] context, String target);
 	private native String decodeFromBytes(byte[] context, byte[] target);
-	public native String md5Hash(String target);
+	private native String md5Hash(String target);
+	private native String shaHash(String target);
 	private native float getDecodeProgress();
 }

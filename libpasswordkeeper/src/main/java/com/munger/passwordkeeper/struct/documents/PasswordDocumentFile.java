@@ -1,5 +1,11 @@
 package com.munger.passwordkeeper.struct.documents;
 
+import com.munger.passwordkeeper.struct.AES256;
+import com.munger.passwordkeeper.struct.IEncoder;
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PlainText;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -11,10 +17,6 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.munger.passwordkeeper.struct.AES256;
-import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
-
 public class PasswordDocumentFile extends PasswordDocument 
 {
 	protected String rootPath = "./";
@@ -23,7 +25,14 @@ public class PasswordDocumentFile extends PasswordDocument
 	{
 		super(name);
 	}
-	
+
+	public PasswordDocumentFile(String name, String password, EncoderType hashType)
+	{
+		this(name);
+		setEncoderType(hashType);
+		setPassword(password);
+	}
+
 	public PasswordDocumentFile(String name, String password)
 	{
 		this(name);
@@ -116,10 +125,10 @@ public class PasswordDocumentFile extends PasswordDocument
 
 	public boolean exists()
 	{
-		String path = getDetailsFilePath();
+		String path = getHistoryFilePath();
 		File target = new File(path);
 
-		return target.exists();
+		return target.exists() && target.length() > 0;
 	}
 
 	public String getDetailsFilePath()
@@ -312,7 +321,14 @@ public class PasswordDocumentFile extends PasswordDocument
 	
 	public boolean testPassword(String password)
 	{
-		AES256 enc = new AES256(password);
+		IEncoder enc;
+		if (encoderType == EncoderType.AES_SHA)
+			enc = new AES256(password, AES256.HashType.SHA);
+		else if (encoderType == EncoderType.AES_MD5)
+			enc = new AES256(password, AES256.HashType.MD5);
+		else
+			enc = new PlainText(password);
+
 		String path = getHistoryFilePath();
 		File target = new File(path);
 		FileInputStream fis = null;

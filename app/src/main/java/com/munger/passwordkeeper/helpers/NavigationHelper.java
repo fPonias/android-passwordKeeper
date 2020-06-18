@@ -5,9 +5,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.preference.PreferenceManager;
 
 import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
@@ -27,21 +35,11 @@ import com.munger.passwordkeeper.view.SettingsFragment;
 import com.munger.passwordkeeper.view.ViewDetailFragment;
 import com.munger.passwordkeeper.view.ViewFileFragment;
 
-import org.mortbay.jetty.Main;
-
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.preference.PreferenceManager;
 
 /**
  * Created by codymunger on 11/26/16.
@@ -98,6 +96,7 @@ public class NavigationHelper
 
         PasswordDocumentFile document = (PasswordDocumentFile) MainState.getInstance().document;
         document.setRootPath(getRootPath());
+
         if (!document.exists())
         {
             createFileFragment = openCreateFileFragment(true);
@@ -177,8 +176,9 @@ public class NavigationHelper
                 else
                 {
                     gettingPassword = false;
+
                     document.setPassword(password);
-                    MainState.getInstance().password = password;
+                    MainState.getInstance().setPassword(password);
                     openFile();
                     return true;
                 }
@@ -192,7 +192,6 @@ public class NavigationHelper
 
         inDialog.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
     }
-
 
     public boolean getEditable()
     {
@@ -630,6 +629,27 @@ public class NavigationHelper
         t.execute(new Object[]{});
     }
 
+    public void exportFile(String name)
+    {
+        File downloadDir = MainState.getInstance().context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        String path = downloadDir.getPath() + "/" + name;
+        File backupFile = new File(path);
+        if (backupFile.exists())
+            backupFile.delete();
+
+        try
+        {
+            PasswordDocumentFile exportFile = new PasswordDocumentFile(path, "");
+            exportFile.load(true);
+            PasswordDocumentHistory hist = MainState.getInstance().document.getHistory().clone();
+            exportFile.playSubHistory(hist);
+            exportFile.save();
+        }
+        catch (Exception e){
+            return;
+        }
+    }
+
     protected void setPasswordFile()
     {
         MainState.getInstance().document = new PasswordDocumentFile(MainState.getInstance().config.localDataFilePath);
@@ -638,8 +658,7 @@ public class NavigationHelper
 
     public void setFile(String password) throws Exception
     {
-        MainState.getInstance().password = password;
-        MainState.getInstance().document.setPassword(password);
+        MainState.getInstance().setPassword(password);
         openFile();
     }
 

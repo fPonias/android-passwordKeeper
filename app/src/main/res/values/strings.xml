@@ -41,6 +41,7 @@
     <string name="settings_timeout_title">Idle Timeout</string>
     <string name="settings_password_title">Change Password &#8230;</string>
     <string name="settings_import_title">Import old data &#8230;</string>
+    <string name="settings_export_title">Backup data &#8230;</string>
     <string name="settings_delete_title">Delete all data &#8230;</string>
     <string name="settings_about_title">About Password Crypt &#8230;</string>
 

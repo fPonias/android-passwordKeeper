@@ -3,6 +3,8 @@ package com.munger.passwordkeeper;
 import android.content.Context;
 import android.os.Handler;
 
+import androidx.fragment.app.FragmentActivity;
+
 import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.helpers.KeyboardListener;
 import com.munger.passwordkeeper.helpers.NavigationHelper;
@@ -14,8 +16,6 @@ import com.munger.passwordkeeper.struct.Settings;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
-
-import androidx.fragment.app.FragmentActivity;
 
 /**
  * Created by codymunger on 11/25/16.
@@ -43,7 +43,7 @@ public class MainState
 
     public PasswordDocument document;
     public PasswordDetails details;
-    public String password;
+    private String password = null;
 
     private boolean editable = false;
 
@@ -72,6 +72,22 @@ public class MainState
         setupDriveHelper();
         setupDocument();
         setupQuitTimer();
+    }
+
+    public void setPassword(String password)
+    {
+        this.password = password;
+
+        if (password != null)
+        {
+            if (this.document != null)
+                this.document.setPassword(password);
+        }
+    }
+
+    public String getPassword()
+    {
+        return password;
     }
 
     protected void setupNavigation()
@@ -119,6 +135,9 @@ public class MainState
 
         if (config.localDataFilePath.startsWith("./"))
             ((PasswordDocumentFile) doc).setRootPath(NavigationHelper.getRootPath());
+
+        if (password != null)
+            doc.setPassword(password);
 
         return doc;
     }
@@ -180,9 +199,11 @@ public class MainState
         driveDocument = createDriveDocument();
     }
 
-    protected PasswordDocumentDrive createDriveDocument()
+    protected PasswordDocumentDrive createDriveDocument() throws Exception
     {
-        return new PasswordDocumentDrive(document, MainState.getInstance().config.remoteDataFilePath);
+        PasswordDocumentDrive ret = new PasswordDocumentDrive(document, MainState.getInstance().config.remoteDataFilePath);
+
+        return ret;
     }
 
     private Object setupLock = new Object();
@@ -244,7 +265,7 @@ public class MainState
             {
                 settingUp = false;
             }
-        }});
+        }}, "drive helper connect thread");
         t.start();
     }
 

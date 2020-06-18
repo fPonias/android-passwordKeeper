@@ -7,9 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -30,7 +27,7 @@ public class AES256Test
     @Before
     public void init()
     {
-        encoder = new AES256(DEFAULT_PASSWORD);
+        encoder = new AES256(DEFAULT_PASSWORD, AES256.HashType.SHA);
     }
 
     @After
@@ -49,14 +46,14 @@ public class AES256Test
     @Test
     public void testMD5Empty()
     {
-        String hash = encoder.md5Hash("");
+        String hash = encoder.hash("");
         assertEquals(32, hash.length());
     }
 
     @Test
     public void testMD5Typical()
     {
-        String hash = encoder.md5Hash(DEFAULT_STRING);
+        String hash = encoder.hash(DEFAULT_STRING);
         assertEquals(32, hash.length());
     }
 
@@ -64,7 +61,7 @@ public class AES256Test
     public void testMD5Big()
     {
         String longStr = HelperNoInst.longString();
-        String hash = encoder.md5Hash(longStr);
+        String hash = encoder.hash(longStr);
         assertEquals(32, hash.length());
     }
 
@@ -138,16 +135,16 @@ public class AES256Test
         String cipher1 = encoder.encode(DEFAULT_STRING);
         String plain1 = encoder.decode(cipher1);
 
-        AES256 encoder2 = new AES256("");
+        AES256 encoder2 = new AES256("", AES256.HashType.SHA);
         String cipher2 = encoder2.encode(DEFAULT_STRING);
         String plain2 = encoder2.decode(cipher2);
 
-        AES256 encoder3 = new AES256("a different password");
+        AES256 encoder3 = new AES256("a different password", AES256.HashType.SHA);
         String cipher3 = encoder3.encode(DEFAULT_STRING);
         String plain3 = encoder3.decode(cipher3);
 
         String longStr = HelperNoInst.longString();
-        AES256 encoder4 = new AES256(longStr);
+        AES256 encoder4 = new AES256(longStr, AES256.HashType.SHA);
         String cipher4 = encoder4.encode(DEFAULT_STRING);
         String plain4 = encoder4.decode(cipher4);
 

@@ -288,3 +288,35 @@ void MD5Hash(const char* source, char* hash)
     
     hash[32] = '\0';
 }
+
+void MD5PasswordToHash(const char* password, char* key)
+{
+    int sz = strlen(password);
+    int sz1 = sz / 2;
+    int sz2 = sz - sz1;
+
+    char part1[sz1 + 1];
+    strncpy(part1, password, sz1);
+    part1[sz1] = '\0';
+
+
+    MD5_CTX mdContext;
+    MD5Init (&mdContext);
+    MD5Update (&mdContext, (unsigned char*)password, sz1);
+    MD5Final (&mdContext);
+
+    int i;
+    for (i = 0; i < 16; i++)
+    {
+        key[i] = mdContext.digest[i];
+    }
+
+    MD5Init (&mdContext);
+    MD5Update (&mdContext, (unsigned char*)&(password[sz1]), sz2);
+    MD5Final (&mdContext);
+
+    for (i = 0; i < 16; i++)
+    {
+        key[i + 16] = mdContext.digest[i];
+    }
+}

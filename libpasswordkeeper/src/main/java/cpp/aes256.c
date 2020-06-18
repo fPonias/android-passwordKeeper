@@ -19,6 +19,7 @@
 */
 #include "aes256.h"
 #include "MD5.h"
+#include "sha256.h"
 #include <string.h>
 
 #define F(x)   (((x)<<1) ^ ((((x)>>7) & 1) * 0x1b))
@@ -362,39 +363,15 @@ void aes256_decrypt_ecb(aes256_context *ctx, uint8_t *buf)
 
 
 
-void aes256_initFromPassword(aes256_context* ctx, const char* password)
+void aes256_initFromPassword(aes256_context* ctx, const char* password, int type)
 {
-    uint8_t key[32];
-    
-    int sz = strlen(password);
-    int sz1 = sz / 2;
-    int sz2 = sz - sz1;
-    
-    char part1[sz1 + 1];
-    strncpy(part1, password, sz1);
-    part1[sz1] = '\0';
-    
-    
-    MD5_CTX mdContext;
-    MD5Init (&mdContext);
-    MD5Update (&mdContext, (unsigned char*)password, sz1);
-    MD5Final (&mdContext);
-    
-    int i;
-    for (i = 0; i < 16; i++)
-    {
-        key[i] = mdContext.digest[i];
-    }
-    
-    MD5Init (&mdContext);
-    MD5Update (&mdContext, (unsigned char*)&(password[sz1]), sz2);
-    MD5Final (&mdContext);
-    
-    for (i = 0; i < 16; i++)
-    {
-        key[i + 16] = mdContext.digest[i];
-    }
-    
+    uint8_t key[65];
+
+    if (type == 1)
+        shaHash(password, &(key[0]));
+    else
+        MD5PasswordToHash(password, &(key[0]));
+
     aes256_init(ctx, key);
 }
 

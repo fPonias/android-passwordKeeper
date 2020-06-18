@@ -9,11 +9,12 @@ android {
             keyPassword '1600 Amphitheatre Parkway'
         }
     }
-    compileSdkVersion 28
+    compileSdkVersion 29
+    ndkVersion "21.3.6528147"
     defaultConfig {
         applicationId "com.munger.passwordkeeper"
         minSdkVersion 18
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

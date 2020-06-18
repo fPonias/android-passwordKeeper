@@ -4,6 +4,8 @@
                         android:title="@string/settings_cloud_title"
                         android:defaultValue="false"
         />
+    <Preference android:key="settings_test"
+                android:title="Test" />
     <ListPreference android:key="settings_timeout"
                     android:title="@string/settings_timeout_title"
                     android:defaultValue="5"
@@ -14,6 +16,8 @@
                 android:title="@string/settings_password_title" />
     <Preference android:key="settings_importFile"
                 android:title="@string/settings_import_title" />
+    <Preference android:key="settings_exportFile"
+                android:title="@string/settings_export_title" />
     <Preference android:key="settings_deleteFile"
                 android:title="@string/settings_delete_title" />
     <Preference android:key="settings_about"

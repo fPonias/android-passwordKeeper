@@ -13,6 +13,10 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.Fragment;
+
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
@@ -22,10 +26,6 @@ import com.munger.passwordkeeper.view.widget.TextWidget;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.appcompat.widget.SearchView;
-import androidx.core.view.MenuItemCompat;
-import androidx.fragment.app.Fragment;
 
 public class ViewFileFragment extends Fragment
 {
@@ -128,7 +128,7 @@ public class ViewFileFragment extends Fragment
 	@Override
 	public void onSaveInstanceState(Bundle outState) 
 	{
-		outState.putString("password", MainState.getInstance().password);
+		outState.putString("password", MainState.getInstance().getPassword());
 	};
 	
 	@Override

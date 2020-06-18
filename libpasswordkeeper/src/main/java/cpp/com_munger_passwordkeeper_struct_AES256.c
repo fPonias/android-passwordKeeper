@@ -16,7 +16,8 @@
 
 #include "jni.h"
 #include "aes256.h"
-#include "MD5.h"
+//#include "MD5.h"
+#include "sha256.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -35,11 +36,11 @@ JNIEXPORT jfloat JNICALL Java_com_munger_passwordkeeper_struct_AES256_getDecodeP
     return (jfloat) decodeProgress;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_init(JNIEnv * env, jobject jthis, jstring jpass)
+JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_init(JNIEnv * env, jobject jthis, jstring jpass, jint hashType)
 {
 	const char* password = (*env)->GetStringUTFChars(env, jpass, 0);
 	aes256_context ret;
-	aes256_initFromPassword(&ret, password);
+	aes256_initFromPassword(&ret, password, hashType);
 
     int sz = sizeof(aes256_context);
     printf("context size: %i", sz);
@@ -201,6 +202,19 @@ JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_md5Has
     hash[32] = '\0';
     char* hashPtr = &(hash[0]);
     MD5Hash(targetPtr, hashPtr);
+    jstring ret = (*env)->NewStringUTF(env, hashPtr);
+
+    return ret;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_com_munger_passwordkeeper_struct_AES256_shaHash (JNIEnv* env, jobject jthis, jstring jtarget)
+{
+    const char* targetPtr = (*env)->GetStringUTFChars(env, jtarget, 0);
+
+    char hash[65];
+    hash[64] = '\0';
+    char* hashPtr = &(hash[0]);
+    shaHash(targetPtr, hashPtr);
     jstring ret = (*env)->NewStringUTF(env, hashPtr);
 
     return ret;

@@ -2,17 +2,10 @@ package com.munger.passwordkeeper.struct.documents;
 
 import android.util.Log;
 
-import com.google.api.client.http.FileContent;
 import com.google.api.client.util.DateTime;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.File;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.helpers.DriveHelper;
-import com.munger.passwordkeeper.helpers.DriveRemoteLock;
-import com.munger.passwordkeeper.struct.AES256;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
-
-import org.mortbay.jetty.Main;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -349,7 +342,7 @@ public class PasswordDocumentDrive
 
     protected boolean isOverwriting = false;
 
-    public void setPassword(String password) throws Exception
+    public void changePassword(String password) throws Exception
     {
         sourceDoc.setPassword(password);
         isOverwriting = true;

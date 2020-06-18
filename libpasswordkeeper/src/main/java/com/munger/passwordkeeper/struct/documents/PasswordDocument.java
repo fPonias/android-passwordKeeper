@@ -1,35 +1,33 @@
 package com.munger.passwordkeeper.struct.documents;
 
+import com.munger.passwordkeeper.struct.AES256;
+import com.munger.passwordkeeper.struct.IEncoder;
+import com.munger.passwordkeeper.struct.PasswordDetails;
+import com.munger.passwordkeeper.struct.PlainText;
+import com.munger.passwordkeeper.struct.history.HistoryEvent;
+import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
+
 import java.io.BufferedReader;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.NavigableSet;
-import java.util.Queue;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentSkipListSet;
-
-import com.munger.passwordkeeper.struct.AES256;
-import com.munger.passwordkeeper.struct.PasswordDetailsPair;
-import com.munger.passwordkeeper.struct.history.HistoryEvent;
-import com.munger.passwordkeeper.struct.history.HistoryEventFactory;
-import com.munger.passwordkeeper.struct.PasswordDetails;
-import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 public abstract class PasswordDocument 
 {
-	protected AES256 encoder;
+	protected IEncoder encoder;
 	protected long lastLoad;
 
 	protected ArrayList<PasswordDetails> details;
 	protected HashMap<String, PasswordDocumentHistory.HistoryEventListener> detailsListeners;
 	public String name;
 	protected TreeSet<ILoadEvents> loadEvents = new TreeSet<>();
+	protected EncoderType encoderType = EncoderType.AES_SHA;
 
 
 	protected PasswordDocumentHistory history;
@@ -42,6 +40,13 @@ public abstract class PasswordDocument
 	protected final String testString = "test string";
 	public static final String emptyEntryTitle = "new entry";
 	public static final String defaultName = "passwords";
+
+	public enum EncoderType
+	{
+		AES_MD5,
+		AES_SHA,
+		PLAINTEXT
+	}
 
 	public PasswordDocument()
 	{
@@ -68,7 +73,22 @@ public abstract class PasswordDocument
 
 	public void setPassword(String password)
 	{
-		encoder = new AES256(password);
+		if (encoderType == EncoderType.AES_SHA)
+			encoder = new AES256(password, AES256.HashType.SHA);
+		else if (encoderType == EncoderType.AES_MD5)
+			encoder = new AES256(password, AES256.HashType.MD5);
+		else
+			encoder = new PlainText(password);
+	}
+
+	public void setEncoderType(EncoderType encoderType)
+	{
+		this.encoderType = encoderType;
+	}
+
+	public EncoderType getHashType()
+	{
+		return encoderType;
 	}
 
 	public void changePassword(String password) throws Exception
@@ -76,7 +96,7 @@ public abstract class PasswordDocument
 		setPassword(password);
 	}
 
-	AES256 getEncoder()
+	IEncoder getEncoder()
 	{
 		return encoder;
 	}
@@ -272,7 +292,7 @@ public abstract class PasswordDocument
 		dis.readFully(lineEnc);
 
 		String batchLine = history.partToString(index, HISTORY_BATCH_SIZE);
-		String batchHash = encoder.md5Hash(batchLine);
+		String batchHash = encoder.hash(batchLine);
 
 		if (batchHash.equals(hashStr))
 		{
@@ -313,7 +333,7 @@ public abstract class PasswordDocument
 		if (line != null && line != "")
 		{
 			byte[] lineEnc = encoder.encodeToBytes(line);
-			String hash = encoder.md5Hash(line);
+			String hash = encoder.hash(line);
 
 			dos.writeInt(idx);
 			dos.writeInt(lineEnc.length);
@@ -334,6 +354,7 @@ public abstract class PasswordDocument
 		history = new PasswordDocumentHistory();
 
 		String line = readLine(inArr);
+		System.out.println("document test line: " + line);
 		if (!line.equals(testString))
 			throw new IncorrectPasswordException();
 
@@ -342,6 +363,7 @@ public abstract class PasswordDocument
 		history.setSequenceCount(idx);
 		total += 8;
 
+		int hashSize = encoder.hashSize();
 		int count = 0;
 		int i = 0;
 		while (true)
@@ -365,7 +387,7 @@ public abstract class PasswordDocument
 
 			if (sz > 0)
 			{
-				byte[] hash = new byte[32];
+				byte[] hash = new byte[hashSize];
 				inArr.readFully(hash);
 				String hashStr = new String(hash);
 				String batchLine = readLine(inArr, sz);

@@ -20,6 +20,7 @@ add_library( # Sets the name of the library.
              # file are automatically included.
              src/main/java/cpp/aes256.c
              src/main/java/cpp/MD5.c
+             src/main/java/cpp/sha256.c
              src/main/java/cpp/com_munger_passwordkeeper_struct_AES256.c)
 
 # Searches for a specified prebuilt library and stores the path as a
