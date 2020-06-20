@@ -119,14 +119,18 @@ public class MainState
         if (document == null)
             document = createDocument();
 
-        try
+        Thread t = new Thread(new Runnable() {public void run()
         {
-            boolean enable = settings.getSaveToCloud();
-            if (enable)
-                setupDriveDocument();
-        }
-        catch(Exception e){
-        }
+            try
+            {
+                boolean enable = settings.getSaveToCloud();
+                if (enable)
+                    setupDriveDocument();
+            }
+            catch(Exception e){
+            }
+        }});
+        t.start();
     }
 
     protected PasswordDocument createDocument()

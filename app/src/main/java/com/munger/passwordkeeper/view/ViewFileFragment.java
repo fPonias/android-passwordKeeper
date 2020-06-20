@@ -3,6 +3,7 @@ package com.munger.passwordkeeper.view;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -30,18 +31,18 @@ import java.util.List;
 public class ViewFileFragment extends Fragment
 {
 	private View root;
-	
+
 	private TextView title;
 	private Button addButton;
 	private ListView detailList;
 
 	private DetailListAdapter detailListAdapter;
-	
+
 	private PasswordDocument document = null;
 	private String file = "";
-	
+
 	private boolean editable = false;
-	
+
 	public static String getName()
 	{
 		return "File";
@@ -51,15 +52,15 @@ public class ViewFileFragment extends Fragment
 	{
 		private ViewFileFragment parent;
 
-		public DetailListAdapter(ViewFileFragment parent, Context context, List<PasswordDetails> objects) 
+		public DetailListAdapter(ViewFileFragment parent, Context context, List<PasswordDetails> objects)
 		{
 			super(context, 0, objects);
-			
+
 			this.parent = parent;
 		}
 
 		@Override
-		public View getView(int position, View convertView, ViewGroup par) 
+		public View getView(int position, View convertView, ViewGroup par)
 		{
 			final DetailView ret;
 			final DetailListAdapter that = this;
@@ -73,22 +74,22 @@ public class ViewFileFragment extends Fragment
 			else
 			{
 				ret = new DetailView(details, getContext());
-				ret.setListener(new TextWidget.Listener() 
+				ret.setListener(new TextWidget.Listener()
 				{
-					public void labelClicked() 
+					public void labelClicked()
 					{
 						that.parent.openDetail(ret.getDetails());
 					}
-					
-					public void deleteClicked() 
+
+					public void deleteClicked()
 					{
 						that.parent.deleteClicked(ret.getDetails());
 					}
 				});
 			}
-			
+
 			ret.setEditable(parent.editable);
-			
+
 			return ret;
 		}
 	}
@@ -96,18 +97,18 @@ public class ViewFileFragment extends Fragment
 	static class DetailView extends TextWidget
 	{
 		private PasswordDetails details;
-		
-		public DetailView(PasswordDetails details, Context context) 
+
+		public DetailView(PasswordDetails details, Context context)
 		{
 			super(context, null);
 
 			setDetails(details);
 		}
-		
+
 		public void setDetails(PasswordDetails dets)
 		{
 			details = dets;
-			
+
 			if (details != null)
             {
                 if (dets.getName().isEmpty() && dets.getLocation().isEmpty() && dets.getList().isEmpty())
@@ -118,24 +119,24 @@ public class ViewFileFragment extends Fragment
                     setText(dets.getName());
             }
 		}
-		
+
 		public PasswordDetails getDetails()
 		{
 			return details;
 		}
 	}
-	
+
 	@Override
-	public void onSaveInstanceState(Bundle outState) 
+	public void onSaveInstanceState(Bundle outState)
 	{
 		outState.putString("password", MainState.getInstance().getPassword());
 	};
-	
+
 	@Override
-	public void onCreate(Bundle savedInstanceState) 
+	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		
+
 		setDocument(MainState.getInstance().document);
 	};
 
@@ -143,9 +144,9 @@ public class ViewFileFragment extends Fragment
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
 	{
 		final ViewFileFragment that = this;
-		
+
 		setHasOptionsMenu(true);
-		
+
 		root = inflater.inflate(R.layout.fragment_viewfile, container, false);
 
 		title = (TextView) root.findViewById(R.id.viewfile_name);
@@ -154,30 +155,30 @@ public class ViewFileFragment extends Fragment
 
 		if (document != null)
 			setupDetailListAdapter();
-		
 
-		addButton.setOnClickListener(new View.OnClickListener() {public void onClick(View v) 
+
+		addButton.setOnClickListener(new View.OnClickListener() {public void onClick(View v)
 		{
-			if (document != null)
-			{
-				PasswordDetails details = new PasswordDetails();
-				try{document.addDetails(details);}catch(Exception e){}
-				
-				try
-				{
-					document.save();
-				}
-				catch(Exception e){
-					Log.e("passwordkeeper", "failed to save file " + file);
-				}
-				
-				
-				that.detailListAdapter.notifyDataSetChanged();
+			if (document == null)
+				return;
 
-				openDetail(details);
+			PasswordDetails details = new PasswordDetails();
+			try{document.addDetails(details);}catch(Exception e){}
+
+			try
+			{
+				document.save();
 			}
+			catch (Exception e) {
+				Log.e("passwordkeeper", "failed to save file " + file);
+			}
+
+
+			that.detailListAdapter.notifyDataSetChanged();
+
+			openDetail(details);
 		}});
-		
+
 		return root;
 	}
 
@@ -193,7 +194,7 @@ public class ViewFileFragment extends Fragment
 			if (dets.getName().toLowerCase().contains(search))
 				ret.add(dets);
 		}
-		
+
 		return ret;
 	}
 
@@ -204,22 +205,22 @@ public class ViewFileFragment extends Fragment
 
 
 	@Override
-	public void onCreateOptionsMenu(android.view.Menu menu, android.view.MenuInflater inflater) 
+	public void onCreateOptionsMenu(android.view.Menu menu, android.view.MenuInflater inflater)
 	{
 		inflater.inflate(R.menu.main, menu);
-		
+
 		MenuItem searchItem = menu.findItem(R.id.action_search);
 	    searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-	    
-	    
-	    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() 
+
+
+	    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener()
 	    {
-	    	public boolean onQueryTextSubmit(String arg0) 
+	    	public boolean onQueryTextSubmit(String arg0)
 	    	{
 				return false;
 			}
 
-			public boolean onQueryTextChange(String arg0) 
+			public boolean onQueryTextChange(String arg0)
 			{
 				if (arg0.isEmpty())
 				{
@@ -237,7 +238,7 @@ public class ViewFileFragment extends Fragment
 
 						filterAdapter.clear();
 						filterAdapter.addAll(filtered);
-						
+
 						if (useFiltered == false)
 						{
 							useFiltered = true;
@@ -247,23 +248,23 @@ public class ViewFileFragment extends Fragment
 						filterAdapter.notifyDataSetChanged();
 					}
 				}
-				
+
 				return false;
 			}
 		});
 	};
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) 
+	public boolean onOptionsItemSelected(MenuItem item)
 	{
 		int id = item.getItemId();
-		
+
 		if (id == R.id.action_edit)
 		{
 			setEditable(!editable);
 			return true;
 		}
-		
+
 		return false;
 	};
 
@@ -275,12 +276,58 @@ public class ViewFileFragment extends Fragment
 	public void setEditable(boolean editable)
 	{
 		this.editable = editable;
-		
+
 		if (root == null)
 			return;
-		
+
 		setupEditable();
 	}
+
+	private static class DocListener implements PasswordDocument.DocumentEvents
+	{
+		private ViewFileFragment parent;
+
+		public DocListener(ViewFileFragment parent)
+		{
+			this.parent = parent;
+		}
+
+		public boolean ignoreSave = false;
+
+		@Override
+		public void initFailed(Exception e)
+		{}
+
+		@Override
+		public void initted()
+		{}
+
+		@Override
+		public void saved()
+		{
+			if (ignoreSave)
+			{
+				ignoreSave = true;
+				return;
+			}
+
+			parent.setupDetailListAdapter();
+		}
+
+		@Override
+		public void loaded()
+		{}
+
+		@Override
+		public void deleted()
+		{}
+
+		@Override
+		public void closed()
+		{}
+	}
+
+	private DocListener docListener = new DocListener(this);
 
 	public void setDocument(PasswordDocument document)
 	{
@@ -291,16 +338,21 @@ public class ViewFileFragment extends Fragment
 		{
 			setupDetailListAdapter();
 		}
+
+		this.document.addListener(docListener);
 	}
 
 	private void setupDetailListAdapter()
 	{
-		detailListAdapter = new DetailListAdapter(this, getActivity(), this.document.getDetailsList());
-		filterAdapter = new DetailListAdapter(this, getActivity(), this.filtered);
-		
-		detailList.setAdapter(detailListAdapter);
-		
-		title.setText(file);
+		new Handler(getContext().getMainLooper()).post(new Runnable() {public void run()
+		{
+			detailListAdapter = new DetailListAdapter(ViewFileFragment.this, getActivity(), document.getDetailsList());
+			filterAdapter = new DetailListAdapter(ViewFileFragment.this, getActivity(), filtered);
+
+			detailList.setAdapter(detailListAdapter);
+
+			title.setText(file);
+		}});
 	}
 
 	@Override
@@ -355,6 +407,7 @@ public class ViewFileFragment extends Fragment
 
 				try
 				{
+					docListener.ignoreSave = true;
 					document.save();
 				}
 				catch(Exception e){

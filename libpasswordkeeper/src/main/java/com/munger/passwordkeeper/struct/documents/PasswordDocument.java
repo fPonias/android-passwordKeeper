@@ -558,7 +558,8 @@ public abstract class PasswordDocument
 	protected ArrayList<DocumentEvents> listeners = new ArrayList<>();
 	public void addListener(DocumentEvents listener)
 	{
-		listeners.add(listener);
+		if (!listeners.contains(listener))
+			listeners.add(listener);
 	}
 
 	public void removeListener(DocumentEvents listener)

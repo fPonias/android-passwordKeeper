@@ -334,7 +334,17 @@ public class PasswordDocumentFile extends PasswordDocument
 		FileInputStream fis = null;
 		DataInputStream dis = null;
 		boolean ret = false;
-		
+
+/*  manual testing block
+		String test = new String("test string");
+		String hash = enc.hash(test);
+		String en = enc.encode(test);
+		String d = enc.decode(en);
+		byte[] enb = enc.encodeToBytes(test);
+		String db = enc.decodeFromByteArray(enb);
+		String foo = d;
+*/
+
 		try
 		{
 			fis = new FileInputStream(target);
