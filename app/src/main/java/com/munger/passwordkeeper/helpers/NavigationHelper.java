@@ -21,6 +21,7 @@ import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.AlertFragment;
+import com.munger.passwordkeeper.alert.ConfirmFragment;
 import com.munger.passwordkeeper.alert.InputFragment;
 import com.munger.passwordkeeper.alert.PasswordFragment;
 import com.munger.passwordkeeper.struct.PasswordDetails;
@@ -99,19 +100,114 @@ public class NavigationHelper
 
         if (!document.exists())
         {
-            createFileFragment = openCreateFileFragment(true);
-            createFileFragment.submittedListener = new CreateFileFragment.ISubmittedListener() {public void submitted()
-            {
-                onBackPressed(new NavigationHelper.Callback() {public void callback(Object result)
-                {
-                    openFile();
-                }});
-            }};
+            startNewDocumentFlow();
         }
         else
         {
             startGetPassword();
         }
+    }
+
+    private ConfirmFragment restoreDialog = null;
+
+    public void startNewDocumentFlow()
+    {
+        restoreDialog = new ConfirmFragment("Restore backup from Google Drive?", ConfirmFragment.POSITIVE | ConfirmFragment.NEGATIVE, new ConfirmFragment.Listener()
+        {
+            @Override
+            public void okay()
+            {
+                restoreDialog.dismiss();
+                restoreFromGoogleDrive();
+            }
+
+            @Override
+            public void discard()
+            {
+                restoreDialog.dismiss();
+                createFileFragment = openCreateFileFragment(true);
+                createFileFragment.submittedListener = new CreateFileFragment.ISubmittedListener() {public void submitted()
+                {
+                    onBackPressed(new NavigationHelper.Callback() {public void callback(Object result)
+                    {
+                        openFile();
+                    }});
+                }};
+            }
+        });
+
+        restoreDialog.show(MainState.getInstance().activity.getSupportFragmentManager(), "restore_from_drive_fragment");
+    }
+
+    private PasswordDocumentDrive.InitListener remoteListener = null;
+    private PasswordFragment remoteInDialog = null;
+
+    private void restoreFromGoogleDrive()
+    {
+        remoteInDialog = new PasswordFragment("Input the remote document password", "password", new PasswordFragment.Listener()
+        {
+            public boolean okay(InputFragment that, String password)
+            {
+                PasswordDocument document = MainState.getInstance().document;
+
+                that.dismiss();
+                document.setPassword(password);
+                try {document.load(true);} catch(Exception e){}
+
+                if (MainState.getInstance().settings.getSaveToCloud() == false)
+                {
+                    MainState.getInstance().settings.setSaveToCloud(true);
+                    MainState.getInstance().setupDriveHelper();
+                }
+
+                MainState.getInstance().setPassword(password);
+                MainState.getInstance().setupDocument(remoteListener);
+
+                return true;
+            }
+
+            public void cancel(InputFragment that)
+            {
+                doExit();
+            }
+        });
+
+        remoteListener = new PasswordDocumentDrive.InitListener()
+        {
+            @Override
+            public void error(Exception e)
+            {
+                remoteInDialog.dismiss();
+
+                String message;
+                if (e instanceof PasswordDocumentDrive.RemoteNoFileException || e instanceof PasswordDocumentDrive.RemoteFileEmptyException)
+                    message = "Remote data doesn't exist";
+                else
+                    message = "Unable to open remote data";
+
+                AlertFragment alfrag = new AlertFragment(message);
+                alfrag.setCloseCallback(new AlertFragment.CloseCallback() {public void closed()
+                {
+                    createFileFragment = openCreateFileFragment(true);
+                }});
+                alfrag.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
+
+                MainState.getInstance().driveDocument.removeListener(this);
+            }
+
+            @Override
+            public void success()
+            {
+                remoteInDialog.dismiss();
+                MainState.getInstance().settings.setSaveToCloud(false);
+                MainState.getInstance().driveDocument.removeListener(this);
+
+
+                openFileView();
+            }
+        };
+
+        remoteInDialog.show(MainState.getInstance().activity.getSupportFragmentManager(), "invalid_fragment");
     }
 
     public void changePassword(CreateFileFragment.ISubmittedListener listener)

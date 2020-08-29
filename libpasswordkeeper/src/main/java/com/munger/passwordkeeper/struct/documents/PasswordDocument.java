@@ -285,7 +285,8 @@ public abstract class PasswordDocument
 			return;
 		}
 
-		byte[] hash = new byte[32];
+		int hashSz = encoder.hashSize();
+		byte[] hash = new byte[hashSz];
 		dis.readFully(hash);
 		String hashStr = new String(hash);
 		byte[] lineEnc = new byte[sz];
@@ -701,7 +702,7 @@ public abstract class PasswordDocument
 	{
 		String detid = orig.getId();
 		if (detailsIndex.containsKey(detid))
-			throw new PasswordDocumentHistory.HistoryPlaybackException();
+			throw new PasswordDocumentHistory.HistoryPlaybackException("add details failed. details id " + detid + " already exists");
 
 		details.add(orig);
 
@@ -727,7 +728,7 @@ public abstract class PasswordDocument
 	protected void detailsEventHandler(HistoryEvent event) throws PasswordDocumentHistory.HistoryPlaybackException
 	{
 		if (!detailsIndex.containsKey(event.id))
-			throw new PasswordDocumentHistory.HistoryPlaybackException();
+			throw new PasswordDocumentHistory.HistoryPlaybackException("details event failed. event " + event.id + "already run");
 
 		history.addEvent(event);
 	}
@@ -737,7 +738,7 @@ public abstract class PasswordDocument
 		awaitHistoryLoaded();
 		String detid = dets.getId();
 		if (!detailsIndex.containsKey(detid))
-			throw new PasswordDocumentHistory.HistoryPlaybackException();
+			throw new PasswordDocumentHistory.HistoryPlaybackException("details replace failed. details " + detid + " doesn't exist");
 
 		detailsListeners.remove(detid);
 		playSubHistory(dets.getHistory());

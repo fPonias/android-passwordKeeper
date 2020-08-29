@@ -20,7 +20,12 @@ public class PasswordDocumentHistory
     }
 
     public static class HistoryPlaybackException extends Exception
-    {}
+    {
+        public HistoryPlaybackException(String message)
+        {
+            super(message);
+        }
+    }
 
     public static class PlaybackException extends Exception
     {

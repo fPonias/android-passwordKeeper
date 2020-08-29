@@ -364,7 +364,21 @@ public class ViewFileFragment extends Fragment
 			return;
 		
 		title.setText(file);
-		
+/*
+		if (filterAdapter != null)
+		{
+			int sz = detailList.getChildCount();
+
+			for (int i = 0; i < sz; i++)
+			{
+				PasswordDetails dets = document.getDetails(i);
+				TextWidget w = (TextWidget) detailList.getChildAt(i);
+				w.setText(dets.getName());
+			}
+
+			filterAdapter.notifyDataSetChanged();
+		}*/
+
 		setupEditable();
 		root.invalidate();
 	}

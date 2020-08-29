@@ -128,7 +128,7 @@ public class HistoryEventFactory
         public void apply(PasswordDocument doc) throws PasswordDocumentHistory.HistoryPlaybackException
         {
             if (doc.getDetails(id) != null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details create failed. details " + id + " already exists");
 
             PasswordDetails dets = new PasswordDetails(id);
             doc.addDetails(dets);
@@ -141,14 +141,14 @@ public class HistoryEventFactory
         {
             PasswordDetails dets = doc.getDetails(id);
             if (dets == null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details update failed. details " + id + " don't exist");
 
             if (property.equals("name"))
                 dets.setName(value);
             else if (property.equals("location"))
                 dets.setLocation(value);
             else
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details update failed. details property " + property + " doesn't exist");
         }
     }
 
@@ -158,7 +158,7 @@ public class HistoryEventFactory
         {
             PasswordDetails dets = doc.getDetails(id);
             if (dets == null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details removal failed.  details " + id + " don't exist");
 
             doc.removeDetails(dets);
         }
@@ -170,11 +170,11 @@ public class HistoryEventFactory
         {
             PasswordDetails dets = doc.getDetails(id);
             if (dets == null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details pair create failed. details " + id + " don't exist");
 
             PasswordDetailsPair pair = dets.getPair(pairid);
             if (pair != null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details pair create failed. details pair " + pairid + " of details " + id + " don't exist");
 
             pair = new PasswordDetailsPair(pairid);
             dets.addPair(pair);
@@ -187,11 +187,11 @@ public class HistoryEventFactory
         {
             PasswordDetails dets = doc.getDetails(id);
             if (dets == null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details pair update failed. details " + id + " don't exist");
 
             PasswordDetailsPair pair = dets.getPair(pairid);
             if (pair == null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details pair update failed. details pair " + pairid + " of details " + id + " don't exist");
 
 
             if (property.equals("key"))
@@ -199,7 +199,7 @@ public class HistoryEventFactory
             else if (property.equals("value"))
                 pair.setValue(value);
             else
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details pair update failed. details pair property " + property + " doesn't exist");
         }
     }
 
@@ -209,11 +209,11 @@ public class HistoryEventFactory
         {
             PasswordDetails dets = doc.getDetails(id);
             if (dets == null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details pair delete failed. details " + id + " doesn't exist");
 
             PasswordDetailsPair pair = dets.getPair(pairid);
             if (pair == null)
-                throw new PasswordDocumentHistory.HistoryPlaybackException();
+                throw new PasswordDocumentHistory.HistoryPlaybackException("details pair delete failed. details pair " + pairid + " under details " + id + " doesn't exist");
 
             dets.removePair(pair);
         }

@@ -158,7 +158,7 @@ public class DriveHelper
         }
     }
 
-    public String getOrCreateFile(String name) throws IOException
+    public String getRemoteFileId(String name) throws IOException
     {
         if (!connected)
             return null;
@@ -170,6 +170,19 @@ public class DriveHelper
             if (f.getName().equals(name))
                 return f.getId();
         }
+
+        return null;
+    }
+
+    public String getOrCreateFile(String name) throws IOException
+    {
+        if (!connected)
+            return null;
+
+        String ret = getRemoteFileId(name);
+
+        if (ret != null)
+            return ret;
 
         File fl = new File();
         fl.setName(name);

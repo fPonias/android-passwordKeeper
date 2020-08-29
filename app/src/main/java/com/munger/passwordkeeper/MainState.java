@@ -82,6 +82,9 @@ public class MainState
         {
             if (this.document != null)
                 this.document.setPassword(password);
+
+            if (this.driveDocument != null)
+                this.driveDocument = null;
         }
     }
 
@@ -116,6 +119,11 @@ public class MainState
 
     public void setupDocument()
     {
+        setupDocument(null);
+    }
+
+    public void setupDocument(final PasswordDocumentDrive.InitListener driveListener)
+    {
         if (document == null)
             document = createDocument();
 
@@ -125,7 +133,7 @@ public class MainState
             {
                 boolean enable = settings.getSaveToCloud();
                 if (enable)
-                    setupDriveDocument();
+                    setupDriveDocument(driveListener);
             }
             catch(Exception e){
             }
@@ -192,7 +200,7 @@ public class MainState
 
     public PasswordDocumentDrive driveDocument;
 
-    protected void  setupDriveDocument() throws Exception
+    protected void  setupDriveDocument(PasswordDocumentDrive.InitListener driveListener) throws Exception
     {
         if (driveHelper.isConnected() == null)
             driveHelper.awaitConnection();
@@ -201,6 +209,12 @@ public class MainState
             return;
 
         driveDocument = createDriveDocument();
+
+        if (driveListener != null)
+            driveDocument.addListener(driveListener);
+
+        if (driveHelper != null && driveHelper.isConnected())
+            driveDocument.init();
     }
 
     protected PasswordDocumentDrive createDriveDocument() throws Exception
@@ -248,7 +262,7 @@ public class MainState
                 {
                     try
                     {
-                        setupDriveDocument();
+                        setupDriveDocument(null);
                     }
                     catch(Exception e){
                         driveDocument = null;

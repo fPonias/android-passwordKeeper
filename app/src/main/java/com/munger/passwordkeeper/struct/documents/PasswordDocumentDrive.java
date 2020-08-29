@@ -8,8 +8,11 @@ import com.munger.passwordkeeper.helpers.DriveHelper;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Created by codymunger on 11/18/16.
@@ -136,11 +139,44 @@ public class PasswordDocumentDrive
         }
     };
 
+    public static class InitListener
+    {
+        public void success(){}
+        public void error(Exception e){}
+    }
+
+    protected ArrayList<InitListener> listeners = new ArrayList<>();
+
+    public void addListener(InitListener listener)
+    {
+        if (!listeners.contains(listener))
+            listeners.add(listener);
+    }
+
+    public void removeListener(InitListener listener)
+    {
+        if (listeners.contains(listener))
+            listeners.remove(listener);
+    }
+
     protected Exception initException = null;
 
     public void notifyInitError(Exception e)
     {
         initException = e;
+
+        for(InitListener listener : listeners)
+        {
+            listener.error(e);
+        }
+    }
+
+    public void notifyInitSuccess()
+    {
+        for (InitListener listener : listeners)
+        {
+            listener.success();
+        }
     }
 
     public Exception getInitException()
@@ -166,6 +202,8 @@ public class PasswordDocumentDrive
 
     protected boolean connectionHandled = false;
 
+    public static class RemoteNoFileException extends Exception {};
+
     private void handleConnected()
     {
         Log.d("password", "checking for remote document");
@@ -173,7 +211,11 @@ public class PasswordDocumentDrive
 
         try
         {
-            fileId = MainState.getInstance().driveHelper.getOrCreateFile(name);
+            File histFile = new File(((PasswordDocumentFile) sourceDoc).getHistoryFilePath());
+            if (!histFile.exists())
+                fileId = MainState.getInstance().driveHelper.getRemoteFileId(name);
+            else
+                fileId = MainState.getInstance().driveHelper.getOrCreateFile(name);
         }
         catch (IOException e) {
             fileId = null;
@@ -182,7 +224,7 @@ public class PasswordDocumentDrive
         if (fileId == null)
         {
             Log.e("password", "Failed to get file id");
-            notifyInitError(new Exception("failed to get file id"));
+            notifyInitError(new RemoteNoFileException());
             return;
         }
 
@@ -197,6 +239,8 @@ public class PasswordDocumentDrive
             notifyInitError(e);
             return;
         }
+
+        notifyInitSuccess();
     }
 
     private DateTime lastUpdate = null;
@@ -218,7 +262,12 @@ public class PasswordDocumentDrive
 
     }
 
-    public void remoteUpdate(boolean force) throws PasswordDocument.IncorrectPasswordException, Exception
+    public static class RemoteTrashedException extends Exception {};
+    public static class RemoteFileEmptyException extends Exception {};
+    public static class RemoteIOException extends Exception {};
+    public static class UnplayableHistoryException extends Exception {};
+
+    public void remoteUpdate(boolean force) throws PasswordDocument.IncorrectPasswordException, RemoteTrashedException, RemoteFileEmptyException, RemoteIOException, UnplayableHistoryException
     {
         synchronized (updateLock)
         {
@@ -240,7 +289,15 @@ public class PasswordDocumentDrive
                 System.out.println("remote file trashed");
 
                 synchronized (updateLock) {isUpdating = false;}
-                throw new Exception("remote file trashed");
+                throw new RemoteTrashedException();
+            }
+
+            if (meta.size == 0 && sourceDoc.history.count() == 0)
+            {
+                System.out.println("empty remote file");
+
+                synchronized (updateLock) {isUpdating = false;}
+                throw new RemoteFileEmptyException();
             }
 
             if ((lastUpdate == null || meta.modified.getValue() > lastUpdate.getValue() || force) && meta.size > 0)
@@ -262,6 +319,11 @@ public class PasswordDocumentDrive
                     System.out.println("remote password data doesn't match");
 
                     PasswordDocumentHistory tmpHist = sourceDoc.history.mergeHistory(remoteDoc.history);
+                    boolean success = verifyHistory(tmpHist);
+
+                    if (!success)
+                        throw new UnplayableHistoryException();
+
                     sourceDoc.delete();
                     sourceDoc.playSubHistory(tmpHist);
                     sourceDoc.save();
@@ -290,12 +352,12 @@ public class PasswordDocumentDrive
             {
                 Log.e("password", "trashed remote file");
                 synchronized (updateLock) {isUpdating = false;}
-                throw new TrashedFileException();
+                throw new RemoteTrashedException();
             }
             else if (force == false)
             {
                 synchronized (updateLock) {isUpdating = false;}
-                throw new Exception("failed to update local file");
+                throw new RemoteIOException();
             }
         }
 
@@ -317,12 +379,36 @@ public class PasswordDocumentDrive
         synchronized (updateLock) {isUpdating = false;}
     }
 
-    public void overwrite() throws Exception
+    private boolean verifyHistory(PasswordDocumentHistory history)
+    {
+        Log.d("password", "verifying history playback");
+
+        try
+        {
+            PasswordDocumentFile verifier = new PasswordDocumentFile("foo");
+            verifier.deleteFiles();
+            verifier.setPassword("");
+            verifier.onLoad(true);
+            verifier.playSubHistory(history);
+            verifier.deleteFiles();
+        } catch (Exception e){
+            Log.d("password", "unplayable history generated");
+            return false;
+        }
+
+        return true;
+    }
+
+    public void overwrite() throws RemoteIOException, UnplayableHistoryException
     {
         if (isOverwriting)
             return;
 
         isOverwriting = true;
+
+        boolean success = verifyHistory(sourceDoc.getHistory());
+        if (!success)
+            throw new UnplayableHistoryException();
 
         try
         {
@@ -334,7 +420,7 @@ public class PasswordDocumentDrive
             System.out.println("Failed to write remote data");
             synchronized (updateLock) {isUpdating = false;}
             isOverwriting = false;
-            throw new Exception(("failed to update remote file"));
+            throw new RemoteIOException();
         }
 
         isOverwriting = false;

@@ -49,6 +49,7 @@ import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
+import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.widget.DetailItemWidget;
 import com.munger.passwordkeeper.view.widget.TextInputWidget;
 
@@ -446,6 +447,7 @@ public class ViewDetailFragment extends Fragment
 
 		originalDetails = dets;
 		details = dets.copy();
+		details.setHistory(new PasswordDocumentHistory());
 
 		if (root != null)
 		{
@@ -494,9 +496,11 @@ public class ViewDetailFragment extends Fragment
 		if (root == null)
 			return;
 
-		if (isVisible())
+		if (isVisible() && !editable)
 		{
-			if (!editable && originalDetails != null && originalDetails.diff(details))
+			updateDetails();
+
+			if (originalDetails != null && originalDetails.diff(details))
 			{
 				saveDetails(new Predicate<Boolean>() {public boolean apply(Boolean aBoolean)
 				{
@@ -510,6 +514,29 @@ public class ViewDetailFragment extends Fragment
 		}
 
 		setupEditable();
+	}
+
+	private void updateDetails()
+	{
+		if (!details.getName().equals(nameLabel.getText()))
+			details.setName(nameLabel.getText());
+
+		if (!details.getLocation().equals(locationLabel.getText()))
+			details.setLocation(locationLabel.getText());
+
+		int sz = itemList.getChildCount();
+		View target = null;
+		for (int position = 0; position < sz; position++)
+		{
+			PasswordDetailsPair pair = details.getPair(position);
+			PairDetailItemWidget tWidget = (PairDetailItemWidget) itemList.getChildAt(position);
+
+			if (!pair.getKey().equals(tWidget.getKey()))
+				pair.setKey(tWidget.getKey());
+
+			if (!pair.getValue().equals(tWidget.getValue()))
+				pair.setValue(tWidget.getValue());
+		}
 	}
 
 	public void backPressed(final NavigationHelper.Callback callback)
