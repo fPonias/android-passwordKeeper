@@ -39,6 +39,11 @@ public class PasswordDocumentFile extends PasswordDocument
 		setPassword(password);
 	}
 
+	public void setPath(String path)
+	{
+		rootPath = path;
+	}
+
 	@Override
 	public void setPassword(String password)
 	{

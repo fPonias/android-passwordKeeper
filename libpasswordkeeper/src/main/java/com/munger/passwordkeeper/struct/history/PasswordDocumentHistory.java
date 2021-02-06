@@ -104,7 +104,7 @@ public class PasswordDocumentHistory
                 evt.apply(document);
             }
             catch(HistoryPlaybackException e){
-                throw new PlaybackException(e, "history playback failed on index " + i + " with " + evt.toString());
+                //throw new PlaybackException(e, "history playback failed on index " + i + " with " + evt.toString());
             }
 
             PasswordDocumentHistory docHist = document.getHistory();

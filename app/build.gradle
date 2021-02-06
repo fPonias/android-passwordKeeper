@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     signingConfigs {
         config {
-            storeFile file('../../../.ssh/com.munger.debug-keystore.jks')
+            storeFile file('../../../ssh/com.munger.debug-keystore.jks')
             storePassword '1600 Amphitheatre Parkway'
             keyAlias 'key0'
             keyPassword '1600 Amphitheatre Parkway'

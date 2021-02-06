@@ -325,57 +325,11 @@ public class ViewDetailFragment extends Fragment
 		return ret;
 	}
 
+
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) 
 	{
-		inflater.inflate(R.menu.main, menu);
-		
-		MenuItem searchItem = menu.findItem(R.id.action_search);
-	    SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-	    searchView.setQuery("", false);
-	    
-	    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() 
-	    {
-	    	public boolean onQueryTextSubmit(String arg0) 
-	    	{
-				return false;
-			}
-
-			public boolean onQueryTextChange(String arg0) 
-			{
-				if (filterAdapter == null)
-					return false;
-
-				if (arg0.isEmpty())
-				{
-					if (useFiltered == true)
-					{
-						useFiltered = false;
-						itemList.setAdapter(pairListAdapter);
-					}
-				}
-				else
-				{
-					if (details != null)
-					{
-						filtered = searchDetails(details, arg0);
-
-						filterAdapter.clear();
-						filterAdapter.addAll(filtered);
-						
-						if (useFiltered == false)
-						{
-							useFiltered = true;
-							itemList.setAdapter(filterAdapter);
-						}
-
-						filterAdapter.notifyDataSetChanged();
-					}
-				}
-				
-				return false;
-			}
-		});
+		inflater.inflate(R.menu.detail, menu);
 	};
 	
 	@Override

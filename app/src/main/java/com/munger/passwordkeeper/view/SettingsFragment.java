@@ -1,6 +1,7 @@
 package com.munger.passwordkeeper.view;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
@@ -143,9 +144,39 @@ public class SettingsFragment extends PreferenceFragmentCompat
         return mPath;
     }
 
+    private boolean isExporting = false;
+    private final Object exportLock = new Object();
+
     private void doExport()
     {
-        MainState.getInstance().navigationHelper.exportFile("passwordCrypt-backup");
+        synchronized (exportLock)
+        {
+            if (isExporting)
+                return;
+
+            isExporting = true;
+        }
+
+        final ProgressDialog loadingDialog = new ProgressDialog(MainState.getInstance().context);
+        loadingDialog.setMessage("Backing up data");
+        loadingDialog.show();
+
+        Thread t = new Thread(new Runnable() {public void run() {
+            final File result = MainState.getInstance().navigationHelper.exportFile("backup");
+
+            MainState.getInstance().activity.runOnUiThread(new Runnable() {public void run()
+            {
+                loadingDialog.dismiss();
+                String message = (result == null) ? "Failed to save backup data." : "Saved backup to: " + result.getPath();
+                MainState.getInstance().navigationHelper.showAlert(message);
+            }});
+
+            synchronized (exportLock)
+            {
+                isExporting = false;
+            }
+        }});
+        t.start();
     }
 
     private void doImport()

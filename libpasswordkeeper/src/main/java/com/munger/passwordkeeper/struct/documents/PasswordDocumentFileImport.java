@@ -5,8 +5,10 @@ import com.munger.passwordkeeper.struct.PasswordDetailsPair;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.Buffer;
 
@@ -91,19 +93,11 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
         PasswordDetails dets = new PasswordDetails();
         String[] parts = line.split("\t");
         dets.setName(parts[0]);
-        dets.setLocation(parts[0]);
 
-        if (parts.length >= 2)
-        {
-            PasswordDetailsPair pair = dets.addEmptyPair();
-            pair.setKey(parts[1]);
-
-            if (parts.length >= 3)
-                pair.setValue(parts[2]);
-
-            if (parts.length >= 4)
-                throw new IOException("line " + line + " had too many fields for details line");
-        }
+        if (parts.length > 1)
+            dets.setLocation(parts[1]);
+        else
+            dets.setLocation(parts[0]);
 
         return dets;
     }
@@ -126,5 +120,41 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
         }
 
         return pair;
+    }
+
+    protected BufferedWriter getWriter() throws IOException
+    {
+        File f = new File(path + "-bak");
+
+        if (!f.exists() || !f.canRead())
+            throw new IOException();
+
+        FileWriter fw = new FileWriter(f);
+        BufferedWriter bw = new BufferedWriter(fw);
+        return bw;
+    }
+
+    public void onSave() throws IOException
+    {
+        BufferedWriter bw = getWriter();
+
+        for (PasswordDetails dets : details)
+        {
+            bw.write(dets.getName());
+            bw.write('\t');
+            bw.write(dets.getLocation());
+            bw.write('\n');
+
+            int sz = dets.count();
+            for (int i = 0; i < sz; i++)
+            {
+                PasswordDetailsPair pair = dets.getPair(i);
+                bw.write('\t');
+                bw.write(pair.getKey());
+                bw.write('\t');
+                bw.write(pair.getValue());
+                bw.write('\n');
+            }
+        }
     }
 }

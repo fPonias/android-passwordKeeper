@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,10 +15,12 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 
+import com.munger.passwordkeeper.MainActivity;
 import com.munger.passwordkeeper.MainState;
 import com.munger.passwordkeeper.R;
 import com.munger.passwordkeeper.alert.ConfirmFragment;
@@ -203,6 +206,11 @@ public class ViewFileFragment extends Fragment
 	private DetailListAdapter filterAdapter;
 	private SearchView searchView = null;
 
+	@Override
+	public void onPrepareOptionsMenu(@NonNull Menu menu) {
+		super.onPrepareOptionsMenu(menu);
+
+	}
 
 	@Override
 	public void onCreateOptionsMenu(android.view.Menu menu, android.view.MenuInflater inflater)
@@ -211,7 +219,6 @@ public class ViewFileFragment extends Fragment
 
 		MenuItem searchItem = menu.findItem(R.id.action_search);
 	    searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-
 
 	    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener()
 	    {
@@ -252,6 +259,15 @@ public class ViewFileFragment extends Fragment
 				return false;
 			}
 		});
+
+
+		if (searchActive)
+		{
+			searchItem.expandActionView();
+
+			if (oldQuery.length() > 0)
+				searchView.setQuery(oldQuery, true);
+		}
 	};
 
 	@Override
@@ -344,7 +360,7 @@ public class ViewFileFragment extends Fragment
 
 	private void setupDetailListAdapter()
 	{
-		new Handler(getContext().getMainLooper()).post(new Runnable() {public void run()
+		MainState.getInstance().activity.runOnUiThread(new Runnable() {public void run()
 		{
 			detailListAdapter = new DetailListAdapter(ViewFileFragment.this, getActivity(), document.getDetailsList());
 			filterAdapter = new DetailListAdapter(ViewFileFragment.this, getActivity(), filtered);
@@ -353,6 +369,20 @@ public class ViewFileFragment extends Fragment
 
 			title.setText(file);
 		}});
+	}
+
+	private boolean searchActive;
+
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+
+		searchActive = !searchView.isIconified();
+		if (searchActive)
+			oldQuery = searchView.getQuery();
+		else
+			oldQuery = "";
 	}
 
 	@Override
@@ -364,6 +394,9 @@ public class ViewFileFragment extends Fragment
 			return;
 		
 		title.setText(file);
+
+		if (searchView != null && searchActive)
+			searchView.onActionViewExpanded();
 /*
 		if (filterAdapter != null)
 		{
@@ -400,11 +433,6 @@ public class ViewFileFragment extends Fragment
 
 	private void openDetail(final PasswordDetails dets)
 	{
-		if (searchView != null)
-		{
-			oldQuery = searchView.getQuery().toString();
-		}
-
 		MainState.getInstance().navigationHelper.openDetail(dets);
 	}
 

@@ -1,5 +1,6 @@
 package com.munger.passwordkeeper.helpers;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,6 +29,7 @@ import com.munger.passwordkeeper.struct.PasswordDetails;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentDrive;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFile;
+import com.munger.passwordkeeper.struct.documents.PasswordDocumentFileExport;
 import com.munger.passwordkeeper.struct.documents.PasswordDocumentFileImport;
 import com.munger.passwordkeeper.struct.history.PasswordDocumentHistory;
 import com.munger.passwordkeeper.view.AboutFragment;
@@ -517,7 +519,7 @@ public class NavigationHelper
                 }
                 else // which == -3 . turn off remote sync
                 {
-                    PreferenceManager mgr = new PreferenceManager(MainState.getInstance().context);
+                    @SuppressLint("RestrictedApi") PreferenceManager mgr = new PreferenceManager(MainState.getInstance().context);
                     mgr.getSharedPreferences().edit().putBoolean(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD, false).apply();
                     MainState.getInstance().cleanUpDriveHelper();
 
@@ -541,7 +543,7 @@ public class NavigationHelper
                 }
                 else //disable
                 {
-                    PreferenceManager mgr = new PreferenceManager(MainState.getInstance().context);
+                    @SuppressLint("RestrictedApi") PreferenceManager mgr = new PreferenceManager(MainState.getInstance().context);
                     mgr.getSharedPreferences().edit().putBoolean(SettingsFragment.PREF_NAME_SAVE_TO_CLOUD, false).apply();
                     MainState.getInstance().cleanUpDriveHelper();
 
@@ -681,7 +683,12 @@ public class NavigationHelper
             {
                 try
                 {
-                    PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(path, "import");
+                    File dir = new File(path);
+                    String fileName = dir.getName();
+                    String dirPath = dir.getParentFile().getPath();
+                    PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(dir.getPath(), fileName);
+                    //PasswordDocumentFile fileImport = new PasswordDocumentFile(fileName, "");
+                    //fileImport.setPath(dirPath + "/");
                     fileImport.load(false);
                     PasswordDocument doc =  MainState.getInstance().document;
                     doc.playSubHistory(fileImport.getHistory());
@@ -725,7 +732,7 @@ public class NavigationHelper
         t.execute(new Object[]{});
     }
 
-    public void exportFile(String name)
+    public File exportFile(String name)
     {
         File downloadDir = MainState.getInstance().context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
         String path = downloadDir.getPath() + "/" + name;
@@ -735,14 +742,16 @@ public class NavigationHelper
 
         try
         {
-            PasswordDocumentFile exportFile = new PasswordDocumentFile(path, "");
+            PasswordDocumentFileExport exportFile = new PasswordDocumentFileExport(path, name);
             exportFile.load(true);
             PasswordDocumentHistory hist = MainState.getInstance().document.getHistory().clone();
             exportFile.playSubHistory(hist);
             exportFile.save();
+
+            return backupFile;
         }
         catch (Exception e){
-            return;
+            return null;
         }
     }
 

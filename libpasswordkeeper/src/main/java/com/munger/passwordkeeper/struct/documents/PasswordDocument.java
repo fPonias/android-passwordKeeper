@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeSet;
 
+import sun.rmi.runtime.Log;
+
 public abstract class PasswordDocument 
 {
 	protected IEncoder encoder;
@@ -266,6 +268,12 @@ public abstract class PasswordDocument
 			int index = dis.readInt();
 			int sz = dis.readInt();
 
+			if (sz == 0)
+			{
+				System.out.println("failed to read batch " + i + " from history index " + index);
+				break;
+			}
+
 			transferBatch(index, sz, dis, dos);
 		}
 
@@ -394,6 +402,8 @@ public abstract class PasswordDocument
 				String batchLine = readLine(inArr, sz);
 				history.partFromString(batchLine);
 			}
+			else if (sz == 0)
+				return;
 
 			count++;
 		}
