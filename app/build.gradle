@@ -1,20 +1,28 @@
 apply plugin: 'com.android.application'
 
+// The release signing config is only attached if the keystore actually exists on disk.
+// This means debug builds work even on a fresh checkout, and release will still sign
+// when you have the keystore file in place.
+def releaseKeystore = file('../../../ssh/com.munger.debug-keystore.jks')
+def hasReleaseKeystore = releaseKeystore.exists()
+
 android {
-    signingConfigs {
-        config {
-            storeFile file('../../../ssh/com.munger.debug-keystore.jks')
-            storePassword '1600 Amphitheatre Parkway'
-            keyAlias 'key0'
-            keyPassword '1600 Amphitheatre Parkway'
+    if (hasReleaseKeystore) {
+        signingConfigs {
+            config {
+                storeFile releaseKeystore
+                storePassword '1600 Amphitheatre Parkway'
+                keyAlias 'key0'
+                keyPassword '1600 Amphitheatre Parkway'
+            }
         }
     }
-    compileSdkVersion 29
-    ndkVersion '21.3.6528147'
+    compileSdkVersion 35
+    ndkVersion '25.1.8937393'
     defaultConfig {
         applicationId "com.munger.passwordkeeper"
-        minSdkVersion 18
-        targetSdkVersion 29
+        minSdkVersion 21
+        targetSdkVersion 35
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -23,22 +31,27 @@ android {
                 cppFlags ""
             }
         }
-        signingConfig signingConfigs.config
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.config
+            if (hasReleaseKeystore) {
+                signingConfig signingConfigs.config
+            }
         }
         debug {
-            signingConfig signingConfigs.config
+            // Use the standard debug keystore Gradle generates automatically.
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     testOptions {
         unitTests.returnDefaultValues = true
     }
-    lintOptions {
+    lint {
         checkReleaseBuilds true
         abortOnError false
     }
@@ -47,84 +60,110 @@ android {
             path '../libpasswordkeeper/CMakeLists.txt'
         }
     }
-    packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/license.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/notice.txt'
-        exclude 'META-INF/ASL2.0'
+    packaging {
+        resources {
+            excludes += [
+                    'META-INF/DEPENDENCIES',
+                    'META-INF/LICENSE',
+                    'META-INF/LICENSE.txt',
+                    'META-INF/LICENSE.md',
+                    'META-INF/license.txt',
+                    'META-INF/NOTICE',
+                    'META-INF/NOTICE.txt',
+                    'META-INF/NOTICE.md',
+                    'META-INF/notice.txt',
+                    'META-INF/ASL2.0',
+                    'META-INF/INDEX.LIST',
+                    'META-INF/io.netty.versions.properties',
+                    'META-INF/*.kotlin_module'
+            ]
+        }
     }
+    namespace 'com.munger.passwordkeeper'
 }
 
 afterEvaluate { project ->
-    project.tasks.assembleDebugAndroidTest {
-        description= "builds a debuggable test apk"
-        doLast {
-
-            def rootDir = project.rootDir
-            def localProperties = new File(rootDir, "local.properties")
-            def sdkDir = '.'
-            if (localProperties.exists()) {
-                Properties properties = new Properties()
-                localProperties.withInputStream { instr ->
-                    properties.load(instr)
+    if (hasReleaseKeystore) {
+        project.tasks.assembleDebugAndroidTest {
+            description = "builds a debuggable test apk"
+            doLast {
+                def rootDir = project.rootDir
+                def localProperties = new File(rootDir, "local.properties")
+                def sdkDir = '.'
+                if (localProperties.exists()) {
+                    Properties properties = new Properties()
+                    localProperties.withInputStream { instr ->
+                        properties.load(instr)
+                    }
+                    sdkDir = properties.getProperty('sdk.dir')
                 }
-                sdkDir = properties.getProperty('sdk.dir')
-            }
 
-            exec {
-                commandLine sdkDir + '/build-tools/28.0.3/apksigner',
-                        'sign', '--ks', android.signingConfigs.config.storeFile,
-                        '--ks-pass', 'pass:' + android.signingConfigs.config.storePassword,
-                        './build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'
-
+                exec {
+                    commandLine sdkDir + '/build-tools/34.0.0/apksigner',
+                            'sign', '--ks', android.signingConfigs.config.storeFile,
+                            '--ks-pass', 'pass:' + android.signingConfigs.config.storePassword,
+                            './build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'
+                }
             }
         }
     }
 }
 
-repositories {
-    jcenter()
-    flatDir {
-        dirs 'libs'
-    }
-}
+// Repositories are declared centrally in settings.gradle (dependencyResolutionManagement).
+// Do NOT add a `repositories {}` block here — it would either trigger
+// FAIL_ON_PROJECT_REPOS or, in older Gradle modes, replace the centralized repos and
+// break dependency resolution.
 
 dependencies {
-    androidTestImplementation 'junit:junit:4.12'
-    androidTestImplementation 'org.mockito:mockito-core:1.10.19'
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
-    androidTestImplementation 'androidx.annotation:annotation:1.1.0'
-    androidTestImplementation 'androidx.test:runner:1.2.0'
-    androidTestImplementation 'androidx.test:rules:1.2.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'org.hamcrest:hamcrest-library:1.3'
-    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    androidTestImplementation('androidx.test.espresso:espresso-contrib:3.1.0', {
-        exclude group: 'com.android.support', module: 'recyclerview-v7'
-        exclude group: 'com.android.support', module: 'design'
-        exclude group: 'com.android.support', module: 'support-v4'
-    })
-    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.2.0'
-    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'androidx.preference:preference:1.1.0'
-    implementation 'com.google.api-client:google-api-client:1.25.0'
-    implementation 'com.google.oauth-client:google-oauth-client-jetty:1.25.0'
-    implementation 'com.google.apis:google-api-services-drive:v3-rev173-1.25.0'
+    // ---- Kotlin stdlib alignment ----
+    // kotlin-stdlib-jdk7/jdk8 were merged into kotlin-stdlib in Kotlin 1.8.
+    // Old transitive deps still ask for them at 1.6.x, which collides with the
+    // 1.8.x kotlin-stdlib pulled in by newer libs. Forcing them to the same
+    // version turns them into empty pass-through artifacts.
+    constraints {
+        implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22') {
+            because 'kotlin-stdlib-jdk7 was merged into kotlin-stdlib in 1.8.0'
+        }
+        implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22') {
+            because 'kotlin-stdlib-jdk8 was merged into kotlin-stdlib in 1.8.0'
+        }
+        implementation('org.jetbrains.kotlin:kotlin-stdlib:1.8.22') {
+            because 'align kotlin-stdlib across all transitive deps'
+        }
+    }
+
+    // ---- App runtime dependencies ----
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Google Drive client (2.x line). DriveHelper.java was switched from
+    // JacksonFactory -> GsonFactory to match.
+    implementation 'com.google.api-client:google-api-client:2.7.0'
+    implementation 'com.google.oauth-client:google-oauth-client-jetty:1.36.0'
+    implementation 'com.google.apis:google-api-services-drive:v3-rev20240809-2.0.0'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.mockito:mockito-all:1.10.19'
-    testImplementation 'org.hamcrest:hamcrest-library:1.3'
-    testImplementation 'org.powermock:powermock-api-mockito:1.6.6'
-    testImplementation 'org.powermock:powermock-module-junit4:1.6.6'
+
     implementation project(':libpasswordkeeper')
+
+    // ---- Unit test (JVM) ----
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:4.11.0'
+    testImplementation 'org.hamcrest:hamcrest-library:2.2'
+    // PowerMock removed: not compatible with JDK 17 / Mockito 4+. If you actually
+    // need to mock static methods, switch to mockito-inline.
+
+    // ---- Instrumented test (on-device) ----
+    androidTestImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.annotation:annotation:1.7.1'
+    androidTestImplementation 'androidx.test:runner:1.6.1'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'org.hamcrest:hamcrest-library:2.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.6.1'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+    androidTestImplementation 'org.mockito:mockito-android:4.11.0'
+    // dexmaker-mockito / crittercism dexmaker removed — abandoned in 2014, replaced by mockito-android.
 }

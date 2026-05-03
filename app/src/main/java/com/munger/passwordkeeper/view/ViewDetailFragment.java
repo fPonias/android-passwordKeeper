@@ -355,8 +355,8 @@ public class ViewDetailFragment extends Fragment
 		
 		int resid = 0;
 		if (selected)
-			resid = R.drawable.abc_list_selector_background_transition_holo_dark;
-		
+			resid = android.R.drawable.list_selector_background;
+
 		v.setBackgroundResource(resid);
 		v.setPadding(left, top, right, bott);
 	}

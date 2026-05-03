@@ -3,11 +3,14 @@ package com.munger.passwordkeeper.view;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -20,6 +23,10 @@ import com.munger.passwordkeeper.helpers.NavigationHelper;
 import com.munger.passwordkeeper.struct.documents.PasswordDocument;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class SettingsFragment extends PreferenceFragmentCompat
 {
@@ -54,10 +61,26 @@ public class SettingsFragment extends PreferenceFragmentCompat
     {
     };
 
+    /**
+     * Storage Access Framework launcher for picking a file to import.
+     * MUST be registered during onCreate (before the fragment is started).
+     * Uses the system file picker, which works on all Android versions and
+     * needs no runtime permissions.
+     */
+    private ActivityResultLauncher<String[]> importPickerLauncher;
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
+        importPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri == null)
+                        return;     // user cancelled the picker
+                    handleImportUri(uri);
+                });
 
         if (savedInstanceState != null)
         {
@@ -181,33 +204,78 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
     private void doImport()
     {
-        FileDialog fileDialog = new FileDialog(MainState.getInstance().activity, getDefaultDirectory());
+        // Launch the system file picker. "*/*" lets the user pick anything; if the
+        // password export files have a known MIME type or extension, this can be
+        // narrowed (e.g. new String[]{"text/plain"} or {"application/octet-stream"}).
+        importPickerLauncher.launch(new String[]{"*/*"});
+    }
 
-        fileDialog.addFileListener(new FileDialog.FileSelectedListener() {public void fileSelected(File file)
+    /**
+     * Called from the SAF picker callback. Copies the chosen content URI into a
+     * cache file so the existing path-based import API keeps working unchanged.
+     */
+    private void handleImportUri(Uri uri)
+    {
+        Log.d(getClass().getName(), "selected uri " + uri.toString());
+
+        File tempFile;
+        try
         {
-            Log.d(getClass().getName(), "selected file " + file.toString());
-            MainState.getInstance().navigationHelper.importFile(file.getPath(), new NavigationHelper.Callback() {public void callback(Object result)
+            tempFile = copyUriToCache(uri);
+        }
+        catch (IOException e)
+        {
+            Log.e(getClass().getName(), "failed to copy import uri to cache", e);
+            MainState.getInstance().navigationHelper.showAlert("Could not read the selected file.");
+            return;
+        }
+
+        MainState.getInstance().navigationHelper.importFile(tempFile.getPath(), new NavigationHelper.Callback() {public void callback(Object result)
+        {
+            boolean success = (boolean) result;
+            // best-effort cleanup of the cache copy
+            //noinspection ResultOfMethodCallIgnored
+            tempFile.delete();
+
+            if (!success)
+                return;
+
+            try
             {
-                boolean success = (boolean) result;
+                MainState.getInstance().document.save();
+            }
+            catch (Exception e) {
+                MainState.getInstance().navigationHelper.showAlert("Failed to import external data.");
+                success = false;
+            }
 
-                if (!success)
-                    return;
-
-                try
-                {
-                    MainState.getInstance().document.save();
-                }
-                catch(Exception e){
-                    MainState.getInstance().navigationHelper.showAlert("Failed to import external data.");
-                    success = false;
-                }
-
-                if (success)
-                    MainState.getInstance().navigationHelper.onBackPressed(null);
-            }});
+            if (success)
+                MainState.getInstance().navigationHelper.onBackPressed(null);
         }});
+    }
 
-        fileDialog.showDialog();
+    /**
+     * Copies the contents of a content:// URI into a temp file in the app's
+     * cache directory. The existing import code path expects a file path, not
+     * a URI, so this bridges the two worlds.
+     */
+    private File copyUriToCache(Uri uri) throws IOException
+    {
+        File cacheDir = requireContext().getCacheDir();
+        File out = File.createTempFile("import_", ".tmp", cacheDir);
+
+        try (InputStream in = requireContext().getContentResolver().openInputStream(uri);
+             OutputStream os = new FileOutputStream(out))
+        {
+            if (in == null)
+                throw new IOException("ContentResolver returned null InputStream for " + uri);
+
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0)
+                os.write(buf, 0, n);
+        }
+        return out;
     }
 
     private void doDelete()

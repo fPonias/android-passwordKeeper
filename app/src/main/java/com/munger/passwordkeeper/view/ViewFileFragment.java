@@ -378,6 +378,8 @@ public class ViewFileFragment extends Fragment
 	{
 		super.onPause();
 
+		if (searchView == null) { return; }
+
 		searchActive = !searchView.isIconified();
 		if (searchActive)
 			oldQuery = searchView.getQuery();

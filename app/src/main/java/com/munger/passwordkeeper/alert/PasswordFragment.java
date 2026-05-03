@@ -24,11 +24,6 @@ import android.view.View;
 
 import com.munger.passwordkeeper.MainState;
 
-import org.mortbay.jetty.Main;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 
 /**
  * This is the same as the input alert.

@@ -681,55 +681,65 @@ public class NavigationHelper
         {
             protected Object doInBackground(Object[] params)
             {
-                try
-                {
-                    File dir = new File(path);
-                    String fileName = dir.getName();
-                    String dirPath = dir.getParentFile().getPath();
-                    PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(dir.getPath(), fileName);
-                    //PasswordDocumentFile fileImport = new PasswordDocumentFile(fileName, "");
-                    //fileImport.setPath(dirPath + "/");
-                    fileImport.load(false);
-                    PasswordDocument doc =  MainState.getInstance().document;
-                    doc.playSubHistory(fileImport.getHistory());
-                    doc.save();
-                }
-                catch(Exception e){
-                    showAlert("Failed to import the document: " + path);
-
-                    synchronized (importLock)
-                    {
-                        importSuccess = false;
-                    }
-
-                    return false;
-                }
-
-                synchronized (importLock)
-                {
-                    importSuccess = true;
-                }
-
-                return true;
+                return doImport(path);
             }
 
             protected void onPostExecute(Object o)
             {
-                loadingDialog.dismiss();
-
-                synchronized (importLock)
-                {
-                    importing = false;
-
-                    if (!importSuccess)
-                        return;
-                }
-
-                showAlert("Successfully imported!");
-                callback.callback(o);
+                finishImport(callback, o);
             }
         };
         t.execute(new Object[]{});
+    }
+
+    private boolean doImport(String path) {
+        try
+        {
+            File dir = new File(path);
+            String fileName = dir.getName();
+            String dirPath = dir.getParentFile().getPath();
+            PasswordDocumentFileImport fileImport = new PasswordDocumentFileImport(dir.getPath(), fileName);
+            //PasswordDocumentFile fileImport = new PasswordDocumentFile(fileName, "");
+            //fileImport.setPath(dirPath + "/");
+            fileImport.load(false);
+            PasswordDocument doc =  MainState.getInstance().document;
+            doc.playSubHistory(fileImport.getHistory());
+            doc.save();
+        }
+        catch(Exception e){
+            showAlert("Failed to import the document: " + path);
+
+            synchronized (importLock)
+            {
+                importSuccess = false;
+            }
+
+            return false;
+        }
+
+        synchronized (importLock)
+        {
+            importSuccess = true;
+        }
+
+        return true;
+    }
+
+    private void finishImport(Callback callback, Object o) {
+        if (loadingDialog != null) {
+            loadingDialog.dismiss();
+        }
+
+        synchronized (importLock)
+        {
+            importing = false;
+
+            if (!importSuccess)
+                return;
+        }
+
+        showAlert("Successfully imported!");
+        callback.callback(o);
     }
 
     public File exportFile(String name)
@@ -742,11 +752,15 @@ public class NavigationHelper
 
         try
         {
+            PasswordDocumentFile encryptedExportFile = new PasswordDocumentFile(path + name + "-encrypted", "password");
+            encryptedExportFile.load(true);
             PasswordDocumentFileExport exportFile = new PasswordDocumentFileExport(path, name);
             exportFile.load(true);
             PasswordDocumentHistory hist = MainState.getInstance().document.getHistory().clone();
             exportFile.playSubHistory(hist);
             exportFile.save();
+            encryptedExportFile.playSubHistory(hist);
+            encryptedExportFile.save();
 
             return backupFile;
         }

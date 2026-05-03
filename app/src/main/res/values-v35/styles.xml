@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 15 (API 35) enforces edge-to-edge by default for apps targeting SDK 35+.
+  This file opts the legacy themes out of that enforcement so views don't draw
+  under the status bar / navigation bar. Remove this once layouts are migrated
+  to handle WindowInsets (or moved to Compose).
+-->
+<resources>
+    <style name="AppBaseTheme" parent="Theme.AppCompat.Light">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+
+    <style name="AppTheme" parent="AppBaseTheme">
+        <item name="preferenceTheme">@style/Theme.AppCompat.Light</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+
+    <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

@@ -18,8 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeSet;
 
-import sun.rmi.runtime.Log;
-
 public abstract class PasswordDocument 
 {
 	protected IEncoder encoder;

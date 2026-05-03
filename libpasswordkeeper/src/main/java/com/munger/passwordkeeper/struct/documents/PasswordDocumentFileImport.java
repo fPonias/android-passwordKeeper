@@ -69,7 +69,7 @@ public class PasswordDocumentFileImport extends PasswordDocumentFile
 
     private void parseLine(String line) throws IOException, PasswordDocumentHistory.HistoryPlaybackException
     {
-        if (line.length() == 0)
+        if (line.length() == 0 || line.trim().length() == 0)
             return;
 
         if (line.charAt(0) != '\t')
